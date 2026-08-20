@@ -64,6 +64,12 @@ def build_visit_panel(cfg: Config, extended: bool = False) -> pd.DataFrame:
     subscores = build_subscores(cfg)
 
     panel = curated.merge(subscores, on=KEY, how="left", validate="one_to_one")
+
+    # The left join introduces NaN into what was a boolean column, making it
+    # object dtype where `~flag` yields a numeric complement instead of False.
+    # Restore a true boolean so downstream masking behaves.
+    panel["ratio_defined"] = panel["ratio_defined"] == True  # noqa: E712
+
     return _add_time_axis(panel, cfg)
 
 

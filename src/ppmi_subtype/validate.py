@@ -65,12 +65,26 @@ def against_curated_cut(panel: pd.DataFrame, cfg: Config) -> dict:
     return summary
 
 
+def remap_archived_labels(series: pd.Series, cfg: Config) -> pd.Series:
+    """Translate archived ``td_pigd_old`` codes into this project's coding.
+
+    The two codings agree on TD = 1 but swap the other two: the archived
+    dictionary defines 2 = PIGD and 3 = Indeterminate, whereas this project
+    uses 2 = Indeterminate and 3 = PIGD. Comparing the raw codes produces a
+    confusion matrix that looks like a systematic failure when the labels
+    actually agree.
+    """
+    ref = cfg.raw["subtype"]["archived_reference_labels"]
+    ours = cfg.subtype.labels
+    lookup = {float(ref[name]): float(ours[name]) for name in ref}
+    return series.map(lookup)
+
+
 def against_archived_three_class(panel: pd.DataFrame, cfg: Config) -> dict:
     """Compare our three-class label against archived ``td_pigd_old``.
 
-    ``td_pigd_old`` uses 1 = TD, 2 = Indeterminate, 3 = PIGD, which is the
-    coding the project adopts, so no remapping is needed unless
-    ``subtype.labels`` is changed in config.
+    This is the only in-repo check on the Indeterminate/PIGD boundary, since
+    the curated cut collapses those two classes.
     """
     archived = loaders.load_archived_original_cohort(cfg)
     if "td_pigd_old" not in archived.columns:
@@ -78,10 +92,15 @@ def against_archived_three_class(panel: pd.DataFrame, cfg: Config) -> dict:
 
     ref = archived[KEY + ["td_pigd_old"]].drop_duplicates(KEY)
     frame = panel[KEY + ["subtype"]].merge(ref, on=KEY, how="inner")
+    frame["td_pigd_old"] = remap_archived_labels(frame["td_pigd_old"], cfg)
 
     summary = _agreement(frame, "subtype", "td_pigd_old")
     summary["n_patients"] = int(frame["PATNO"].nunique())
-    summary["confusion"] = pd.crosstab(frame["subtype"], frame["td_pigd_old"], dropna=True)
+    names = cfg.subtype.label_names
+    confusion = pd.crosstab(frame["subtype"], frame["td_pigd_old"], dropna=True)
+    confusion.index = [names.get(i, i) for i in confusion.index]
+    confusion.columns = [names.get(c, c) for c in confusion.columns]
+    summary["confusion"] = confusion
     summary["disagreements"] = frame[
         frame["subtype"].notna()
         & frame["td_pigd_old"].notna()

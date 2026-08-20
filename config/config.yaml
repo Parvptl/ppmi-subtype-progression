@@ -25,8 +25,12 @@ paths:
   # Item-level MDS-UPDRS. Downloaded separately from LONI -> Study Data ->
   # Motor Assessments. Globs, so the date suffix in the filename does not
   # matter. See docs/DATA_REQUIREMENTS.md.
-  updrs_part2_glob: "Data/06_Motor_UPDRS/MDS-UPDRS_Part_II*.csv"
-  updrs_part3_glob: "Data/06_Motor_UPDRS/MDS*UPDRS_Part_III*.csv"
+  # Note the wildcard between MDS and UPDRS: PPMI ships Part II with an
+  # underscore (MDS_UPDRS_Part_II__...) and Part III with a hyphen
+  # (MDS-UPDRS_Part_III_...). The double underscore in the Part II pattern is
+  # what keeps it from also matching Part III.
+  updrs_part2_glob: "Data/06_Motor_UPDRS/MDS*UPDRS_Part_II__Patient_Questionnaire*.csv"
+  updrs_part3_glob: "Data/06_Motor_UPDRS/MDS*UPDRS_Part_III_*.csv"
 
 # -----------------------------------------------------------------------------
 #  TD/PIGD classification
@@ -68,6 +72,27 @@ subtype:
     TD: 1
     Indeterminate: 2
     PIGD: 3
+
+  # Coding used by `td_pigd_old` in the archived Apr-2020 snapshot, our only
+  # 3-class reference. It is NOT the same as `labels` above: its dictionary
+  # defines 2 = PIGD and 3 = Indeterminate. Comparing without this remap looks
+  # like a 66% agreement failure when the labels in fact match.
+  archived_reference_labels:
+    TD: 1
+    PIGD: 2
+    Indeterminate: 3
+
+  # Sentinel codes that occupy the same numeric field as a real 0-4 score.
+  # In the MDS-UPDRS Part III file, 101 = "Unable to Rate" for every one of the
+  # 13 items used here. Treated as a score it is catastrophic: a single 101
+  # among the five PIGD items lifts their mean to roughly 20, driving the ratio
+  # to zero and mislabelling the visit as PIGD. NP3PSTBL alone carries 4,302 of
+  # them, postural stability being frequently untestable.
+  missing_value_codes: [101]
+
+  # Valid MDS-UPDRS item range. Anything outside it is treated as missing and
+  # counted, so a future sentinel code cannot enter a subscore unnoticed.
+  valid_score_range: [0, 4]
 
   # How many of the constituent items may be missing before the subscore is
   # set to NaN. PPMI's own derivation requires all items present; we keep it

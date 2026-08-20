@@ -23,6 +23,7 @@ from ppmi_subtype.subtype import (
     MissingItemsError,
     classify,
     compute_subscores,
+    count_unrateable,
     deduplicate_visits,
     select_medication_state,
 )
@@ -39,6 +40,8 @@ def cfg() -> SubtypeConfig:
         td_threshold=1.15,
         pigd_threshold=0.90,
         labels={"TD": 1, "Indeterminate": 2, "PIGD": 3},
+        missing_value_codes=(101.0,),
+        valid_score_range=(0.0, 4.0),
         max_missing_tremor_items=0,
         max_missing_pigd_items=0,
         medication_state="OFF",
@@ -143,6 +146,80 @@ class TestSubscores:
         assert pd.isna(out["tremor_score"].iloc[0])
 
 
+class TestUnrateableCodes:
+    """PPMI stores 'Unable to Rate' as 101 in the same field as a 0-4 score.
+
+    Averaging it as a score is not a small error: one 101 among the five PIGD
+    items lifts their mean to ~20 and flips a tremor-dominant visit to PIGD.
+    """
+
+    def test_sentinel_is_not_averaged_as_a_score(self, cfg):
+        frame = make_frame(2.0, 1.0)
+        frame.loc[0, PIGD[0]] = 101
+        out = compute_subscores(frame, cfg)
+        assert out["pigd_score"].iloc[0] != pytest.approx(21.0)
+
+    def test_sentinel_nullifies_the_subscore_under_strict_policy(self, cfg):
+        frame = make_frame(2.0, 1.0)
+        frame.loc[0, PIGD[0]] = 101
+        out = compute_subscores(frame, cfg)
+        assert pd.isna(out["pigd_score"].iloc[0])
+        assert pd.isna(out["subtype"].iloc[0])
+
+    def test_sentinel_would_otherwise_flip_the_label(self, cfg):
+        """The regression this guards: TD becomes PIGD if 101 is scored."""
+        clean = compute_subscores(make_frame(2.0, 1.0), cfg)
+        assert clean["subtype"].iloc[0] == cfg.labels["TD"]
+
+        lenient = SubtypeConfig(**{**cfg.__dict__, "max_missing_pigd_items": 1})
+        frame = make_frame(2.0, 1.0)
+        frame.loc[0, PIGD[0]] = 101
+        out = compute_subscores(frame, lenient)
+        # With the sentinel excluded the remaining four items still average 1.0.
+        assert out["pigd_score"].iloc[0] == pytest.approx(1.0)
+        assert out["subtype"].iloc[0] == cfg.labels["TD"]
+
+    def test_any_out_of_range_value_is_treated_as_missing(self, cfg):
+        """Guards against a sentinel PPMI introduces later, not just 101."""
+        frame = make_frame(2.0, 1.0)
+        frame.loc[0, PIGD[0]] = 999
+        out = compute_subscores(frame, cfg)
+        assert pd.isna(out["pigd_score"].iloc[0])
+
+    def test_negative_values_are_treated_as_missing(self, cfg):
+        frame = make_frame(2.0, 1.0)
+        frame.loc[0, TREMOR[0]] = -1
+        out = compute_subscores(frame, cfg)
+        assert pd.isna(out["tremor_score"].iloc[0])
+
+    def test_boundary_scores_are_kept(self, cfg):
+        """0 and 4 are valid ratings and must survive the range filter."""
+        frame = make_frame(0.0, 4.0)
+        out = compute_subscores(frame, cfg)
+        assert out["tremor_score"].iloc[0] == pytest.approx(0.0)
+        assert out["pigd_score"].iloc[0] == pytest.approx(4.0)
+        assert out["subtype"].iloc[0] == cfg.labels["PIGD"]
+
+    def test_count_unrateable_reports_per_item(self, cfg):
+        frame = make_frame(1.0, 1.0, n=3)
+        frame["PATNO"] = [1, 2, 3]
+        frame["EVENT_ID"] = ["BL", "BL", "BL"]
+        frame.loc[[0, 1], PIGD[0]] = 101
+        counts = count_unrateable(frame, cfg)
+        assert counts[PIGD[0]] == 2
+        assert counts[TREMOR[0]] == 0
+
+    def test_deduplication_counts_sentinels_as_missing(self, cfg):
+        """A row full of 101s must lose to a genuinely complete row."""
+        frame = make_frame(1.0, 1.0, n=2)
+        frame["PATNO"] = [1, 1]
+        frame["EVENT_ID"] = ["BL", "BL"]
+        frame.loc[0, list(PIGD)] = 101
+        out = deduplicate_visits(frame, cfg)
+        assert len(out) == 1
+        assert (out[list(PIGD)] == 1.0).all(axis=None)
+
+
 class TestMedicationState:
     def test_off_exam_selected(self, cfg):
         frame = make_frame(1.0, 1.0, n=2)
@@ -200,3 +277,9 @@ class TestProjectConfig:
         """1/2/3 so recomputed labels compare directly against td_pigd_old."""
         s = load_config().subtype
         assert s.labels == {"TD": 1, "Indeterminate": 2, "PIGD": 3}
+
+    def test_unable_to_rate_sentinel_is_configured(self):
+        """101 appears in all 13 Part III items and must be excluded."""
+        s = load_config().subtype
+        assert 101.0 in s.missing_value_codes
+        assert s.valid_score_range == (0.0, 4.0)

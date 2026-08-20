@@ -36,14 +36,39 @@ class MissingItemsError(KeyError):
     """Raised when the input frame lacks MDS-UPDRS item columns."""
 
 
-def _subscore(frame: pd.DataFrame, items: tuple[str, ...], max_missing: int) -> pd.Series:
+def clean_items(frame: pd.DataFrame, items: tuple[str, ...], cfg: SubtypeConfig) -> pd.DataFrame:
+    """Coerce item columns to numeric and blank out anything that is not a score.
+
+    PPMI records "Unable to Rate" as the sentinel 101 in the same numeric field
+    as a real 0-4 rating. Averaging it as a score is not a rounding error: one
+    such value among the five PIGD items lifts their mean to roughly 20 and
+    drives the ratio to zero, relabelling a tremor-dominant visit as PIGD.
+
+    Anything outside ``valid_score_range`` is treated as missing, so a sentinel
+    PPMI adds later cannot quietly enter a subscore.
+    """
+    lo, hi = cfg.valid_score_range
+    block = frame[list(items)].apply(pd.to_numeric, errors="coerce")
+    return block.where((block >= lo) & (block <= hi))
+
+
+def count_unrateable(frame: pd.DataFrame, cfg: SubtypeConfig) -> pd.Series:
+    """Per-item count of sentinel codes, for reporting before they are dropped."""
+    present = [c for c in cfg.all_items if c in frame.columns]
+    block = frame[present].apply(pd.to_numeric, errors="coerce")
+    return block.isin(list(cfg.missing_value_codes)).sum().sort_values(ascending=False)
+
+
+def _subscore(
+    frame: pd.DataFrame, items: tuple[str, ...], max_missing: int, cfg: SubtypeConfig
+) -> pd.Series:
     """Row-wise mean of `items`, NaN where too many constituents are missing.
 
     The mean is taken over the *observed* items only. A row with more than
     `max_missing` absent items yields NaN, matching PPMI's own rule that a
     subscore is null if any constituent is missing (max_missing = 0).
     """
-    block = frame[list(items)].apply(pd.to_numeric, errors="coerce")
+    block = clean_items(frame, items, cfg)
     n_missing = block.isna().sum(axis=1)
     score = block.mean(axis=1, skipna=True)
     return score.where(n_missing <= max_missing)
@@ -72,8 +97,8 @@ def compute_subscores(frame: pd.DataFrame, cfg: SubtypeConfig) -> pd.DataFrame:
             f"item columns: {absent}. See docs/DATA_REQUIREMENTS.md."
         )
 
-    tremor = _subscore(frame, cfg.tremor_items, cfg.max_missing_tremor_items)
-    pigd = _subscore(frame, cfg.pigd_items, cfg.max_missing_pigd_items)
+    tremor = _subscore(frame, cfg.tremor_items, cfg.max_missing_tremor_items, cfg)
+    pigd = _subscore(frame, cfg.pigd_items, cfg.max_missing_pigd_items, cfg)
 
     out = pd.DataFrame(index=frame.index)
     out["tremor_score"] = tremor
@@ -171,8 +196,9 @@ def deduplicate_visits(frame: pd.DataFrame, cfg: SubtypeConfig) -> pd.DataFrame:
     if not frame.duplicated(["PATNO", "EVENT_ID"]).any():
         return frame.copy()
 
-    present = [c for c in cfg.all_items if c in frame.columns]
-    ordered = frame.assign(_n_missing=frame[present].isna().sum(axis=1))
+    present = tuple(c for c in cfg.all_items if c in frame.columns)
+    cleaned = clean_items(frame, present, cfg)
+    ordered = frame.assign(_n_missing=cleaned.isna().sum(axis=1))
     ordered = ordered.sort_values(["PATNO", "EVENT_ID", "_n_missing"], kind="mergesort")
     deduped = ordered.drop_duplicates(["PATNO", "EVENT_ID"], keep="first")
     return deduped.drop(columns="_n_missing")

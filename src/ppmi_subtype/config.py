@@ -31,6 +31,8 @@ class SubtypeConfig:
     td_threshold: float
     pigd_threshold: float
     labels: dict[str, int]
+    missing_value_codes: tuple[float, ...]
+    valid_score_range: tuple[float, float]
     max_missing_tremor_items: int
     max_missing_pigd_items: int
     medication_state: str
@@ -78,6 +80,8 @@ class Config:
             td_threshold=float(s["td_threshold"]),
             pigd_threshold=float(s["pigd_threshold"]),
             labels=dict(s["labels"]),
+            missing_value_codes=tuple(float(c) for c in s["missing_value_codes"]),
+            valid_score_range=(float(s["valid_score_range"][0]), float(s["valid_score_range"][1])),
             max_missing_tremor_items=int(s["max_missing_tremor_items"]),
             max_missing_pigd_items=int(s["max_missing_pigd_items"]),
             medication_state=str(s["medication_state"]).upper(),
@@ -113,12 +117,25 @@ def _validate(raw: dict[str, Any]) -> None:
         "td_threshold",
         "pigd_threshold",
         "labels",
+        "missing_value_codes",
+        "valid_score_range",
         "max_missing_tremor_items",
         "max_missing_pigd_items",
         "medication_state",
     ):
         if key not in s:
             raise ConfigError(f"config.yaml is missing subtype.{key}")
+
+    lo, hi = s["valid_score_range"]
+    if not float(lo) < float(hi):
+        raise ConfigError(f"subtype.valid_score_range must be increasing, got {[lo, hi]}")
+
+    inside = [c for c in s["missing_value_codes"] if float(lo) <= float(c) <= float(hi)]
+    if inside:
+        raise ConfigError(
+            f"subtype.missing_value_codes {inside} fall inside valid_score_range "
+            f"{[lo, hi]}; real scores would be discarded as missing"
+        )
 
     if not s["tremor_items"] or not s["pigd_items"]:
         raise ConfigError("subtype.tremor_items and subtype.pigd_items must be non-empty")
