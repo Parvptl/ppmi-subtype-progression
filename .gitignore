@@ -2,7 +2,6 @@
 # per-user via LONI under the PPMI Data Use Agreement. Keep all of it out of
 # version control, including the dictionaries and user guides.
 Data/
-Docs/
 outputs/
 *.pdf
 !report/*.pdf
