@@ -68,10 +68,19 @@ src/ppmi_subtype/
   transitions.py           empirical transition analysis (Weeks 3-4)
   validate.py              agreement against PPMI's own derivations
 scripts/                   numbered pipeline stages
-tests/                     40 tests over the classification and transition rules
+tests/                     55 tests over classification, transitions and validation
 docs/DATA_REQUIREMENTS.md  what to download and why
 outputs/                   generated, not tracked
+extra/                     parked material, read by nothing — see extra/README.md
 ```
+
+`Data/` holds only what the pipeline actually reads: the curated cut
+(`01_Current_Clinical`), the three-class validation reference
+(`04_Archived_TemporalShift`), the item-level MDS-UPDRS files
+(`06_Motor_UPDRS`) and the PPMI dictionaries (`00_Reference`). Genetics,
+biospecimen, online and unused MDS-UPDRS parts are parked under
+`extra/unused_data/`, along with the report from the project's abandoned first
+direction.
 
 Nothing is hardcoded in the source: item lists, the 1.15 / 0.90 thresholds,
 cohort membership, medication state and split ratios all live in
