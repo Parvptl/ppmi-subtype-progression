@@ -5,9 +5,10 @@ Data/
 outputs/
 extra/unused_data/
 
-# Papers and supervisor documents are third-party material; the only PDF we
-# generate ourselves is the progress report.
+# Papers and supervisor documents are third-party material; the only PDFs we
+# generate ourselves are the progress reports.
 *.pdf
+!report/*.pdf
 !extra/old_ood_project/*.pdf
 
 __pycache__/
