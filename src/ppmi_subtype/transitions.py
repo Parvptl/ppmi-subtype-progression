@@ -172,3 +172,161 @@ def first_transition_times(
         .rename(columns={"to_time": "years_to_transition"})
         .reset_index(drop=True)
     )
+
+
+def state_sequences(
+    panel: pd.DataFrame, label_col: str = "subtype", time_col: str = TIME_COL
+) -> pd.Series:
+    """Each patient's ordered sequence of labelled states, as a tuple."""
+    df = panel[panel[label_col].notna()].sort_values(["PATNO", time_col])
+    return df.groupby("PATNO")[label_col].apply(tuple)
+
+
+def collapse_runs(sequence: tuple) -> tuple:
+    """Drop immediate repeats: (TD, TD, PIGD, PIGD) -> (TD, PIGD).
+
+    Turns a visit-by-visit record into the pathway actually traversed, so
+    pathway frequencies are not dominated by how often a patient attended.
+    """
+    out: list = []
+    for s in sequence:
+        if not out or out[-1] != s:
+            out.append(s)
+    return tuple(out)
+
+
+def reversion_after_change(
+    panel: pd.DataFrame, label_col: str = "subtype", time_col: str = TIME_COL
+) -> pd.DataFrame:
+    """For each observed state change, does the next visit revert to the origin?
+
+    This separates two very different things that a transition matrix reports
+    identically: a patient whose phenotype genuinely progressed, and a patient
+    whose single noisy assessment crossed a threshold and crossed back. A high
+    reversion rate is direct evidence that the observed label is a noisy read
+    of an underlying state, which is the premise of the whole project.
+    """
+    df = panel[panel[label_col].notna()].sort_values(["PATNO", time_col])
+    g = df.groupby("PATNO", sort=False)
+
+    frame = pd.DataFrame(
+        {
+            "PATNO": df["PATNO"],
+            "s0": df[label_col],
+            "s1": g[label_col].shift(-1),
+            "s2": g[label_col].shift(-2),
+            "t0": df[time_col],
+            "t2": g[time_col].shift(-2),
+        }
+    )
+    # Need a full triple, and the middle step must be an actual change.
+    frame = frame[frame["s2"].notna() & (frame["s0"] != frame["s1"])].copy()
+    frame["reverted"] = frame["s2"] == frame["s0"]
+    return frame.reset_index(drop=True)
+
+
+def reversion_summary(reversions: pd.DataFrame, names: dict | None = None) -> pd.DataFrame:
+    """Reversion rate per observed transition type."""
+    if reversions.empty:
+        return pd.DataFrame(columns=["from_state", "to_state", "n", "n_reverted", "p_revert"])
+
+    out = (
+        reversions.groupby(["s0", "s1"])["reverted"]
+        .agg(n="size", n_reverted="sum")
+        .reset_index()
+        .rename(columns={"s0": "from_state", "s1": "to_state"})
+    )
+    out["p_revert"] = out["n_reverted"] / out["n"]
+    if names:
+        out["from_state"] = out["from_state"].map(names)
+        out["to_state"] = out["to_state"].map(names)
+    return out.sort_values("n", ascending=False).reset_index(drop=True)
+
+
+def first_entry(
+    panel: pd.DataFrame,
+    target_state,
+    min_consecutive: int = 1,
+    label_col: str = "subtype",
+    time_col: str = TIME_COL,
+) -> pd.DataFrame:
+    """Time of each patient's first entry into `target_state`.
+
+    With ``min_consecutive > 1`` the entry only counts if the patient is still
+    in that state at the required number of consecutive labelled visits. This
+    distinguishes a sustained conversion from a one-visit excursion; the gap
+    between the two counts is a direct measure of how much of the apparent
+    progression is noise.
+
+    Patients who never qualify are returned with ``converted = False`` and
+    their last observed time, so the result can be fed to a survival estimate
+    without silently dropping the censored majority.
+    """
+    df = panel[panel[label_col].notna()].sort_values(["PATNO", time_col])
+
+    records = []
+    for patno, grp in df.groupby("PATNO", sort=False):
+        states = grp[label_col].to_numpy()
+        times = grp[time_col].to_numpy()
+
+        hit_time = np.nan
+        for i in range(len(states) - min_consecutive + 1):
+            window = states[i : i + min_consecutive]
+            if np.all(window == target_state):
+                hit_time = times[i]
+                break
+
+        # Someone already in the target state at their first visit has no
+        # observable time-to-entry and is excluded from the risk set.
+        at_risk_from = times[0]
+        starts_in_state = bool(states[0] == target_state)
+
+        records.append(
+            {
+                "PATNO": patno,
+                "converted": bool(not np.isnan(hit_time)),
+                "time": hit_time if not np.isnan(hit_time) else times[-1],
+                "last_seen": times[-1],
+                "n_visits": len(states),
+                "baseline_state": states[0],
+                "starts_in_state": starts_in_state,
+                "at_risk_from": at_risk_from,
+            }
+        )
+    return pd.DataFrame.from_records(records)
+
+
+def kaplan_meier(times, events) -> pd.DataFrame:
+    """Kaplan-Meier survival estimate with Greenwood standard errors.
+
+    Written out rather than pulled from lifelines to keep the dependency set
+    small; censoring here is simply loss to follow-up.
+    """
+    times = np.asarray(times, dtype=float)
+    events = np.asarray(events, dtype=bool)
+    order = np.argsort(times, kind="mergesort")
+    times, events = times[order], events[order]
+
+    n_at_risk = len(times)
+    surv, var_sum = 1.0, 0.0
+    rows = [{"time": 0.0, "n_at_risk": n_at_risk, "n_events": 0, "survival": 1.0, "se": 0.0}]
+
+    for t in np.unique(times):
+        at_t = times == t
+        d = int(events[at_t].sum())
+        n = int((times >= t).sum())
+        if n == 0:
+            continue
+        if d > 0:
+            surv *= 1 - d / n
+            var_sum += d / (n * (n - d)) if n > d else 0.0
+        rows.append(
+            {
+                "time": float(t),
+                "n_at_risk": n,
+                "n_events": d,
+                "survival": surv,
+                "se": surv * np.sqrt(var_sum),
+            }
+        )
+    return pd.DataFrame(rows)

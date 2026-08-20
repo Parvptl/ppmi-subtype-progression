@@ -13,7 +13,7 @@ transitioning to another over future follow-up.
 | Stage | Deliverable | Status |
 |---|---|---|
 | Weeks 1–2 | Clean longitudinal dataset with subtype labels for every visit | **Complete** |
-| Weeks 3–4 | Transition matrices and progression visualisations | Code written, not yet run on 3-class labels |
+| Weeks 3–4 | Transition matrices and progression visualisations | **Complete** |
 | Weeks 5–7 | Baseline probabilistic (Markov) model | Not started |
 | Later | Hierarchical Bayesian model; σᵢ-as-phenotype analysis | Not started |
 
@@ -130,6 +130,53 @@ labels, so the pipeline keeps PPMI's strict rule.
 trajectory-stability analysis are 97–100% complete at baseline: RBDSQ (`rem`),
 SCOPA-AUT (`scopa`), UPSIT (`upsit`), MoCA (`moca`), DaTscan putamen SBR
 (`MIA_PUTAMEN_BILAT`) and age.
+
+## Weeks 3–4: transition analysis
+
+`scripts/02_transition_analysis.py` → `outputs/transitions/` (9 CSV tables,
+6 figures, `report.txt`). 3,361 consecutive labelled visit pairs from 934
+patients, median interval 1.0 years.
+
+Pooled transition matrix (rows = current visit, columns = next):
+
+| | → TD | → Indeterminate | → PIGD |
+|---|---|---|---|
+| **TD** (n=2,261) | 0.808 | 0.080 | 0.112 |
+| **Indeterminate** (n=334) | 0.440 | 0.192 | 0.368 |
+| **PIGD** (n=766) | 0.184 | 0.114 | 0.702 |
+
+**Indeterminate is a crossing, not a state.** Only 19.2% of patients labelled
+Indeterminate are still Indeterminate at the next visit; 44.0% are back at TD
+and 36.8% have moved to PIGD. It behaves exactly like the neutral band of a
+continuous latent variable rather than a clinical category — which is the
+proposal's premise, now measured rather than assumed.
+
+**PIGD is not absorbing.** 29.8% of PIGD visits are followed by a non-PIGD
+assessment, 18.4% of them straight back to TD. Any model that treats TD → PIGD
+as a one-way progression is contradicted by the data.
+
+**35.2% of all observed subtype changes reverse at the very next visit.** This
+is the headline number of the whole analysis: a transition matrix built from
+raw labels measures assessment noise as much as disease progression. Broken
+down, TD → Indeterminate reverses 56% of the time and PIGD → Indeterminate 50%,
+while the changes that stick are the ones crossing the full width of the scale.
+
+**Requiring a conversion to hold for two consecutive visits eliminates 51.7% of
+apparent conversions** (263 → 127). Kaplan-Meier cumulative incidence of PIGD
+conversion by year 5 is 35.3% under a single-visit definition against 15.3%
+under the sustained one. The choice of definition matters more than most
+modelling choices downstream of it.
+
+**Transitions scale with the gap between visits.** TD → PIGD rises from 0.100
+at ≤1.5 years to 0.289 beyond 4 years, so a single pooled matrix is not a
+well-defined quantity — it averages one-year and multi-year transitions in
+whatever proportion attendance happened to produce. Weeks 5–7 should work in
+continuous time rather than per-visit.
+
+**Most patients never change state.** 622 of 1,080 (57.6%) hold one subtype for
+their entire record; median state changes per patient is 0, mean 0.86. Across
+86 distinct pathways, the commonest are TD-only (46.0%), PIGD-only (10.1%) and
+TD → PIGD (7.7%).
 
 ## Reference
 
