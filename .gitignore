@@ -1,0 +1,18 @@
+# PPMI data is not redistributable — access is granted per-user via LONI.
+Data/
+outputs/
+
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+.venv/
+venv/
+
+# LaTeX build artefacts
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
