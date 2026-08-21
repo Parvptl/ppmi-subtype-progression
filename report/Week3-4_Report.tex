@@ -545,13 +545,83 @@ distribution of TD 0.560, Indeterminate 0.103, PIGD 0.338. The observed year-11
 prevalence is TD 0.391, Indeterminate 0.120, PIGD 0.489 --- considerably more
 PIGD than the pooled matrix predicts. At least three things could explain the
 gap: transition rates are not constant over disease duration, the process is
-not Markov in the observed label, or attrition is selective. Disentangling them
-is a Week 5--7 question, but the discrepancy is worth stating rather than
-presenting a stationary distribution as a finding.
+not Markov in the observed label, or attrition is selective. A fourth
+possibility is developed in Section~\ref{sec:missingness} --- that the
+transition matrix itself is estimated on a sample from which the most severely
+affected visits have been systematically dropped, so its rates understate the
+true drift. Disentangling these is a Week 5--7 question, but the discrepancy is
+worth stating rather than presenting a stationary distribution as a finding.
 
 % =============================================================================
 \section{Limitations}
 % =============================================================================
+
+\subsection{Label availability is not random, and it is not neutral}
+\label{sec:missingness}
+
+Of the 5{,}774 cohort visits, 1{,}333 (23.1\%) carry no subtype label. That
+missingness is not a random thinning of the data, and its direction matters.
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{@{}lrl@{}}
+\toprule
+\textbf{Reason a visit has no label} & \textbf{$n$} & \textbf{Share of the loss} \\
+\midrule
+No OFF-medication Part III exam recorded  & 722 & 54.2\% \\
+OFF exam recorded but items incomplete    & 595 & 44.6\% \\
+Part II missing or incomplete             &  16 &  1.2\% \\
+\bottomrule
+\end{tabular}
+\caption{Why visits go unlabelled.}
+\end{table}
+
+\noindent
+Label availability also falls sharply across follow-up: 99.6\% of baseline
+visits are labelled, 75.3\% at year 4, 55.4\% at year 11, and 19.2\% at
+year 13.
+
+\paragraph{The second route is the concerning one.} Among the 1{,}253
+OFF-medication exams that were recorded but could not be scored,
+\textbf{NP3PSTBL --- item 3.12, postural stability --- is missing in 1{,}243 of
+them}, and 185 of those are explicitly coded \code{101}, ``Unable to Rate''. The
+pull test is frequently unsafe or impossible to administer in a patient with
+poor balance.
+
+Because our rule requires all sixteen items, one unscored postural-stability
+test discards the whole visit. And the visits it discards are not a random
+sample: exams with an incomplete item set come from materially more advanced
+patients, with a median Hoehn \& Yahr stage of 3.0 against 2.0 for complete
+exams (Mann--Whitney $p = 1.4 \times 10^{-17}$).
+
+\begin{keypoint}
+\textbf{This biases the results in a knowable direction.} Postural stability is
+one of the five \emph{PIGD} items. The visits we lose are therefore
+disproportionately those of patients whose gait and balance are worst --- the
+patients most likely to be classified PIGD. The observed drift toward PIGD, and
+the PIGD conversion rates in Table~\ref{tab:conversion}, are for that reason
+most likely \emph{underestimates}. This also offers a plausible explanation for
+the gap noted in Section~5.2, where observed year-11 PIGD prevalence exceeds
+what the pooled matrix predicts.
+\end{keypoint}
+
+\noindent
+Two things are worth noting about how this was established. First, an earlier
+reading of the same numbers attributed the loss mainly to ON-state exams
+replacing OFF-state ones as patients become medicated. That explanation
+accounts for only about half the loss and plateaus after year 5, whereas
+incomplete item sets persist and are the clearly severity-linked route; the
+severity comparison above is what distinguished them. Second, the effect is a
+consequence of the strict all-items rule inherited from PPMI's own derivation.
+Relaxing it to tolerate one missing item was tested in Weeks 1--2 and recovers
+only 44 visits while changing no existing label, so relaxation is not a
+remedy --- the incomplete exams are typically missing many items, not one.
+
+A sensitivity analysis that imputes the postural-stability item, or that models
+the label as missing-not-at-random, would quantify the size of this bias. That
+is a Weeks 5--7 task.
+
+\subsection{Other limitations}
 
 \begin{itemize}
   \item \textbf{Sparse cells.} Transitions out of Indeterminate at intervals
@@ -560,14 +630,15 @@ presenting a stationary distribution as a finding.
         figure.
 
   \item \textbf{Selective attrition.} By year 8 fewer than 12\% of the baseline
-        cohort is still assessed. If patients with faster progression drop out
-        preferentially, prevalence curves understate the drift; if they are
-        retained preferentially, the reverse.
+        cohort is still assessed. This is separate from, and compounds, the
+        label-availability problem in Section~\ref{sec:missingness}: a visit
+        must both happen and be scorable to contribute.
 
   \item \textbf{Medication state.} Labels use the OFF or untreated exam, which
         is correct, but the proportion of patients who are genuinely untreated
-        falls over follow-up. Some of the observed churn may reflect changing
-        treatment context rather than phenotype.
+        falls over follow-up --- from 99.7\% at baseline to under 2\% by year 7.
+        Some of the observed churn may reflect changing treatment context
+        rather than phenotype.
 
   \item \textbf{Month-resolution dates.} PPMI releases \code{INFODT} as month
         and year only, so intervals carry roughly $\pm$ two weeks of noise.
@@ -641,6 +712,27 @@ Not in this data. 29.8\% of PIGD visits are followed by a non-PIGD assessment,
 18.4\% of them straight back to TD. Some of that is measurement noise --- the
 PIGD~\arr~TD reversion rate is 39.3\% --- but a model that forbids leaving PIGD
 would be misspecified.
+
+\medskip
+\noindent\textbf{Q. You lose 23\% of visits. Does that break the analysis?}\\
+It does not break it, but it biases it, and in a direction we can name. Roughly
+half the loss is visits with no OFF-medication exam; the other half is exams
+that were performed but could not be fully scored --- and in 1{,}243 of those
+1{,}253 exams the missing item is postural stability, which is often unsafe to
+test in a patient with poor balance. Those exams come from more advanced
+patients (median Hoehn \& Yahr 3.0 versus 2.0, $p = 1.4\times10^{-17}$), and
+postural stability is a PIGD item. So we preferentially lose the patients most
+likely to be PIGD, which makes the reported drift toward PIGD a lower bound.
+Section~\ref{sec:missingness} sets this out in full.
+
+\medskip
+\noindent\textbf{Q. Then why not relax the all-items rule?}\\
+It was tested. Allowing one missing item per subscore recovers 44 visits and
+changes zero existing labels, because the incomplete exams are typically
+missing many items rather than one. The strict rule also matches PPMI's own
+derivation, which is what lets us validate at 100\% against their
+\code{td\_pigd}. The real remedy is imputation or an explicit
+missing-not-at-random model, in Weeks 5--7.
 
 \medskip
 \noindent\textbf{Q. What did you actually deliver this fortnight?}\\

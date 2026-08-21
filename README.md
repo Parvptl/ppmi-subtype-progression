@@ -245,6 +245,15 @@ their entire record; median state changes per patient is 0, mean 0.86. Across
 86 distinct pathways, the commonest are TD-only (46.0%), PIGD-only (10.1%) and
 TD → PIGD (7.7%).
 
+**The results are a lower bound on the drift.** 23.1% of visits carry no label.
+Roughly half of that loss is exams that were performed but could not be fully
+scored — and in 1,243 of those 1,253 exams the missing item is postural
+stability, the pull test, which is often unsafe in a patient with poor balance.
+Those exams come from more advanced patients (median Hoehn & Yahr 3.0 vs 2.0,
+p = 1.4×10⁻¹⁷), and postural stability is a *PIGD* item. So the visits lost are
+disproportionately the ones most likely to be PIGD. See §6.1 of the Weeks 3–4
+report.
+
 ## Reference
 
 Stebbins GT, Goetz CG, Burn DJ, Jankovic J, Khoo TK, Tilley BC. How to identify
