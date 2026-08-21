@@ -1,0 +1,1603 @@
+% =============================================================================
+%  Pipeline Walkthrough — a reverse-engineered account of the implementation
+%
+%  Every number in this document was produced by instrumenting the actual code
+%  in this repository and recording the counts at each step.
+% =============================================================================
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{caption}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{fancyvrb}
+\usepackage[hidelinks]{hyperref}
+
+\definecolor{codebg}{HTML}{F4F6F8}
+\definecolor{warn}{HTML}{B7770B}
+
+\newcommand{\code}[1]{\texttt{\small #1}}
+\newcommand{\arr}{$\rightarrow$}
+
+\setlist[itemize]{itemsep=2pt,topsep=4pt}
+\setlist[enumerate]{itemsep=2pt,topsep=4pt}
+\captionsetup{font=small,labelfont=bf}
+
+\DefineVerbatimEnvironment{codeblock}{Verbatim}
+  {fontsize=\small,frame=leftline,framerule=1pt,rulecolor=\color{gray},xleftmargin=8pt,framesep=6pt}
+
+\newenvironment{keypoint}
+  {\begin{center}\begin{minipage}{0.95\textwidth}%
+   \vspace{4pt}\hrule\vspace{7pt}\small}
+  {\vspace{7pt}\hrule\vspace{4pt}\end{minipage}\end{center}}
+
+\title{\textbf{Pipeline Walkthrough}\\[0.4em]
+       \large Probabilistic Motor Subtype Progression Model for Parkinson's Disease\\[0.6em]
+       \normalsize A step-by-step account of how every result was generated}
+\author{\small Prepared as a study and defence guide}
+\date{August 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+This document reverse-engineers the implementation in this repository and
+traces every reported number back to the code that produced it. Nothing here is
+generic methodology: each count was obtained by instrumenting the actual
+functions and recording the data shape before and after every transformation.
+
+Where a design decision has a documented rationale, that rationale is quoted.
+Where it does not, this is stated explicitly rather than filled in with a
+plausible-sounding reason.
+\end{abstract}
+
+\tableofcontents
+\clearpage
+
+% =============================================================================
+\section{Current project state}
+% =============================================================================
+
+\subsection{What exists}
+
+Twenty-four tracked files: seven modules in \code{src/ppmi\_subtype/}
+(1{,}552 lines), three scripts, three test files, one configuration file, and
+documentation.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lrl@{}}
+\toprule
+\textbf{Location} & \textbf{Lines} & \textbf{Role} \\
+\midrule
+\code{src/ppmi\_subtype/} & 1{,}552 & All analysis logic \\
+\code{scripts/}           &   596 & Orchestration: call \code{src}, print, save \\
+\code{tests/}             &   598 & 74 tests, all exercising \code{src} \\
+\bottomrule
+\end{tabular}
+\caption{Code inventory. The scripts contain no analysis logic.}
+\end{table}
+
+\subsection{What has actually been executed}
+
+Established by comparing file modification times, not assumed:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lr@{}}
+\toprule
+\textbf{Item} & \textbf{Last modified} \\
+\midrule
+Newest source file (\code{scripts/00\_data\_audit.py}) & 2026-08-21 11:15 \\
+All 20 output files                                    & 2026-08-21 11:17 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent
+Every output post-dates every source file, so \textbf{no output is stale}. All
+74 tests pass against the same code that produced those outputs.
+
+\subsection{Which script produced which output}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Output file} & \textbf{Produced by} & \textbf{Line} \\
+\midrule
+\code{outputs/visit\_panel.csv}          & \code{01\_build\_panel.py} & 118 \\
+\code{outputs/baseline.csv}              & \code{01\_build\_panel.py} & 119 \\
+\code{outputs/panel\_summary.txt}        & \code{01\_build\_panel.py} & 94 \\
+\code{outputs/validation.txt}            & \code{01\_build\_panel.py} & 112 \\
+\code{outputs/transitions/*.csv} (9)     & \code{02\_transition\_analysis.py} & 113--222 \\
+\code{outputs/transitions/report.txt}    & \code{02\_transition\_analysis.py} & 270 \\
+\code{outputs/transitions/figures/*.png} (6) & \code{plots.py} via stage 2 & 59 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Dead code and unused configuration}
+
+Three findings, stated plainly because a reviewer will find them:
+
+\begin{enumerate}
+  \item \code{config.yaml} line 19 defines \code{participant\_status:}. A grep
+        across \code{src/}, \code{scripts/} and \code{tests/} returns zero
+        references. It is a configured path with no consumer.
+  \item Of the seventeen files under \code{data/}, exactly \textbf{four} are
+        opened by the pipeline. The remainder --- demographics, cohort history,
+        five dictionary files, and four of the six files in
+        \code{data/validation/} --- are human reference material that no code
+        path reads.
+  \item \code{scripts/00\_data\_audit.py} contains no \code{to\_csv} or
+        \code{write\_text} call. It writes nothing. It is a read-only
+        diagnostic, \emph{not} a pipeline stage.
+\end{enumerate}
+
+\noindent
+\textbf{Not established from the current repository:} there are no logs, no
+notebooks, no shell scripts and no run manifests. Execution history is
+inferable only from file timestamps and git commits.
+
+% =============================================================================
+\section{Execution pipeline}
+% =============================================================================
+
+\subsection{The order is proven, not assumed}
+
+The numeric filename prefixes suggest an order, but the order is
+\emph{established} by a data dependency:
+\code{scripts/02\_transition\_analysis.py} line 85 reads
+\code{outputs/visit\_panel.csv}, and the only code that writes that file is
+\code{scripts/01\_build\_panel.py} line 118.
+
+\begin{codeblock}
+        +-----------------------------------------+
+        |  00_data_audit.py    (DIAGNOSTIC ONLY)  |
+        |  reads raw data, writes nothing         |
+        +-----------------------------------------+
+                (optional; off the critical path)
+
+  RAW DATA --> 01_build_panel.py --> outputs/visit_panel.csv
+                                              |
+                                              v
+                               02_transition_analysis.py
+                                              |
+                                              v
+                                    outputs/transitions/
+\end{codeblock}
+
+\subsection{Module dependency graph}
+
+Derived from the \code{import} statements; the graph is acyclic.
+
+\begin{codeblock}
+  config.py        <- foundation; imports nothing internal
+      ^
+      +-- loaders.py      (config)
+      +-- subtype.py      (config)
+      +-- validate.py     (config, loaders)
+      +-- panel.py        (config, loaders, subtype)
+
+  transitions.py   <- imports NOTHING internal. Pure DataFrame functions.
+  plots.py         <- imports NOTHING internal. Pure DataFrame functions.
+\end{codeblock}
+
+\noindent
+\code{transitions.py} and \code{plots.py} do not read the configuration at all.
+They take DataFrames in and return DataFrames or figures out. That is why they
+carry the heaviest test coverage: they have no hidden state.
+
+% =============================================================================
+\section{Stage 0 --- the raw inputs}
+% =============================================================================
+
+\subsection{The four files the pipeline opens}
+
+\subsubsection*{File 1 --- the visit skeleton}
+
+\code{data/clinical/PPMI\_Curated\_Data\_Cut\_Public\_20260511.xlsx}, sheet
+\code{20260511}.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lr@{}}
+\toprule
+Shape & \textbf{19{,}450 rows $\times$ 212 columns} \\
+Unique \code{PATNO} & 4{,}788 \\
+Distinct \code{EVENT\_ID} values & 18 \\
+Duplicate \code{(PATNO, EVENT\_ID)} & \textbf{0} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent
+\textbf{One row = one patient at one scheduled study visit.}
+
+\begin{codeblock}
+ PATNO EVENT_ID  YEAR visit_date    subgroup  COHORT  age_at_visit  td_pigd  pigd   hy
+100001       BL     0    10/2020 Sporadic PD       1     67.386301      1.0   0.4  2.0
+100001      V04     1    11/2021 Sporadic PD       1     68.512329      1.0   0.4  2.0
+100001      V06     2    11/2022 Sporadic PD       1     69.528767      1.0   0.4  2.0
+\end{codeblock}
+
+Read by \code{loaders.load\_curated\_cut()} (lines 45--48).
+
+\textbf{Columns used:} \code{PATNO}, \code{EVENT\_ID} (merge keys),
+\code{subgroup} (cohort filter), \code{YEAR} and \code{visit\_date} (time
+axis), \code{td\_pigd} (validation reference only), plus the baseline predictor
+columns written to \code{baseline.csv}.
+
+\begin{keypoint}
+This file already contains PPMI's own derived scores (\code{pigd}, \code{hy},
+\code{updrs3\_score}, \code{td\_pigd}). \textbf{The pipeline does not use any of
+them to build the label.} It uses this file purely as a visit skeleton plus
+covariates, and computes the subtype independently from raw items. That
+independence is what makes the validation in Section~\ref{sec:validation}
+meaningful --- otherwise it would be comparing a number against itself.
+\end{keypoint}
+
+\subsubsection*{File 2 --- patient questionnaire items}
+
+\code{data/motor\_updrs/MDS\_UPDRS\_Part\_II\_\_Patient\_Questionnaire\_20Aug2026.csv}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lr@{}}
+\toprule
+Shape & \textbf{37{,}777 rows $\times$ 22 columns} \\
+Unique \code{PATNO} & 5{,}341 \\
+Duplicate \code{(PATNO, EVENT\_ID)} & \textbf{0} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent
+\textbf{One row = one patient's self-reported questionnaire at one visit.}
+
+All 22 columns: \code{REC\_ID, PATNO, EVENT\_ID, PAG\_NAME, INFODT, NUPSOURC,
+NP2SPCH, NP2SALV, NP2SWAL, NP2EAT, NP2DRES, NP2HYGN, NP2HWRT, NP2HOBB,
+NP2TURN, NP2TRMR, NP2RISE, NP2WALK, NP2FREZ, NP2PTOT, ORIG\_ENTRY,
+LAST\_UPDATE}.
+
+\textbf{The pipeline reads exactly three item columns:} \code{NP2TRMR}
+(tremor), \code{NP2WALK} (walking and balance), \code{NP2FREZ} (freezing). The
+other ten items are not used. Read by \code{loaders.load\_updrs\_part2()}.
+
+\subsubsection*{File 3 --- motor examination items}
+
+\code{data/motor\_updrs/MDS-UPDRS\_Part\_III\_20Aug2026.csv}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lr@{}}
+\toprule
+Shape & \textbf{39{,}310 rows $\times$ 65 columns} \\
+Unique \code{PATNO} & 5{,}344 \\
+Duplicate \code{(PATNO, EVENT\_ID)} & \textcolor{warn}{\textbf{6{,}907}} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent
+\textbf{One row = one clinician-administered motor examination --- not one row
+per visit.}
+
+\begin{keypoint}
+\textbf{The most important structural fact in the raw data.} Part II has zero
+duplicate \code{(PATNO, EVENT\_ID)} pairs; Part III has 6{,}907. The reason is
+in the columns: \code{PDSTATE} (\code{ON}/\code{OFF}), \code{PDTRTMNT},
+\code{ONEXAM}, \code{OFFEXAM}, \code{ONOFFORDER}. A medicated patient can be
+examined \emph{twice at the same visit} --- once off medication and once on it
+--- producing two rows with different scores:
+
+\begin{Verbatim}[fontsize=\small,xleftmargin=10pt]
+PATNO   EVENT_ID  PDSTATE  PDTRTMNT  NP3GAIT  NP3PSTBL
+3002    V06       OFF      1         2        1          <- exam A
+3002    V06       ON       1         1        0          <- exam B, same visit
+\end{Verbatim}
+
+Merging this against the visit skeleton without handling it would either
+duplicate the visit or silently keep whichever row happened to come first. Both
+are wrong. This is precisely why \code{select\_medication\_state()} and
+\code{deduplicate\_visits()} exist.
+\end{keypoint}
+
+\textbf{The pipeline reads thirteen item columns plus three metadata columns:}
+\code{NP3PTRMR, NP3PTRML, NP3KTRMR, NP3KTRML, NP3RTARU, NP3RTALU, NP3RTARL,
+NP3RTALL, NP3RTALJ, NP3RTCON} (tremor), \code{NP3GAIT, NP3FRZGT, NP3PSTBL}
+(gait and postural), plus \code{PDSTATE}, \code{PDTRTMNT}, \code{NHY}. The
+remaining $\approx 46$ columns are not used.
+
+\subsubsection*{File 4 --- the validation reference}
+
+\code{data/validation/PPMI\_Original\_Cohort\_BL\_to\_Year\_5\_Dataset\_Apr2020.csv}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lr@{}}
+\toprule
+Shape & \textbf{3{,}445 rows $\times$ 159 columns} \\
+Unique \code{PATNO} & 683 \\
+\code{td\_pigd\_old} & 1.0: 1{,}440 \quad 2.0: 550 \quad 3.0: 1{,}014 \quad NaN: 441 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent
+This file is \textbf{never used for analysis}. It is read once, by
+\code{validate.against\_archived\_three\_class()}, purely to check the
+recomputed labels. It is the only file in the repository carrying a
+\textbf{three-class} subtype label, because the current curated cut collapsed
+its \code{td\_pigd} to two classes.
+
+\subsection{Why these sixteen items?}
+
+\textbf{What the code does.} \code{config.yaml} lines 42--60 list eleven tremor
+items and five PIGD items.
+
+\textbf{Documented rationale}, quoted verbatim from \code{config.yaml} lines
+36--39: \emph{``Definition follows Stebbins et al., Movement Disorders 2013, and
+matches the derivation notes in the Curated Data Cut dictionary for
+\code{td\_pigd} verbatim.''}
+
+\textbf{Interpretation.} The item selection is not a modelling choice this
+project made; it is a published clinical definition that was cross-checked
+against PPMI's own derivation notes.
+
+\textbf{Assumption introduced.} That the Stebbins definition is the right
+phenotype to model. The proposal commits to this explicitly --- its stated goal
+is to \emph{retain} the clinically validated ratio rather than invent a new
+score.
+
+% =============================================================================
+\section{Stage 1 --- \code{01\_build\_panel.py}}
+% =============================================================================
+
+\subsection{A. Purpose}
+
+\textbf{Scientific question:} \emph{For every visit of every sporadic PD
+patient in PPMI, what was that patient's motor subtype at that moment, and can
+we prove the label is correct?}
+
+This script converts raw MDS-UPDRS item scores into a longitudinal, labelled
+patient-visit panel, and validates that panel against PPMI's own derivations
+before any analysis is permitted to use it.
+
+\subsection{B. Inputs}
+
+Three files (Section~3): the curated cut, MDS-UPDRS Part II, MDS-UPDRS
+Part III. A fourth, the archived cohort, is read only for validation.
+
+\subsection{C. Code walkthrough with actual counts}
+
+The script's real work is one call, \code{build\_visit\_panel(cfg)} in
+\code{panel.py} line 56, which decomposes as follows.
+
+\subsubsection*{Step 1.1 --- \code{filter\_cohort()} \quad (\code{panel.py}:44)}
+
+\begin{codeblock}
+out = frame[frame["subgroup"].isin(keep)]
+out = out[~out["EVENT_ID"].isin(set(cohort["excluded_events"]))]
+out = out[out["YEAR"] <= cohort["max_follow_up_years"]]
+\end{codeblock}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lrr@{}}
+\toprule
+\textbf{Operation} & \textbf{Rows} & \textbf{Removed} \\
+\midrule
+\code{load\_curated\_cut()}                          & 19{,}450 & --- \\
+\code{subgroup} $\in$ \{Sporadic PD\}                & \phantom{0}5{,}789 & 13{,}661 \\
+\code{EVENT\_ID} $\notin$ \{ST, PW, U01, U02\}       & \phantom{0}5{,}774 & \phantom{00,0}15 \\
+\code{YEAR} $\leq$ 15                                & \phantom{0}5{,}774 & \phantom{00,00}0 \\
+\bottomrule
+\end{tabular}
+\caption{Cohort filtering. Patients: 4{,}788 \arr\ 1{,}080.}
+\end{table}
+
+\noindent
+\textbf{What happened to the removed rows.} The 13{,}661 rows dropped at the
+first step are the other PPMI subgroups: Hyposmia (1{,}759 patients), RBD
+(572), LRRK2 (400), Healthy Control (330), GBA (310), SWEDD (60) and others.
+They are not deleted from disk; they are simply not selected. The 15 further
+rows are visits labelled \code{ST} (unscheduled) or \code{PW} (premature
+withdrawal) --- verified: those are the only two excluded codes actually
+present. The \code{YEAR} filter removes nothing, because the curated cut
+already stops at year 15.
+
+\textbf{Why this step exists.} \code{config.yaml} lines 114--116 document it as
+\emph{``Sporadic PD is the primary analysis population; the genetic PD subgroups
+are listed so a sensitivity analysis can switch them on without touching
+code.''}
+
+\textbf{The scientific rationale for restricting to sporadic PD is not
+explicitly documented in the repository.} A defensible interpretation --- label
+it as interpretation, not as a recorded decision --- is that genetic PD
+subgroups (LRRK2, GBA, SNCA) have known differences in motor phenotype and
+progression rate, so pooling them would mix populations. The config is written
+so this can be tested rather than assumed.
+
+\subsubsection*{Step 1.2 --- \code{select\_medication\_state()} \quad (\code{subtype.py}:159)}
+
+\begin{codeblock}
+state = frame[state_col].astype("string").str.strip().str.upper()
+matches = state == cfg.medication_state          # "OFF"
+if treat_col in frame.columns:
+    untreated = pd.to_numeric(frame[treat_col], errors="coerce") == 0
+    matches = matches | untreated                # keep untreated participants
+matches = matches | state.isna()                 # keep rows with no PDSTATE
+return frame[matches.fillna(False)].copy()
+\end{codeblock}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lrr@{}}
+\toprule
+\textbf{Operation} & \textbf{Rows} & \textbf{Removed} \\
+\midrule
+Part III raw                        & 39{,}310 & --- \\
+After \code{select\_medication\_state} & 29{,}356 & 9{,}954 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{keypoint}
+\textbf{Verified:} all 9{,}954 removed rows have \code{PDSTATE == 'ON'}. Not a
+single row with \code{PDSTATE == 'OFF'}, with a missing \code{PDSTATE}, or from
+an untreated participant was discarded. The filter does exactly what it claims.
+\end{keypoint}
+
+\textbf{Why this exists.} Levodopa suppresses tremor. Scoring an
+on-medication examination would shift a patient's ratio toward PIGD and
+manufacture transitions that are pharmacological rather than pathological. The
+canonical Stebbins classification is defined on the OFF or untreated exam.
+
+\textbf{Assumption introduced.} That an OFF exam reflects the underlying
+untreated phenotype. In practice ``OFF'' in PPMI means a
+practically-defined off state (typically overnight withdrawal), not a true
+drug-free state.
+
+\subsubsection*{Step 1.3 --- merge Part II with Part III \quad (\code{panel.py}:76)}
+
+\begin{codeblock}
+merged = part2[KEY + part2_items].merge(
+    part3[KEY + part3_items + carry], on=KEY, how="outer"
+)
+\end{codeblock}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lrr@{}}
+\toprule
+\textbf{Operation} & \textbf{Rows} & \textbf{Duplicate keys} \\
+\midrule
+Part II (3 items) $\;\bowtie\;$ Part III OFF (13 items + 3 carried) & 37{,}897 & 11 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent
+An \emph{outer} join is used, so a visit with only a questionnaire or only an
+exam is retained rather than silently dropped; it will simply fail the
+completeness test later and produce no label. Eleven duplicate keys survive the
+medication filter --- these are visits with more than one qualifying OFF-state
+record.
+
+\subsubsection*{Step 1.4 --- \code{deduplicate\_visits()} \quad (\code{subtype.py}:187)}
+
+\begin{codeblock}
+present = tuple(c for c in cfg.all_items if c in frame.columns)
+cleaned = clean_items(frame, present, cfg)
+ordered = frame.assign(_n_missing=cleaned.isna().sum(axis=1))
+ordered = ordered.sort_values(["PATNO", "EVENT_ID", "_n_missing"], kind="mergesort")
+deduped = ordered.drop_duplicates(["PATNO", "EVENT_ID"], keep="first")
+\end{codeblock}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lrr@{}}
+\toprule
+\textbf{Operation} & \textbf{Rows} & \textbf{Removed} \\
+\midrule
+After merge            & 37{,}897 & --- \\
+After deduplication    & 37{,}886 & 11 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent
+\textbf{The tie-break rule:} keep the row with the \emph{fewest missing items},
+counted \emph{after} sentinel cleaning, and break remaining ties by first
+occurrence using a stable sort (\code{kind="mergesort"}). The result does not
+depend on the order pandas happened to read the file. This is unit-tested in
+\code{tests/test\_subtype.py::TestDeduplication}.
+
+\subsubsection*{Step 1.5 --- \code{compute\_subscores()} \quad (\code{subtype.py}:77)}
+
+Covered in full in Section~\ref{sec:label}. Applied to all 37{,}886
+patient-visits in the merged frame:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lr@{}}
+\toprule
+\code{tremor\_score} non-null & 27{,}046 \\
+\code{pigd\_score} non-null   & 24{,}098 \\
+\code{subtype} non-null       & \textbf{24{,}066} \\
+\code{ratio\_defined} True    & 12{,}644 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent
+Note that subscores are computed for the \emph{entire PPMI population}, not
+only the analysis cohort. The restriction to sporadic PD happens at the next
+step, via the join.
+
+\subsubsection*{Step 1.6 --- the join onto the visit skeleton \quad (\code{panel.py}:69)}
+
+\begin{codeblock}
+panel = curated.merge(subscores, on=KEY, how="left", validate="one_to_one")
+\end{codeblock}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lr@{}}
+\toprule
+Left side (cohort visits)  & 5{,}774 \\
+Right side (all subscores) & 37{,}886 \\
+\textbf{Result}            & \textbf{5{,}774 $\times$ 223} \\
+\midrule
+\quad of which labelled    & \textbf{4{,}441} \quad (76.9\%) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{keypoint}
+\textbf{The direction of this join is a design decision worth defending.} It is
+a \emph{left} join from the curated cut, so the row count is fixed by the visit
+skeleton, not by the item files. A patient-visit exists in the panel if and only
+if PPMI's curated cut says the visit happened. Item data can only \emph{fill in}
+a label, never add or remove a row. The \code{validate="one\_to\_one"} argument
+makes pandas raise if either side has duplicate keys --- an assertion that the
+deduplication actually worked.
+\end{keypoint}
+
+\subsubsection*{Step 1.7 --- \code{\_add\_time\_axis()} \quad (\code{panel.py}:97)}
+
+Covered in Section~\ref{sec:longitudinal}.
+
+\subsection{D. Data shape after each step}
+
+\begin{codeblock}
+CURATED CUT                                  MDS-UPDRS PART II    MDS-UPDRS PART III
+19,450 x 212                                 37,777 x 22          39,310 x 65
+     |                                            |                    |
+     | subgroup == "Sporadic PD"                  |                    | select_medication_state
+     v                                            |                    v
+5,789 x 212                                       |               29,356 x 65
+     |                                            |                    |
+     | drop EVENT_ID in {ST, PW}                  +--------+-----------+
+     v                                                     | outer merge on (PATNO, EVENT_ID)
+5,774 x 212                                                v
+     |                                              37,897 x 21
+     |                                                     | deduplicate_visits
+     |                                                     v
+     |                                              37,886 x 21
+     |                                                     | compute_subscores
+     |                                                     v
+     |                                              24,066 labelled of 37,886
+     |                                                     |
+     +---------------------- left join --------------------+
+                             v
+                    5,774 x 223   <-- outputs/visit_panel.csv
+                             |
+                             | subtype.notna()
+                             v
+                    4,441 labelled visits  (76.9%)
+\end{codeblock}
+
+\subsection{E. Validation \quad (\code{validate.py})}
+\label{sec:validation}
+
+Two independent checks run before the panel is written.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}llr@{}}
+\toprule
+\textbf{Reference} & \textbf{Classes} & \textbf{Agreement} \\
+\midrule
+Curated cut \code{td\_pigd}   & 2 (TD / non-TD)         & 4{,}431 / 4{,}431 = \textbf{100.00\%} \\
+Archived \code{td\_pigd\_old} & 3 (TD / Indet. / PIGD)  & 1{,}595 / 1{,}597 = \textbf{99.87\%} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent
+The two-class check confirms the arithmetic, the item lists, the medication
+filter and the 1.15 threshold. It cannot test the Indeterminate/PIGD boundary,
+because the curated cut collapses those classes. The three-class check, over
+390 overlapping patients, is the only test of that boundary.
+
+\begin{keypoint}
+\textbf{A trap that was hit and fixed.} The archived \code{td\_pigd\_old} codes
+\textbf{2 = PIGD and 3 = Indeterminate}, the reverse of this project's coding.
+Compared without remapping, agreement reads 65.9\% and looks like a broken
+classifier. \code{validate.remap\_archived\_labels()} (line 68) applies the
+correction, which is driven by \code{config.yaml} lines 80--83 and unit-tested
+in \code{tests/test\_validate.py}. The remap is verified against the archived
+data dictionary, not guessed.
+\end{keypoint}
+
+\subsection{F. Research reasoning}
+
+\textbf{What the code does.} Restricts to a homogeneous cohort, selects the
+clinically correct examination, deduplicates deterministically, computes a
+published phenotype from raw items, and proves the result against two
+independent references.
+
+\textbf{Why the researcher chose to do it.} The proposal requires a
+\emph{three-class} label and a \emph{continuous ratio} at every visit. PPMI's
+curated cut supplies neither: it has no tremor subscore, and its
+\code{td\_pigd} is two-class. Recomputation was not optional.
+
+\textbf{Assumptions introduced.} (i) Stebbins 2013 is the right phenotype;
+(ii) an OFF exam represents the untreated state; (iii) sporadic PD is the
+appropriate population; (iv) a visit with any missing item yields no label.
+
+\textbf{What could go wrong.} Assumption (iv) is the one that bites: it discards
+1{,}333 of 5{,}774 visits, and not at random. This is examined in question Q6 of
+Section~\ref{sec:defence}.
+
+% =============================================================================
+\section{Target / label construction}
+\label{sec:label}
+% =============================================================================
+
+\subsection{The formula, exactly as implemented}
+
+\[
+  \text{tremor\_score} \;=\; \frac{1}{11}\sum_{i \in \mathcal{T}} x_i,
+  \qquad
+  \text{pigd\_score} \;=\; \frac{1}{5}\sum_{j \in \mathcal{P}} x_j,
+  \qquad
+  \text{ratio} \;=\; \frac{\text{tremor\_score}}{\text{pigd\_score}}
+\]
+
+where $\mathcal{T}$ is the eleven tremor items and $\mathcal{P}$ the five
+gait/postural items. Both are \textbf{means, not sums}.
+
+\[
+\text{subtype} =
+\begin{cases}
+\text{TD} & \text{ratio} \geq 1.15 \\
+\text{TD} & \text{pigd\_score} = 0 \;\wedge\; \text{tremor\_score} > 0 \\
+\text{Indeterminate} & 0.90 < \text{ratio} < 1.15 \\
+\text{Indeterminate} & \text{tremor\_score} = 0 \;\wedge\; \text{pigd\_score} = 0 \\
+\text{PIGD} & \text{ratio} \leq 0.90
+\end{cases}
+\]
+
+Codes are \code{TD = 1}, \code{Indeterminate = 2}, \code{PIGD = 3}
+(\code{config.yaml} lines 71--74).
+
+\subsection{Step 1 --- cleaning \quad (\code{clean\_items}, \code{subtype.py}:39)}
+
+\begin{codeblock}
+lo, hi = cfg.valid_score_range                     # (0, 4)
+block = frame[list(items)].apply(pd.to_numeric, errors="coerce")
+return block.where((block >= lo) & (block <= hi))
+\end{codeblock}
+
+\begin{keypoint}
+\textbf{PPMI stores ``Unable to Rate'' as the value 101, in the same numeric
+field as a real 0--4 rating}, in all thirteen Part III items. Averaged as a
+score, a single 101 among the five PIGD items lifts their mean to roughly
+20, drives the ratio to almost zero, and relabels a tremor-dominant visit as
+PIGD. \code{NP3PSTBL} alone carries 3{,}206 such codes among OFF exams.
+
+The implementation excludes them by \emph{range}, not by an equality test
+against 101, so a sentinel PPMI introduces later cannot silently enter a
+subscore. Six unit tests in \code{tests/test\_subtype.py::TestUnrateableCodes}
+pin this down.
+\end{keypoint}
+
+\subsection{Step 2 --- subscores with a missingness policy \quad (\code{\_subscore}, line 62)}
+
+\begin{codeblock}
+block = clean_items(frame, items, cfg)
+n_missing = block.isna().sum(axis=1)
+score = block.mean(axis=1, skipna=True)
+return score.where(n_missing <= max_missing)       # max_missing = 0
+\end{codeblock}
+
+\noindent
+With \code{max\_missing\_tremor\_items: 0} and
+\code{max\_missing\_pigd\_items: 0}, \textbf{any} missing constituent nullifies
+the subscore. This matches PPMI's own rule and is why the two-class validation
+reaches exactly 100\%.
+
+\subsection{Step 3 --- classification \quad (\code{classify}, line 121)}
+
+\begin{codeblock}
+both_zero      = observed & (t == 0) & (p == 0)
+pigd_zero_only = observed & (p == 0) & (t > 0)
+divisible      = observed & (p != 0)
+
+ratio = t / p.where(p != 0)
+
+result[divisible & (ratio >= cfg.td_threshold)]   = labels["TD"]
+result[divisible & (ratio <= cfg.pigd_threshold)] = labels["PIGD"]
+result[divisible & (ratio > pigd_thr) & (ratio < td_thr)] = labels["Indeterminate"]
+
+result[pigd_zero_only] = labels["TD"]              # applied last: cannot be overwritten
+result[both_zero]      = labels["Indeterminate"]
+\end{codeblock}
+
+\noindent
+The degenerate cases are handled by explicit masks applied \emph{after} the
+ratio cases, so they cannot be overwritten by a NaN comparison. A property test
+(\code{test\_every\_observed\_visit\_is\_classified}) sweeps a grid of
+$17 \times 17$ score pairs and asserts no observed pair ever yields NaN.
+
+\subsection{Edge cases, and how each is resolved}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Situation} & \textbf{Naive result} & \textbf{Implemented result} \\
+\midrule
+$\text{pigd}=0$, $\text{tremor}>0$   & $\infty$ or crash & TD \\
+$\text{tremor}=0$, $\text{pigd}=0$   & NaN ($0/0$)       & Indeterminate \\
+$\text{tremor}=0$, $\text{pigd}>0$   & ratio $=0$        & PIGD (via $\leq 0.90$) \\
+ratio exactly $1.15$                 & ambiguous         & TD (boundary closed) \\
+ratio exactly $0.90$                 & ambiguous         & PIGD (boundary closed) \\
+any item missing                     & biased mean       & no label \\
+item $= 101$                         & mean $\approx 20$ & treated as missing \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{A fully worked example from the real data}
+
+\textbf{PATNO 3010, visit BL.} Raw items as they appear on disk:
+
+\begin{codeblock}
+Part II:   NP2TRMR = 1     NP2WALK = 1     NP2FREZ = 0
+Part III:  PDSTATE = NaN   PDTRTMNT = 0            <-- untreated participant
+           NP3PTRMR = 1  NP3PTRML = 1  NP3KTRMR = 1  NP3KTRML = 1
+           NP3RTARU = 0  NP3RTALU = 0  NP3RTARL = 0  NP3RTALL = 0
+           NP3RTALJ = 0  NP3RTCON = 0
+           NP3GAIT  = 0  NP3FRZGT = 0  NP3PSTBL = 0
+\end{codeblock}
+
+\textbf{Note first} that \code{PDSTATE} is missing and \code{PDTRTMNT = 0}.
+This participant was not on PD medication at baseline, so there is no ON/OFF
+distinction to make. \code{select\_medication\_state()} keeps the row through
+its \code{untreated} clause --- exactly the case its
+\code{test\_untreated\_participants\_are\_kept} test covers.
+
+\textbf{Tremor score.} Eleven items, values
+$1,1,1,1,1,0,0,0,0,0,0$:
+\[
+  \text{tremor\_score} = \frac{1+1+1+1+1+0+0+0+0+0+0}{11} = \frac{5}{11} = 0.4545
+\]
+
+\textbf{PIGD score.} Five items, values $1, 0, 0, 0, 0$:
+\[
+  \text{pigd\_score} = \frac{1+0+0+0+0}{5} = \frac{1}{5} = 0.2000
+\]
+
+\textbf{Ratio.}
+\[
+  \text{ratio} = \frac{0.4545}{0.2000} = 2.2727
+\]
+
+\textbf{Classification.} $2.2727 \geq 1.15 \Rightarrow$ \textbf{TD (code 1)}.
+
+This matches \code{outputs/visit\_panel.csv} exactly: \code{tremor\_score
+= 0.454545}, \code{pigd\_score = 0.2}, \code{ratio = 2.272727},
+\code{subtype\_name = TD}.
+
+\subsection{The ratio is not always defined}
+
+Of 4{,}441 labelled visits, \textbf{725 (16.3\%)} have
+$\text{pigd\_score} = 0$. Those visits carry a valid \emph{label} (the rule
+sends them to TD) but no finite \emph{ratio}. \code{compute\_subscores} records
+this distinction explicitly:
+
+\begin{codeblock}
+out["ratio"]         = tremor / pigd.replace(0.0, np.nan)   # NaN, not inf
+out["ratio_defined"] = both_observed & (pigd != 0)
+\end{codeblock}
+
+\noindent
+This matters because the proposed hierarchical model consumes the
+\emph{continuous ratio} as a noisy observation of a latent phenotype. For one
+visit in six there is nothing to consume. The flag exists so that population
+can be counted and handled deliberately rather than dropped silently.
+
+% =============================================================================
+\section{Longitudinal panel construction}
+\label{sec:longitudinal}
+% =============================================================================
+
+\subsection{The time axis \quad (\code{\_add\_time\_axis}, \code{panel.py}:97)}
+
+\begin{codeblock}
+out["visit_ts"] = parse_visit_date(out["visit_date"])          # "%m/%Y"
+out = out.sort_values(["PATNO", "visit_ts", "YEAR"], kind="mergesort")
+baseline = out.groupby("PATNO")["visit_ts"].transform("min")
+out["years_from_baseline"] = (out["visit_ts"] - baseline).dt.days / 365.25
+out["years_from_baseline"] = out["years_from_baseline"].fillna(out["YEAR"].astype(float))
+out["visit_index"] = out.groupby("PATNO").cumcount()
+out["n_visits"]    = out.groupby("PATNO")["PATNO"].transform("size")
+\end{codeblock}
+
+\begin{description}[leftmargin=2.4cm,style=nextline]
+  \item[Visit identity] \code{(PATNO, EVENT\_ID)}. \code{EVENT\_ID} is a label
+    such as \code{BL}, \code{V04}, \code{V06}, not a time.
+  \item[Baseline] Each patient's \emph{own earliest} visit date
+    (\code{transform("min")}), not a fixed calendar date and not necessarily
+    \code{EVENT\_ID == "BL"}.
+  \item[Elapsed time] $(\text{visit date} - \text{baseline date})/365.25$ days.
+  \item[Fallback] If a date is unparseable, the nominal \code{YEAR} is used, so
+    a missing \code{INFODT} does not drop a visit from the time axis.
+  \item[Sorting] Stable mergesort, so ties resolve reproducibly.
+\end{description}
+
+\begin{keypoint}
+\textbf{Why actual dates and not \code{YEAR}?} \code{YEAR} is derived from
+\code{EVENT\_ID} --- it is a \emph{visit label}, not elapsed time. Patients miss
+visits and attend late. In the panel, \code{V04} occurs anywhere from 0.83 to
+over 1.4 years after baseline. Using \code{YEAR} would assign every
+\code{BL}\arr\code{V04} pair an interval of exactly 1.0, which is false, and
+would make the interval-stratified analysis in Section~\ref{sec:stats}
+meaningless.
+
+\textbf{Limitation, stated:} PPMI releases \code{INFODT} as month and year only,
+so every date is anchored to the first of the month. Intervals carry roughly
+$\pm$ two weeks of noise --- negligible at annual spacing.
+\end{keypoint}
+
+\subsection{What one patient's trajectory looks like}
+
+\textbf{PATNO 3010}, taken verbatim from \code{outputs/visit\_panel.csv}:
+
+\begin{codeblock}
+EVENT_ID  YEAR visit_date  years_from_baseline  tremor  pigd    ratio  subtype
+      BL     0    06/2011             0.000000  0.4545   0.2   2.2727       TD
+     V04     1    06/2012             1.002053  0.9091   0.2   4.5455       TD
+     V06     2    07/2013             2.083504  0.8182   0.2   4.0909       TD
+     V08     3    09/2014             3.252567     NaN   NaN      NaN      ---   <- unlabelled
+     V10     4    06/2015             4.000000  1.6364   0.2   8.1818       TD
+     V12     5    11/2016             5.420945     NaN   NaN      NaN      ---   <- unlabelled
+     V14     7    08/2018             7.167693  0.2727   0.6   0.4545     PIGD
+     V15     8    07/2019             8.082136  1.4545   0.8   1.8182       TD
+     V17    10    05/2021             9.916496     NaN   NaN      NaN      ---
+     V18    11    06/2022            11.000684     NaN   NaN      NaN      ---
+\end{codeblock}
+
+\noindent
+Observe: \code{V06} is at 2.083 years, not 2.000. \code{V17} is at 9.92 years
+despite being labelled year 10. \code{V12} is at 5.42 years. The nominal year
+and the elapsed time genuinely differ.
+
+\subsection{Patients with too few usable visits}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lr@{}}
+\toprule
+Patients with $\geq 1$ labelled visit        & 1{,}080 \\
+Patients with exactly 1 labelled visit       & \textbf{146} \\
+Patients with $\geq 2$ labelled visits       & \textbf{934} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent
+The 146 single-visit patients remain in \code{visit\_panel.csv} --- they are not
+deleted --- but they cannot contribute a transition, so they contribute nothing
+to Stage 2. \code{restrict\_to\_analysable()} (\code{panel.py}:120) applies the
+\code{min\_visits\_per\_patient: 2} rule when producing
+\code{outputs/baseline.csv}, which therefore has \textbf{934 rows}.
+
+% =============================================================================
+\section{Transition construction}
+% =============================================================================
+
+\subsection{\code{consecutive\_pairs()} \quad (\code{transitions.py}:16)}
+
+\begin{codeblock}
+df = panel[panel[label_col].notna()].sort_values(["PATNO", time_col])
+grouped = df.groupby("PATNO", sort=False)
+
+out = pd.DataFrame({
+    "PATNO":      df["PATNO"],
+    "from_state": df[label_col],
+    "to_state":   grouped[label_col].shift(-1),
+    "from_time":  df[time_col],
+    "to_time":    grouped[time_col].shift(-1),
+    "from_event": df["EVENT_ID"],
+    "to_event":   grouped["EVENT_ID"].shift(-1),
+})
+out = out[out["to_state"].notna()].copy()
+out["interval_years"] = out["to_time"] - out["from_time"]
+\end{codeblock}
+
+Two decisions are encoded here:
+
+\begin{enumerate}
+  \item \textbf{Unlabelled visits are filtered out \emph{before} pairing}
+        (line 1). They therefore \emph{bridge} rather than truncate: a patient
+        labelled at years 0 and 2 but not 1 yields one pair with a two-year
+        interval, not a broken sequence.
+  \item \textbf{\code{shift(-1)} is applied within \code{groupby("PATNO")}},
+        so the last visit of one patient can never pair with the first visit of
+        the next. \code{tests/test\_transitions.py::test\_pairs\_are\_within\_patient}
+        asserts this.
+\end{enumerate}
+
+\subsection{The same patient, transformed}
+
+\textbf{PATNO 3010} --- unlabelled visits removed, then paired:
+
+\begin{codeblock}
+from_event to_event  from_state  to_state  interval_years
+        BL      V04          TD        TD        1.002053
+       V04      V06          TD        TD        1.081451
+       V06      V10          TD        TD        1.916496   <- V08 was unlabelled: BRIDGED
+       V10      V14          TD      PIGD        3.167693   <- V12 unlabelled: 3.17y interval
+       V14      V15        PIGD        TD        0.914442   <- an immediate REVERSION
+\end{codeblock}
+
+\noindent
+This single patient demonstrates three mechanisms at once: gap bridging
+(\code{V06}\arr\code{V10}), a long-interval transition
+(\code{V10}\arr\code{V14}, 3.17 years, not 3.0), and a state change that
+reverses at the very next visit (\code{V14}\arr\code{V15}). The last is exactly
+what the reversion analysis in Section~\ref{sec:stats} counts.
+
+\subsection{Arithmetic check on the pair count}
+
+\begin{keypoint}
+A patient with $n_i$ labelled visits contributes $n_i - 1$ pairs. Summed over
+the 934 patients with $n_i \geq 2$:
+\[
+  \sum_i (n_i - 1) = 3{,}361
+\]
+which is exactly the number of rows \code{consecutive\_pairs()} returns.
+\textbf{Verified independently.} No pair is lost or double-counted.
+\end{keypoint}
+
+\subsection{From counts to probabilities \quad (\code{transition\_matrix}, line 47)}
+
+\begin{codeblock}
+counts = pd.crosstab(pairs["from_state"], pairs["to_state"])
+counts = counts.reindex(index=states, columns=states, fill_value=0)
+totals = counts.sum(axis=1)
+probs  = counts.div(totals.where(totals > 0), axis=0)
+\end{codeblock}
+
+\textbf{Raw counts, before normalisation} (total $= 3{,}361$):
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lrrr|r@{}}
+\toprule
+& \textbf{$\rightarrow$ TD} & \textbf{$\rightarrow$ Ind} & \textbf{$\rightarrow$ PIGD} & \textbf{Row total} \\
+\midrule
+\textbf{TD}            & 1827 & 181 & 253 & 2261 \\
+\textbf{Indeterminate} &  147 &  64 & 123 &  334 \\
+\textbf{PIGD}          &  141 &  87 & 538 &  766 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{After dividing each row by its total:}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+& \textbf{$\rightarrow$ TD} & \textbf{$\rightarrow$ Ind} & \textbf{$\rightarrow$ PIGD} \\
+\midrule
+\textbf{TD}            & 0.808 & 0.080 & 0.112 \\
+\textbf{Indeterminate} & 0.440 & 0.192 & 0.368 \\
+\textbf{PIGD}          & 0.184 & 0.114 & 0.702 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent
+Worked entry: $181 / 2261 = 0.0800$. The \code{reindex} guarantees all three
+states appear even if one were unobserved, and \code{totals.where(totals > 0)}
+prevents a division by zero for an empty row.
+
+% =============================================================================
+\section{Statistical analysis}
+\label{sec:stats}
+% =============================================================================
+
+\subsection{Wilson score intervals \quad (\code{transition\_counts\_with\_ci}, line 67)}
+
+\textbf{Question answered.} How precise is each transition probability?
+
+\textbf{Formula, as implemented:}
+\[
+  \hat p = \frac{k}{n}, \qquad
+  \text{centre} = \frac{\hat p + \frac{z^2}{2n}}{1 + \frac{z^2}{n}}, \qquad
+  \text{half-width} = \frac{z\sqrt{\frac{\hat p(1-\hat p)}{n} + \frac{z^2}{4n^2}}}{1 + \frac{z^2}{n}}
+\]
+with $z = \Phi^{-1}(1 - \alpha/2)$, $\alpha = 0.05$.
+
+\textbf{Why not the normal approximation?} Row counts range from 334 to
+2{,}261, and several probabilities sit near 0 or 1 (\code{TD}\arr\code{Ind} is
+0.080). The Wald interval $\hat p \pm z\sqrt{\hat p(1-\hat p)/n}$ produces
+bounds outside $[0,1]$ in exactly those cells. A unit test
+(\code{test\_wilson\_interval\_stays\_in\_unit\_range}) asserts the
+implementation never does.
+
+\textbf{Interpretation.} \code{TD}\arr\code{TD} is $0.808$, CI
+$[0.791, 0.824]$. \textbf{Incorrect interpretation:} treating these as
+independent --- the three probabilities in a row are constrained to sum to 1,
+so their errors are negatively correlated.
+
+\subsection{Interval stratification \quad (line 106)}
+
+\textbf{Question answered.} Does a transition probability mean anything without
+saying over what period?
+
+Bins: $[0, 1.5)$, $[1.5, 2.5)$, $[2.5, 4.0)$, $[4.0, \infty)$ years.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lrr@{}}
+\toprule
+\textbf{Interval (years)} & \textbf{Pairs} & \textbf{TD $\rightarrow$ PIGD} \\
+\midrule
+$\leq 1.5$    & 2{,}882 & 0.100 \\
+$1.5$--$2.5$  &    302 & 0.168 \\
+$2.5$--$4.0$  &    111 & 0.153 \\
+$> 4.0$       &     66 & 0.289 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent
+\textbf{Conclusion this forces.} The pooled matrix is not a well-defined
+quantity --- it averages one-year and multi-year transitions in whatever
+proportion attendance happened to produce. It describes the study design as
+much as the disease.
+
+\subsection{Reversion analysis \quad (\code{reversion\_after\_change}, line 198)}
+
+\textbf{Question answered.} Of the state changes we observe, how many are real?
+
+\begin{codeblock}
+frame = pd.DataFrame({
+    "s0": df[label_col],
+    "s1": g[label_col].shift(-1),
+    "s2": g[label_col].shift(-2),
+    ...})
+frame = frame[frame["s2"].notna() & (frame["s0"] != frame["s1"])]
+frame["reverted"] = frame["s2"] == frame["s0"]
+\end{codeblock}
+
+\noindent
+It takes \emph{triples}: a change $s_0 \neq s_1$ that has a third labelled
+visit $s_2$, and asks whether $s_2 = s_0$.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lr@{}}
+\toprule
+Qualifying changes (denominator) & 673 \\
+Of which reverted                & 237 \\
+\textbf{Reversion rate}          & \textbf{0.3522} \\
+Patients contributing            & 342 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Assumption.} That a change followed by a return is more likely
+measurement noise than two genuine changes. \textbf{Incorrect
+interpretation:} concluding the labels are worthless. Section~4.3 of the
+Weeks 3--4 report shows the movement is significantly \emph{asymmetric}
+(TD\arr PIGD 253 versus PIGD\arr TD 141, $p = 1.8\times 10^{-8}$), so a real
+directional drift exists beneath the churn.
+
+\textbf{Limitation.} Requires three labelled visits, so the estimate comes
+from the better-attended subset --- 342 of 934 patients.
+
+\subsection{Kaplan--Meier \quad (\code{first\_entry} + \code{kaplan\_meier}, lines 246, 299)}
+
+\textbf{Question answered.} How long until a patient first becomes PIGD?
+
+\textbf{Formula, as implemented:}
+\[
+  \hat S(t) = \prod_{t_i \leq t}\left(1 - \frac{d_i}{n_i}\right),
+  \qquad
+  \widehat{\mathrm{SE}}(\hat S(t)) = \hat S(t)\sqrt{\sum_{t_i \leq t}\frac{d_i}{n_i(n_i - d_i)}}
+\]
+(Greenwood's formula). Cumulative incidence is plotted as $1 - \hat S(t)$.
+
+\textbf{Risk set construction.} \code{first\_entry()} returns every patient
+with a \code{converted} flag and a time; patients already PIGD at their first
+visit are flagged \code{starts\_in\_state} and excluded.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lrr@{}}
+\toprule
+& \textbf{Naive (1 visit)} & \textbf{Sustained (2 visits)} \\
+\midrule
+Patients                       & 1{,}080 & 1{,}080 \\
+Excluded (PIGD at baseline)    & \phantom{0,}195 & \phantom{0,}195 \\
+\textbf{At risk}               & \phantom{0,}\textbf{885} & \phantom{0,}\textbf{885} \\
+Converted                      & \phantom{0,}263 & \phantom{0,}127 \\
+KM cumulative incidence, yr 5  & \textbf{35.25\%} & \textbf{15.33\%} \\
+$n$ at risk at year 5          & \phantom{0,}180 & \phantom{0,}211 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Why Kaplan--Meier and not a percentage?} Follow-up ranges from one
+visit to fourteen years. A raw proportion conflates ``did not convert'' with
+``was not observed long enough''. KM censors at the last labelled visit.
+
+\textbf{The \code{min\_consecutive} parameter.} With
+\code{min\_consecutive=2}, an entry counts only if the patient is still PIGD at
+the next labelled visit. Requiring this removes \textbf{136 of 263} apparent
+conversions --- 51.7\%.
+
+\textbf{Assumption.} Non-informative censoring: that dropping out is unrelated
+to subtype. \textbf{This is questionable here} and is flagged as a limitation.
+
+\subsection{Pathway analysis \quad (\code{state\_sequences} + \code{collapse\_runs}, lines 177, 185)}
+
+\begin{codeblock}
+def collapse_runs(sequence):
+    out = []
+    for s in sequence:
+        if not out or out[-1] != s:
+            out.append(s)
+    return tuple(out)
+\end{codeblock}
+
+\noindent
+\code{(TD, TD, PIGD, PIGD)} becomes \code{(TD, PIGD)}. \textbf{Why:} without
+collapsing, pathway frequencies would be dominated by how often a patient
+attended rather than by what happened to them.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lrr@{}}
+\toprule
+Patients with $\geq 1$ label & 1{,}080 & \\
+Distinct collapsed pathways  & 86 & \\
+Never changed state          & 622 & 57.6\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% =============================================================================
+\section{Trace of every major result}
+% =============================================================================
+
+Each trace follows the form \textsc{result} \arr\ \textsc{script} \arr\
+\textsc{function} \arr\ \textsc{dataframe} \arr\ \textsc{operation} \arr\
+\textsc{number}.
+
+\subsection*{19{,}450 visits}
+\begin{codeblock}
+loaders.load_curated_cut(cfg)
+  -> pd.read_excel("data/clinical/PPMI_Curated_Data_Cut_Public_20260511.xlsx",
+                   sheet_name="20260511")
+  -> df.shape = (19450, 212)
+\end{codeblock}
+
+\subsection*{5{,}774 cohort visits}
+\begin{codeblock}
+01_build_panel.py -> build_visit_panel() -> panel.filter_cohort()
+  frame[frame["subgroup"].isin({"Sporadic PD"})]           19,450 -> 5,789
+  frame[~frame["EVENT_ID"].isin({ST, PW, U01, U02})]        5,789 -> 5,774
+  frame[frame["YEAR"] <= 15]                                5,774 -> 5,774
+  SAVED: outputs/visit_panel.csv  (5,774 rows x 223 cols)
+\end{codeblock}
+
+\subsection*{29{,}356 OFF-state exam rows}
+\begin{codeblock}
+panel.build_subscores() -> subtype.select_medication_state()
+  keep if PDSTATE == "OFF"  OR  PDTRTMNT == 0  OR  PDSTATE is NaN
+  39,310 -> 29,356    (9,954 removed, all PDSTATE == "ON")
+\end{codeblock}
+
+\subsection*{4{,}441 labelled visits}
+\begin{codeblock}
+panel.build_visit_panel()
+  curated(5,774) .merge(subscores, how="left", validate="one_to_one")  -> 5,774
+  panel["subtype"].notna().sum()                                       -> 4,441
+  = 76.9% of cohort visits
+  SAVED: outputs/visit_panel.csv, column `subtype`
+  REPORTED: outputs/panel_summary.txt
+\end{codeblock}
+
+\subsection*{934 patients / 146 excluded}
+\begin{codeblock}
+labelled = panel[panel.subtype.notna()]
+per_patient = labelled.groupby("PATNO").size()
+  (per_patient == 1).sum()  -> 146     cannot form a transition
+  (per_patient >= 2).sum()  -> 934
+  SAVED: outputs/baseline.csv  (934 rows, via panel.restrict_to_analysable)
+\end{codeblock}
+
+\subsection*{3{,}361 transition pairs}
+\begin{codeblock}
+02_transition_analysis.py -> transitions.consecutive_pairs(panel)
+  df = panel[panel["subtype"].notna()].sort_values(["PATNO","years_from_baseline"])
+  to_state = df.groupby("PATNO")["subtype"].shift(-1)
+  out = out[out["to_state"].notna()]
+  len(out) -> 3,361      CHECK: sum(n_i - 1) over 934 patients = 3,361
+\end{codeblock}
+
+\subsection*{0.808 (TD $\rightarrow$ TD)}
+\begin{codeblock}
+transitions.transition_matrix(pairs, states=[1,2,3])
+  counts = pd.crosstab(pairs["from_state"], pairs["to_state"])
+  counts.loc[TD, TD]  = 1827
+  counts.loc[TD].sum()= 2261
+  1827 / 2261 = 0.8080
+  SAVED: outputs/transitions/transition_matrix_probs.csv
+\end{codeblock}
+
+\subsection*{35.2\% reversion}
+\begin{codeblock}
+transitions.reversion_after_change(panel)
+  triples (s0, s1, s2) where s2 is not NaN AND s0 != s1     -> 673 rows
+  reverted = (s2 == s0)                                     -> 237 True
+  237 / 673 = 0.3522
+  SAVED: outputs/transitions/reversion_summary.csv
+\end{codeblock}
+
+\subsection*{35.3\% vs 15.3\% conversion at year 5}
+\begin{codeblock}
+transitions.first_entry(panel, target_state=3, min_consecutive=k)
+  at_risk = fe[~fe["starts_in_state"]]                      -> 885 patients
+  km = transitions.kaplan_meier(at_risk.time, at_risk.converted)
+  1 - km[km.time <= 5.0].survival.iloc[-1]
+      k=1 -> 0.3525   (n at risk 180)
+      k=2 -> 0.1533   (n at risk 211)
+  SAVED: outputs/transitions/conversion_km_{naive,sustained}.csv
+\end{codeblock}
+
+\subsection*{100.00\% and 99.87\% validation}
+\begin{codeblock}
+01_build_panel.py -> validate.against_curated_cut(panel, cfg)
+  ours_binary = collapse_to_binary(panel["subtype"])   # TD->1, else 2
+  compare vs panel["td_pigd"]        -> 4,431 compared, 4,431 agree
+01_build_panel.py -> validate.against_archived_three_class(panel, cfg)
+  ref = archived[["PATNO","EVENT_ID","td_pigd_old"]]
+  ref = remap_archived_labels(ref)   # 2<->3 swap, per archived dictionary
+  inner join, compare               -> 1,597 compared, 1,595 agree
+  SAVED: outputs/validation.txt
+\end{codeblock}
+
+% =============================================================================
+\section{Complete data funnel}
+% =============================================================================
+
+\begin{codeblock}
+PPMI CURATED DATA CUT                                        19,450 visits (4,788 patients)
+     |
+     |  subgroup == "Sporadic PD"        -- other cohorts (Hyposmia, RBD, HC,
+     |                                      LRRK2, GBA, SWEDD...) not selected
+     v
+                                                              5,789 visits (1,080 patients)
+     |  drop EVENT_ID in {ST, PW}        -- unscheduled / premature-withdrawal visits
+     v
+COHORT VISIT SKELETON                                         5,774 visits (1,080 patients)
+     |
+     |  ---------------- meanwhile, on the item files ----------------
+     |
+     |   MDS-UPDRS Part II   37,777 rows   (0 duplicate visit keys)
+     |   MDS-UPDRS Part III  39,310 rows   (6,907 duplicate visit keys)
+     |         |
+     |         |  select_medication_state: keep OFF / untreated
+     |         v
+     |   Part III OFF        29,356 rows   (9,954 ON-state rows removed)
+     |         |
+     |         |  outer merge on (PATNO, EVENT_ID)
+     |         v
+     |                       37,897 rows   (11 duplicate keys remain)
+     |         |
+     |         |  deduplicate_visits: fewest missing items wins
+     |         v
+     |                       37,886 patient-visits
+     |         |
+     |         |  clean_items (drop 101 / out-of-range) -> subscores -> classify
+     |         v
+     |                       24,066 labelled  (of 37,886, all PPMI patients)
+     |         |
+     +---------+  LEFT JOIN onto the cohort skeleton
+     v
+LABELLED PANEL                                     5,774 rows x 223 cols
+                                                   outputs/visit_panel.csv
+     |
+     |  subtype.notna()      -- 1,333 visits have no complete OFF-state item set
+     v
+                                                   4,441 labelled visits (76.9%)
+     |
+     |  group by PATNO, sort by years_from_baseline
+     v
+                                                   1,080 patients
+     |  keep patients with >= 2 labelled visits    -- 146 single-visit patients
+     v                                                cannot form a transition
+                                                   934 patients
+     |
+     |  consecutive_pairs: shift(-1) within patient
+     v
+TRANSITION PAIRS                                   3,361 pairs
+     |
+     +--> transition_matrix        -> 3x3 counts and probabilities
+     +--> transition_..._with_ci   -> Wilson 95% intervals
+     +--> ..._by_interval          -> 4 interval strata (2,882 / 302 / 111 / 66)
+     +--> reversion_after_change   -> 673 changes, 237 reverted = 35.2%
+     +--> first_entry + kaplan_meier -> 885 at risk, 263 / 127 converted
+     +--> state_sequences          -> 86 distinct pathways, 622 never changed
+     v
+FINAL RESULTS                                      outputs/transitions/
+                                                   9 CSV tables, 6 figures, report.txt
+\end{codeblock}
+
+% =============================================================================
+\section{Code $\leftrightarrow$ science map}
+% =============================================================================
+
+All modules live in \code{src/ppmi\_subtype/}.
+
+\begin{longtable}{@{}p{2.3cm} p{2.2cm} p{3.7cm} p{2.9cm} p{2.4cm}@{}}
+\toprule
+\textbf{Concept} & \textbf{Module} & \textbf{Function} & \textbf{Operation} & \textbf{Output} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Concept} & \textbf{Module} & \textbf{Function} & \textbf{Operation} & \textbf{Output} \\
+\midrule
+\endhead
+Study population & \code{panel} & \code{filter\_cohort} & subgroup + event filter & 5{,}774 visits \\
+Correct exam state & \code{subtype} & \code{select\_}\newline\code{medication\_state} & keep OFF or untreated & 29{,}356 rows \\
+One record per visit & \code{subtype} & \code{deduplicate\_visits} & fewest-missing tie-break & 37{,}886 rows \\
+Invalid measurements & \code{subtype} & \code{clean\_items} & drop outside 0--4 & cleaned items \\
+Motor phenotype & \code{subtype} & \code{compute\_subscores} & two means + ratio & tremor, pigd, ratio \\
+Clinical subtype & \code{subtype} & \code{classify} & 1.15 / 0.90 thresholds & TD / Ind / PIGD \\
+Label correctness & \code{validate} & \code{against\_curated\_cut}, \code{against\_archived\_}\newline\code{three\_class} & agreement & 100\% and 99.87\% \\
+Disease timeline & \code{panel} & \code{\_add\_time\_axis} & date $-$ patient min & \code{years\_from\_}\newline\code{baseline} \\
+Patient trajectory & \code{transitions} & \code{state\_sequences} & groupby + tuple & state sequence \\
+Observed transition & \code{transitions} & \code{consecutive\_pairs} & groupby + shift($-1$) & 3{,}361 pairs \\
+Progression rates & \code{transitions} & \code{transition\_matrix} & crosstab + row-normalise & $3\times3$ matrix \\
+Estimate precision & \code{transitions} & \code{transition\_counts\_}\newline\code{with\_ci} & Wilson score & 95\% CIs \\
+Time-dependence & \code{transitions} & \code{transition\_matrix\_}\newline\code{by\_interval} & cut + per-bin matrix & 4 matrices \\
+Measurement noise & \code{transitions} & \code{reversion\_}\newline\code{after\_change} & triples $s_0,s_1,s_2$ & 35.2\% \\
+Time to event & \code{transitions} & \code{first\_entry}, \code{kaplan\_meier} & survival + censoring & KM curves \\
+Common courses & \code{transitions} & \code{collapse\_runs} & drop repeated states & 86 pathways \\
+Figures & \code{plots} & six plotting functions & matplotlib & 6 PNG files \\
+\bottomrule
+\end{longtable}
+
+% =============================================================================
+\section{Professor defence questions}
+\label{sec:defence}
+% =============================================================================
+
+\subsection*{Q1. Why did you recompute the label instead of using PPMI's \code{td\_pigd}?}
+\textbf{Answer.} PPMI's curated \code{td\_pigd} is coded two-class (1 = TD,
+2 = non-TD), collapsing Indeterminate away, and the cut ships \code{pigd} with
+no matching tremor subscore --- the ratio has a denominator and no numerator.
+The proposal requires all three classes and the continuous ratio.
+
+\textbf{Evidence in code.} \code{docs/DATA\_REQUIREMENTS.md}; the curated
+dictionary decode for \code{td\_pigd}.
+
+\textbf{Follow-up: how do you know your recomputation is right?} Two
+independent checks. Collapsed to binary it agrees with PPMI's own
+\code{td\_pigd} on 4{,}431 of 4{,}431 visits. Against the archived three-class
+\code{td\_pigd\_old} it agrees on 1{,}595 of 1{,}597.
+
+\subsection*{Q2. Why OFF-medication visits?}
+\textbf{Answer.} Levodopa suppresses tremor. Scoring an ON exam shifts the
+ratio toward PIGD and manufactures transitions that are pharmacological, not
+pathological. The Stebbins definition is specified on the OFF or untreated exam.
+
+\textbf{Evidence.} \code{subtype.select\_medication\_state}; verified that all
+9{,}954 removed rows are \code{PDSTATE == 'ON'}.
+
+\textbf{Follow-up: don't you lose untreated patients?} No --- the filter has an
+explicit \code{PDTRTMNT == 0} clause, unit-tested by
+\code{test\_untreated\_participants\_are\_kept}. At baseline 99.7\% of the
+cohort is untreated and every one is retained.
+
+\subsection*{Q3. Why actual dates rather than visit numbers?}
+\textbf{Answer.} \code{YEAR} is derived from \code{EVENT\_ID} --- a visit label,
+not elapsed time. In the real panel \code{V06} lands at 2.08 years and
+\code{V17} at 9.92. Using \code{YEAR} would force every interval to a whole
+number and destroy the interval-stratified analysis.
+
+\textbf{Evidence.} \code{panel.\_add\_time\_axis}; PATNO 3010's trajectory.
+
+\textbf{Follow-up: how precise are the dates?} Month resolution only ---
+roughly $\pm$ two weeks, negligible at annual spacing. Stated as a limitation.
+
+\subsection*{Q4. Why do unlabelled visits bridge instead of breaking the sequence?}
+\textbf{Answer.} Because a missed \emph{assessment} is not a missed
+\emph{patient}. PATNO 3010 has no label at \code{V08}; treating that as an
+endpoint would discard six years of subsequent follow-up. Instead
+\code{V06}\arr\code{V10} becomes one pair with a 1.92-year interval, and the
+interval is carried so the longer gap is visible to the analysis.
+
+\textbf{Evidence.} \code{transitions.consecutive\_pairs} line 1, and
+\code{test\_unlabelled\_visits\_are\_skipped\_not\_terminal}.
+
+\textbf{Follow-up: doesn't that assume nothing happened in between?} It assumes
+nothing \emph{observed} happened. That is precisely why intervals are
+stratified rather than pooled --- a four-year pair is not treated as equivalent
+to a one-year pair.
+
+\subsection*{Q5. Why not impute the missing subtype?}
+\textbf{Answer.} \textbf{The implementation does not impute. The rationale is
+not explicitly documented in the repository.} What \emph{is} documented and
+tested is the sensitivity check: relaxing the rule to tolerate one missing item
+recovers only 44 visits and changes zero existing labels.
+
+\textbf{Interpretation (labelled as such).} Imputing the subtype would mean
+imputing the outcome variable, which risks manufacturing the transitions the
+study is trying to measure.
+
+\subsection*{Q6. Why are there fewer labelled visits than cohort visits?}
+\textbf{Answer.} 1{,}333 of 5{,}774 visits (23.1\%) have no complete
+OFF-medication item set. Of these, 722 have no OFF exam recorded at all, 595
+have an exam that could not be fully scored, and 16 lack Part II.
+
+\textbf{Follow-up: could this introduce selection bias?} \textbf{Yes, and its
+direction is known.} Among the 1{,}253 unscorable OFF exams, \code{NP3PSTBL}
+--- item 3.12, postural stability --- is the missing item in 1{,}243 of them.
+The pull test is often unsafe in a patient with poor balance. Those exams come
+from more advanced patients: median Hoehn \& Yahr 3.0 against 2.0
+($p = 1.4\times10^{-17}$). Postural stability is a \emph{PIGD} item, so the
+visits lost are disproportionately those most likely to be PIGD. \textbf{The
+reported drift toward PIGD is therefore a lower bound.}
+
+\subsection*{Q7. Why Wilson intervals?}
+\textbf{Answer.} Row counts range from 334 to 2{,}261 and several probabilities
+sit near the boundary. The normal approximation yields intervals outside
+$[0,1]$ in exactly those cells.
+
+\textbf{Evidence.} \code{transition\_counts\_with\_ci};
+\code{test\_wilson\_interval\_stays\_in\_unit\_range}.
+
+\subsection*{Q8. Why Kaplan--Meier instead of a conversion percentage?}
+\textbf{Answer.} Follow-up ranges from one visit to fourteen years. A raw
+percentage cannot distinguish ``did not convert'' from ``was not observed long
+enough''. KM censors at the last labelled visit.
+
+\textbf{Follow-up: is censoring non-informative here?} Probably not, and we say
+so. Dropout is heavy and, per Q6, scorability is tied to severity. The curves
+are truncated at year 12 where the risk set falls below 25.
+
+\subsection*{Q9. Why a transition matrix at all?}
+\textbf{Answer.} It is the empirical object the Week 5--7 model must reproduce.
+Before fitting any model, we need to know what transitions look like: which
+states persist, which are transient, and whether movement is directional.
+
+\textbf{Follow-up: is the process Markov?} \textbf{Not established, and there
+is evidence against it.} Iterating the pooled matrix gives a stationary
+distribution of TD 0.560 / Ind 0.103 / PIGD 0.338, whereas observed year-11
+prevalence is 0.391 / 0.120 / 0.489. The gap is reported rather than hidden.
+
+\subsection*{Q10. Does a TD $\rightarrow$ PIGD transition prove biological progression?}
+\textbf{Answer.} No, and the analysis is built to show why not. 35.2\% of all
+observed changes reverse at the very next visit. A single observed transition
+is weak evidence about one patient.
+
+\textbf{Follow-up: then is any of it real?} Yes. The movement is significantly
+asymmetric: TD\arr PIGD occurs 253 times against 141 in reverse,
+$p = 1.8\times10^{-8}$. Of 932 cross-state moves, 80.5\% cancels out and 19.5\%
+is net drift toward PIGD. The correct reading is a genuine drift observed
+through a noisy measurement --- which is the case \emph{for} a latent-state
+model, not against it.
+
+\subsection*{Q11. Why patient-level rather than visit-level reasoning?}
+\textbf{Answer.} Transitions are only defined within a patient.
+\code{consecutive\_pairs} does \code{shift(-1)} inside
+\code{groupby("PATNO")}, so one patient's last visit can never pair with the
+next patient's first. Patients with a single labelled visit (146) contribute
+nothing.
+
+\textbf{Follow-up: are patients weighted equally?} \textbf{No.} A patient with
+14 visits contributes 13 pairs; one with 2 contributes 1. The pooled matrix is
+therefore visit-weighted, not patient-weighted, and better-attended patients
+carry more influence. \textbf{This is not currently corrected for} and is a
+fair criticism.
+
+% =============================================================================
+\section{What we have actually achieved}
+% =============================================================================
+
+\begin{enumerate}
+  \item \textbf{A validated phenotype.} A three-class TD/PIGD label plus the
+        continuous ratio, computed from raw MDS-UPDRS items for 4{,}441 visits,
+        agreeing with PPMI's own derivations at 100\% (2-class) and 99.87\%
+        (3-class).
+  \item \textbf{A longitudinal panel.} 1{,}080 patients, 5{,}774 visits, real
+        elapsed-time axis, out to 14 years --- \code{outputs/visit\_panel.csv}.
+  \item \textbf{An empirical characterisation of transitions.} 3{,}361 pairs;
+        matrices with Wilson intervals; interval stratification; reversion;
+        time-to-conversion under two definitions; pathway analysis.
+  \item \textbf{Four findings that constrain the model.} Indeterminate is a
+        crossing ($p_{\text{stay}} = 0.192$), PIGD is not absorbing (29.8\%
+        leave), 35.2\% of changes reverse immediately, and transition
+        probabilities scale with the inter-visit interval.
+  \item \textbf{A named, directional bias.} Label loss is concentrated in
+        patients who cannot complete the pull test, making the reported drift a
+        lower bound.
+  \item \textbf{Reproducibility.} Two commands regenerate every number;
+        74 unit tests; all parameters in one config file.
+\end{enumerate}
+
+\begin{keypoint}
+\textbf{What has \emph{not} been done.} No model has been fitted. No parameter
+has been estimated. No prediction has been made. Everything above is
+descriptive characterisation of the observed data.
+\end{keypoint}
+
+% =============================================================================
+\section{What comes next}
+% =============================================================================
+
+Weeks 5--7 in the proposal: a baseline probabilistic model. The analysis in
+this document changes what that baseline should be.
+
+\begin{description}[leftmargin=1.6cm,style=nextline]
+  \item[Continuous-time Markov chain, not discrete] Because TD\arr PIGD ranges
+    from 0.100 to 0.289 depending only on the gap between visits, a chain
+    indexed by ``visit number'' would encode PPMI's attendance schedule.
+    Estimating a generator matrix $Q$ and using $P(t) = e^{Qt}$ handles
+    arbitrary intervals.
+  \item[Decide the ratio question] 16.3\% of labelled visits have
+    $\text{pigd\_score} = 0$ and therefore no finite ratio. The recommended
+    route is modelling the two subscores jointly and deriving the ratio's
+    posterior, which keeps every visit.
+  \item[Address the measurement noise explicitly] 35.2\% immediate reversion is
+    the empirical justification for the proposal's
+    $\text{observed} = \text{latent} + \text{noise}$ structure.
+  \item[Quantify the missingness bias] Impute \code{NP3PSTBL}, or model the
+    label as missing-not-at-random, to put a size on the lower bound in Q6.
+  \item[Then the hierarchical Bayesian model] Population-level progression plus
+    subject-level random effects, as in the proposal, followed by the
+    $\sigma_i$-as-phenotype analysis in its second half.
+\end{description}
+
+\vspace{1em}
+\noindent\textbf{Reference.} Stebbins GT, Goetz CG, Burn DJ, Jankovic J, Khoo TK,
+Tilley BC. How to identify tremor dominant and postural instability/gait
+difficulty groups with the Movement Disorder Society Unified Parkinson's Disease
+Rating Scale. \emph{Movement Disorders} 2013;28(5):668--70.
+
+\end{document}

@@ -71,7 +71,10 @@ BTP/
 │   ├── baseline.csv              one row per patient, with baseline predictors
 │   └── transitions/              9 CSV tables, 6 figures, report.txt
 │
-├── report/                    ← Progress reports (LaTeX source + compiled PDF)
+├── report/                    ← LaTeX source + compiled PDF
+│   ├── Week3-4_Report.tex/pdf    the Weeks 3–4 progress report (14 pp)
+│   └── Pipeline_Walkthrough.*    how every number was generated (22 pp),
+│                                 traced to the exact function that produced it
 ├── references/                ← The proposal and the source papers
 ├── docs/                      ← DATA_REQUIREMENTS.md: what to download and why
 └── extra/                     ← Parked material, read by nothing. See its README.
