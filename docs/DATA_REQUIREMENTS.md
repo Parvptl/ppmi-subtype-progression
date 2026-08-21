@@ -4,22 +4,26 @@
 
 | Path | Contents | Role |
 |---|---|---|
-| `Data/01_Current_Clinical/PPMI_Curated_Data_Cut_Public_20260511.xlsx` | 19,450 visits × 212 cols, 4,788 patients, BL → Year 15 | Visit skeleton, covariates, baseline predictors |
-| `Data/04_Archived_TemporalShift/PPMI_Original_Cohort_BL_to_Year_5_Dataset_Apr2020.csv` | 683 patients, BL → Y5 | The only in-repo source with a **3-class** subtype label |
-| `Data/02_Genetic_Subgroup/`, `03_Biospecimen_SiteBatch/` | Genetics, biospecimen assays | Future extensions |
-| `Data/05_Online_ModalityShift/` | Remote MDS-UPDRS Part I/II | Not usable here — no Part III |
-| `Data/00_Reference/` | Annotated data dictionary, code list, user guides | Reference |
+| `data/clinical/PPMI_Curated_Data_Cut_Public_20260511.xlsx` | 19,450 visits × 212 cols, 4,788 patients, BL → Year 15 | Visit skeleton, covariates, baseline predictors |
+| `data/validation/PPMI_Original_Cohort_BL_to_Year_5_Dataset_Apr2020.csv` | 683 patients, BL → Y5 | The only in-repo source with a **3-class** subtype label |
+| `extra/unused_data/02_Genetic_Subgroup/`, `03_Biospecimen_SiteBatch/` | Genetics, biospecimen assays | Future extensions |
+| `extra/unused_data/05_Online_ModalityShift/` | Remote MDS-UPDRS Part I/II | Not usable here — no Part III |
+| `data/dictionaries/` | Annotated data dictionary, code list, user guides | Reference |
 
-## What must be downloaded
+## The two files that must be downloaded separately
 
-Two files, both from the PPMI portal:
+These are **already in place** (`data/motor_updrs/`, downloaded 20 Aug 2026).
+This section records where they came from, so the pipeline can be rebuilt on
+another machine or refreshed against a newer PPMI cut.
+
+Both come from the PPMI portal:
 
 > **LONI IDA → PPMI → Download → Study Data → Motor Assessments**
 
 | Download | PPMI module | Save as |
 |---|---|---|
-| MDS-UPDRS Part II: Patient Questionnaire | `NUPDRS2P` | `Data/06_Motor_UPDRS/MDS-UPDRS_Part_II__Patient_Questionnaire_<date>.csv` |
-| MDS-UPDRS Part III: Motor Examination | `NUPDRS3TRT` | `Data/06_Motor_UPDRS/MDS-UPDRS_Part_III_<date>.csv` |
+| MDS-UPDRS Part II: Patient Questionnaire | `NUPDRS2P` | `data/motor_updrs/MDS-UPDRS_Part_II__Patient_Questionnaire_<date>.csv` |
+| MDS-UPDRS Part III: Motor Examination | `NUPDRS3TRT` | `data/motor_updrs/MDS-UPDRS_Part_III_<date>.csv` |
 
 The date suffix does not matter — `config/config.yaml` matches these by glob
 (`paths.updrs_part2_glob`, `paths.updrs_part3_glob`). If PPMI changes the file
@@ -28,7 +32,7 @@ naming, edit those two patterns rather than any source file.
 ### Why these two, specifically
 
 The proposal's model consumes the continuous TD/PIGD ratio and the three-class
-label. Neither can be derived from anything currently on disk:
+label. Neither can be derived from the curated cut alone:
 
 1. **The curated cut has no tremor score.** It ships `pigd` (the 5-item PIGD
    mean) but no corresponding tremor subscore. Ratio = tremor ÷ PIGD, so only
@@ -101,15 +105,14 @@ references. Expect near-perfect agreement with the curated `td_pigd` after
 collapsing to binary; any material disagreement means the medication-state
 filter or the item list needs revisiting before the panel is trusted.
 
-## Known issue to decide before Stage 3
+## Known issue to decide before the modelling stage
 
-**16.2% of visits have a PIGD subscore of exactly zero**, measured on the
-curated cut's `pigd` column for the sporadic PD cohort. Those visits are
-classifiable (the rule sends them to TD) but the *ratio* is undefined, so the
-observation model `observed ratio = latent phenotype + noise` has nothing to
-consume for roughly one visit in six — concentrated, predictably, in early and
-tremor-dominant patients, which is exactly the population the model most needs
-to characterise.
+**16.3% of labelled visits have a PIGD subscore of exactly zero** — 725 of
+4,441, measured on the built panel. Those visits are classifiable (the rule
+sends them to TD) but the *ratio* is undefined, so the observation model
+`observed ratio = latent phenotype + noise` has nothing to consume for roughly
+one visit in six — concentrated, predictably, in early and tremor-dominant
+patients, which is exactly the population the model most needs to characterise.
 
 This is a modelling decision, not a data problem. Three defensible routes:
 

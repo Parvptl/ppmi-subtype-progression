@@ -179,7 +179,7 @@ def main() -> int:
         print(
             "  BLOCKED on the two item-level MDS-UPDRS files.\n"
             "  Everything else the proposal needs is present and well populated.\n"
-            "  Once the files are in Data/06_Motor_UPDRS/, run:\n"
+            "  Once the files are in data/motor_updrs/, run:\n"
             "      python scripts/01_build_panel.py"
         )
     return 0

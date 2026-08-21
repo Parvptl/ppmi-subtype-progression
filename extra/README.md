@@ -26,16 +26,16 @@ PPMI downloads not consumed by the current pipeline.
 | `03_Biospecimen_SiteBatch/` | CSF and plasma assays. Same: future extension only. |
 | `05_Online_ModalityShift/` | Remote MDS-UPDRS Part I/II. **Not usable** for this project at all — it has no Part III, so 13 of the 16 items the TD/PIGD ratio needs are absent. |
 | `unused_MDS-UPDRS/` | Parts I, I-Patient-Questionnaire and IV from the Motor Assessments download. The subtype definition uses only Parts II and III. |
-| `PPMI Data User Guide.pdf` | Byte-identical duplicate of `Data/00_Reference/PPMI_Data_User_Guide_20240918.pdf`. |
+| `PPMI Data User Guide.pdf` | Byte-identical duplicate of `data/dictionaries/PPMI_Data_User_Guide_20240918.pdf`. |
 
 The `_Subgroup`, `_SiteBatch`, `_ModalityShift` and `_TemporalShift` suffixes are
 leftovers from the abandoned OOD work, where these were assembled as five
-distribution-shift datasets. Only `Data/04_Archived_TemporalShift/` is still in
-use, as the sole three-class validation reference — which is why it stayed in
-`Data/` despite the misleading name.
+distribution-shift datasets. The fifth of them survives as
+`data/validation/`, the sole three-class validation reference, and was renamed
+because its old name described a purpose the project no longer has.
 
 ## Restoring something
 
 If a future extension needs the genetics or biospecimen data, move the folder
-back under `Data/` and add a path entry to `config/config.yaml`. Nothing else
-has to change.
+under `data/` and add a path entry to `config/config.yaml`. Nothing else has to
+change.

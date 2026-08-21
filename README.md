@@ -32,22 +32,80 @@ The recomputed labels are checked against both of PPMI's own derivations:
 The 3-class check covers 390 patients and is the only available test of the
 Indeterminate/PIGD boundary, since the curated cut collapses those two.
 
+## Repository layout
+
+```
+BTP/
+├── config/
+│   └── config.yaml            ← ALL parameters live here. Nothing is hardcoded:
+│                                the 16 MDS-UPDRS items, the 1.15/0.90 thresholds,
+│                                cohort rules, medication state, interval bins.
+│
+├── src/ppmi_subtype/          ← THE CODE. All logic lives here (~1,550 lines).
+│   ├── config.py                 loads config.yaml, validates it on startup
+│   ├── loaders.py                one reader per source file
+│   ├── subtype.py                TD/PIGD subscores, ratio, 3-class decision rule
+│   ├── panel.py                  assembles the longitudinal patient-visit panel
+│   ├── transitions.py            transition matrices, reversion, Kaplan-Meier
+│   ├── validate.py               agreement against PPMI's own derivations
+│   └── plots.py                  the six figures
+│
+├── scripts/                   ← Thin drivers. They call src/ and save results;
+│   ├── 00_data_audit.py          they contain no analysis logic themselves.
+│   ├── 01_build_panel.py         Run them in order.
+│   └── 02_transition_analysis.py
+│
+├── tests/                     ← 74 tests, all exercising src/
+│   ├── test_subtype.py           classification rule and its edge cases
+│   ├── test_transitions.py       pairing, matrices, reversion, survival
+│   └── test_validate.py          label-coding remaps
+│
+├── data/                      ← PPMI source data (gitignored, not redistributable)
+│   ├── clinical/                 Curated Data Cut — the visit skeleton
+│   ├── motor_updrs/              MDS-UPDRS Part II & III — the 16 raw items
+│   ├── validation/               archived Apr-2020 cut, the 3-class reference
+│   └── dictionaries/             PPMI data dictionaries, code lists, guides
+│
+├── outputs/                   ← Generated. Delete freely; scripts rebuild it.
+│   ├── visit_panel.csv           one row per patient-visit, with subtype labels
+│   ├── baseline.csv              one row per patient, with baseline predictors
+│   └── transitions/              9 CSV tables, 6 figures, report.txt
+│
+├── report/                    ← Progress reports (LaTeX source + compiled PDF)
+├── references/                ← The proposal and the source papers
+├── docs/                      ← DATA_REQUIREMENTS.md: what to download and why
+└── extra/                     ← Parked material, read by nothing. See its README.
+```
+
+**Where to look first.** The scientific method is in
+[`src/ppmi_subtype/subtype.py`](src/ppmi_subtype/subtype.py) (how a subtype is
+computed) and
+[`src/ppmi_subtype/transitions.py`](src/ppmi_subtype/transitions.py) (how
+transitions are measured). The scripts show the order things run in;
+`config/config.yaml` shows every parameter that was chosen.
+
 ## Quick start
 
 ```bash
 pip install -e ".[dev]"
 ```
 
-Audit what is on disk and run the interim analysis:
+Check which source files are present, and see the data audit:
 
 ```bash
 python scripts/00_data_audit.py
 ```
 
-Once the MDS-UPDRS files are in `Data/06_Motor_UPDRS/`, build the panel:
+Build the labelled longitudinal panel (Weeks 1–2 deliverable):
 
 ```bash
 python scripts/01_build_panel.py
+```
+
+Run the transition analysis (Weeks 3–4 deliverable):
+
+```bash
+python scripts/02_transition_analysis.py
 ```
 
 Run the tests:
@@ -56,29 +114,38 @@ Run the tests:
 python -m pytest tests/ -q
 ```
 
-## Layout
+## The pipeline in one view
 
 ```
-config/config.yaml         every item list, threshold, path and cohort rule
-src/ppmi_subtype/
-  config.py                loading and eager validation
-  loaders.py               raw readers, one per source file
-  subtype.py               TD/PIGD subscores, ratio and 3-class rule
-  panel.py                 longitudinal patient-visit panel assembly
-  transitions.py           empirical transition analysis (Weeks 3-4)
-  validate.py              agreement against PPMI's own derivations
-scripts/                   numbered pipeline stages
-tests/                     55 tests over classification, transitions and validation
-docs/DATA_REQUIREMENTS.md  what to download and why
-outputs/                   generated, not tracked
-extra/                     parked material, read by nothing — see extra/README.md
+data/clinical/          data/motor_updrs/
+  curated cut             Part II + Part III items
+  (visit skeleton)        (16 raw scores)
+        │                         │
+        └───────────┬─────────────┘
+                    ▼
+        scripts/01_build_panel.py
+          · filter to sporadic PD           panel.filter_cohort
+          · keep OFF-medication exam        subtype.select_medication_state
+          · drop "101 = Unable to Rate"     subtype.clean_items
+          · tremor/PIGD means → ratio       subtype.compute_subscores
+          · apply 1.15 / 0.90 rule          subtype.classify
+          · validate vs PPMI (100%/99.87%)  validate.*
+                    ▼
+        outputs/visit_panel.csv     1,080 patients · 5,774 visits · 4,441 labelled
+                    ▼
+        scripts/02_transition_analysis.py
+          · pair adjacent labelled visits   transitions.consecutive_pairs
+          · 3×3 matrix + Wilson CIs         transitions.transition_matrix*
+          · stratify by elapsed interval    transitions.transition_matrix_by_interval
+          · reversion analysis              transitions.reversion_after_change
+          · time to conversion              transitions.first_entry, kaplan_meier
+          · pathways                        transitions.state_sequences
+                    ▼
+        outputs/transitions/        3,361 pairs · 9 tables · 6 figures
 ```
 
-`Data/` holds only what the pipeline actually reads: the curated cut
-(`01_Current_Clinical`), the three-class validation reference
-(`04_Archived_TemporalShift`), the item-level MDS-UPDRS files
-(`06_Motor_UPDRS`) and the PPMI dictionaries (`00_Reference`). Genetics,
-biospecimen, online and unused MDS-UPDRS parts are parked under
+`data/` holds only what the pipeline actually reads. Genetics, biospecimen, the
+online Part I/II download and the unused MDS-UPDRS parts are parked under
 `extra/unused_data/`, along with the report from the project's abandoned first
 direction.
 
