@@ -49,6 +49,7 @@ BTP/
 │   ├── transitions.py            transition matrices, reversion, Kaplan-Meier
 │   ├── ctmc.py                   continuous-time Markov chain + baselines
 │   ├── hmm.py                    latent state + misclassification model
+│   ├── hbayes.py                 hierarchical Bayesian growth model (Gibbs)
 │   ├── splitting.py              patient-level train/test split
 │   ├── validate.py               agreement against PPMI's own derivations
 │   └── plots.py, model_plots.py  figures
@@ -57,13 +58,15 @@ BTP/
 │   ├── 00_data_audit.py          they contain no analysis logic themselves.
 │   ├── 01_build_panel.py         Run them in order.
 │   ├── 02_transition_analysis.py
-│   └── 03_progression_model.py
+│   ├── 03_progression_model.py
+│   └── 04_hierarchical_bayes.py
 │
-├── tests/                     ← 118 tests, all exercising src/
+├── tests/                     ← 134 tests, all exercising src/
 │   ├── test_subtype.py           classification rule and its edge cases
 │   ├── test_transitions.py       pairing, matrices, reversion, survival
 │   ├── test_ctmc.py              generator recovery from simulated data
 │   ├── test_hmm.py               latent recovery; reduces to plain chain
+│   ├── test_hbayes.py            Gibbs sampler parameter recovery
 │   └── test_validate.py          label-coding remaps
 │
 ├── data/                      ← PPMI source data (gitignored, not redistributable)
@@ -76,11 +79,13 @@ BTP/
 │   ├── visit_panel.csv           one row per patient-visit, with subtype labels
 │   ├── baseline.csv              one row per patient, with baseline predictors
 │   ├── transitions/              9 CSV tables, 6 figures, report.txt
-│   └── model/                    14 CSV tables, 5 figures, report.txt
+│   ├── model/                    14 CSV tables, 5 figures, report.txt
+│   └── hbayes/                   growth model + head-to-head comparison
 │
 ├── report/                    ← LaTeX source + compiled PDF
 │   ├── Week3-4_Report.*          the Weeks 3–4 progress report (14 pp)
 │   ├── Week5-7_Report.*          the Weeks 5–7 progression model (9 pp)
+│   ├── Model_Comparison_Report.* growth model vs HMM (5 pp)
 │   └── Pipeline_Walkthrough.*    how every number was generated (23 pp),
 │                                 traced to the exact function that produced it
 ├── references/                ← The proposal and the source papers
@@ -299,6 +304,31 @@ latent against 3.4 observed; PIGD 16.5 against 2.3.
 
 **Clinical output.** A patient currently Indeterminate has a **63% chance of
 being PIGD within five years**, against 19% for a patient currently TD.
+
+## The hierarchical Bayesian growth model
+
+`scripts/04_hierarchical_bayes.py` → `outputs/hbayes/`. The model specified in
+the proposal (pp. 13–15), implemented as written and compared against the HMM.
+
+**Population progression: the TD/PIGD ratio declines 0.093 per year**
+(95% CI 0.068–0.116). From the mean baseline ratio of 2.29, the population
+average crosses the TD threshold after 12.3 years. Between-patient SD of the
+slope is 0.103/year — patients differ as much as the average effect itself.
+
+**On predicting the next subtype, the HMM is ahead in 6/6 splits** by
++0.058 ± 0.019 log-lik per transition (paired t-test p = 6.6×10⁻⁴). The reason
+is measurable: the growth model's residual SD is σ = 1.138, **4.6× the width of
+the entire Indeterminate band**, so band membership is noise-dominated. It also
+places 12.2% of its five-year predictive mass on negative ratios, which are
+impossible.
+
+**Two problems in the model as specified**, found by implementing it: σ_obs and
+σ_proc are provably not separable (only their sum is identified), and a Normal
+on the raw ratio cannot represent a non-negative, right-skewed quantity.
+
+**Keep both.** The HMM classifies the next visit better; the growth model is
+the only one that gives an interpretable progression rate, per-patient slopes,
+and a route to the σᵢ-as-phenotype analysis in the proposal's second half.
 
 **The results are a lower bound on the drift.** 23.1% of visits carry no label.
 Roughly half of that loss is exams that were performed but could not be fully

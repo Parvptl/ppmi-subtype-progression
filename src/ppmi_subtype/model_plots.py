@@ -251,3 +251,108 @@ def calibration_plot(cal: pd.DataFrame, path: Path, title: str) -> Path:
              "Points on the diagonal are well calibrated; marker area is the number of held-out transitions.",
              fontsize=8.5, color=INK_MUTED)
     return _finish(fig, path)
+
+
+# ---------------------------------------------------------------------------
+def growth_trajectories(post, path: Path, max_years: float = 12.0, n_patients: int = 60) -> Path:
+    """Population trajectory of the TD/PIGD ratio, with patient-level spread."""
+    fig, (ax, ax2) = plt.subplots(1, 2, figsize=(12.0, 4.6), width_ratios=[3, 2])
+    _style(ax)
+    _style(ax2)
+
+    t = np.linspace(0, max_years, 200)
+    rng = np.random.default_rng(0)
+
+    picks = rng.choice(len(post.sigma2), size=n_patients)
+    for s in picks:
+        b0 = rng.normal(0, np.sqrt(post.tau0_2[s]))
+        b1 = rng.normal(0, np.sqrt(post.tau1_2[s]))
+        ax.plot(t, (post.beta[s, 0] + b0) + (post.beta[s, 1] + b1) * t,
+                color="#c9c8c4", linewidth=0.8, alpha=0.7, zorder=2)
+
+    mean = post.beta[:, 0].mean() + post.beta[:, 1].mean() * t
+    draws = np.array([post.beta[s, 0] + post.beta[s, 1] * t for s in range(len(post.sigma2))])
+    lo, hi = np.quantile(draws, [0.025, 0.975], axis=0)
+    ax.fill_between(t, lo, hi, color="#2a78d6", alpha=0.22, linewidth=0, zorder=3)
+    ax.plot(t, mean, color="#2a78d6", linewidth=3, zorder=4, label="population trajectory")
+
+    ax.axhline(1.15, color=STATE_COLORS["TD"], linewidth=1.6, linestyle="--", zorder=1)
+    ax.axhline(0.90, color=STATE_COLORS["PIGD"], linewidth=1.6, linestyle="--", zorder=1)
+    ax.text(max_years * 0.015, 1.22, "TD threshold 1.15", ha="left", fontsize=8.5,
+            color=STATE_COLORS["TD"])
+    ax.text(max_years * 0.015, 0.66, "PIGD threshold 0.90", ha="left", fontsize=8.5,
+            color=STATE_COLORS["PIGD"])
+    ax.axhspan(-1.0, 0.0, color="#c9c8c4", alpha=0.35, zorder=0)
+    ax.text(max_years * 0.985, -0.55, "ratio < 0 is impossible", ha="right",
+            fontsize=8.5, color=INK_MUTED, style="italic")
+
+    ax.set_xlim(0, max_years)
+    ax.set_ylim(-1.0, 6.0)
+    ax.set_xlabel("years from first visit", color=INK_MUTED, fontsize=10)
+    ax.set_ylabel("TD/PIGD ratio", color=INK_MUTED, fontsize=10)
+    ax.set_title("Fitted growth model: population trajectory and patient spread",
+                 fontsize=11.5, fontweight="bold", loc="left", pad=10)
+    ax.grid(color=GRID, linewidth=0.8, alpha=0.6)
+    ax.set_axisbelow(True)
+    leg = ax.legend(frameon=False, fontsize=9.5, loc="upper right")
+    for txt in leg.get_texts():
+        txt.set_color(INK)
+
+    slope = -post.beta[:, 1]
+    ax2.hist(slope, bins=40, color="#2a78d6", edgecolor=SURFACE, linewidth=0.8)
+    for q, style in ((0.025, ":"), (0.5, "-"), (0.975, ":")):
+        ax2.axvline(np.quantile(slope, q), color=INK, linewidth=1.4, linestyle=style)
+    ax2.set_xlabel("population decline in ratio, per year", color=INK_MUTED, fontsize=10)
+    ax2.set_ylabel("posterior draws", color=INK_MUTED, fontsize=10)
+    ax2.set_title(f"Progression rate: {slope.mean():.4f}/yr "
+                  f"[{np.quantile(slope,.025):.4f}, {np.quantile(slope,.975):.4f}]",
+                  fontsize=11.5, fontweight="bold", loc="left", pad=10)
+    ax2.grid(axis="y", color=GRID, linewidth=0.8, alpha=0.6)
+    ax2.set_axisbelow(True)
+
+    fig.text(0.008, -0.05,
+             "Grey lines are 60 patients drawn from the fitted random-effect distribution. The shaded band is the 95% "
+             "credible\ninterval for the population mean, which is narrow; the spread between patients is far wider "
+             "than the uncertainty in the average.",
+             fontsize=8.5, color=INK_MUTED)
+    fig.tight_layout()
+    return _finish(fig, path)
+
+
+def hb_vs_hmm(robustness: pd.DataFrame, path: Path) -> Path:
+    """Held-out comparison of the two latent-variable models across splits."""
+    fig, ax = plt.subplots(figsize=(7.8, 4.6))
+    _style(ax)
+
+    x = np.arange(len(robustness))
+    width = 0.38
+    ax.bar(x - width / 2, robustness["HMM"], width * 0.9, color="#2a78d6",
+           edgecolor=SURFACE, linewidth=2, label="HMM (latent states)")
+    ax.bar(x + width / 2, robustness["HB growth"], width * 0.9, color="#eb6834",
+           edgecolor=SURFACE, linewidth=2, label="Hierarchical Bayesian growth")
+
+    for xi, v in zip(x - width / 2, robustness["HMM"]):
+        ax.text(xi, v - 0.015, f"{v:.3f}", ha="center", va="top", fontsize=8, color="#ffffff")
+    for xi, v in zip(x + width / 2, robustness["HB growth"]):
+        ax.text(xi, v - 0.015, f"{v:.3f}", ha="center", va="top", fontsize=8, color="#ffffff")
+
+    ax.set_xticks(x)
+    ax.set_xticklabels([f"split {int(s)}\nn={int(n)}" for s, n in
+                        zip(robustness["split"], robustness["n_common"])], fontsize=9)
+    ax.set_ylabel("held-out log-likelihood per transition", color=INK_MUTED, fontsize=10)
+    ax.set_ylim(min(robustness["HB growth"].min(), robustness["HMM"].min()) - 0.06, 0)
+    diff = robustness["HMM"] - robustness["HB growth"]
+    ax.set_title(f"Same held-out transitions: HMM ahead in {int((diff>0).sum())} of {len(diff)} splits "
+                 f"(mean {diff.mean():+.4f})",
+                 fontsize=11.5, fontweight="bold", loc="left", pad=10)
+    ax.grid(axis="y", color=GRID, linewidth=0.8, alpha=0.6)
+    ax.set_axisbelow(True)
+    leg = ax.legend(frameon=False, fontsize=9.5, loc="lower right")
+    for txt in leg.get_texts():
+        txt.set_color(INK)
+
+    fig.text(0.008, -0.07,
+             "Higher (less negative) is better. Restricted to transitions where every visit has a finite ratio, so both "
+             "models\ncan score them. Both are fitted only on training patients within each split.",
+             fontsize=8.5, color=INK_MUTED)
+    return _finish(fig, path)
