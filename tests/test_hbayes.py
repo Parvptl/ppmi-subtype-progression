@@ -177,3 +177,81 @@ class TestPrediction:
                                       max_draws=200)
         now = table[table["horizon_years"] == 0.0].iloc[0]
         assert now["TD"] == pytest.approx(1.0)
+
+
+class TestStage4PosteriorInference:
+    """Per-patient latent phenotype, its uncertainty, and how much is real."""
+
+    @pytest.fixture
+    def fitted(self):
+        panel = simulate_panel(2.0, -0.1, 1.0, 0.1, 0.8, 200, 5, seed=51)
+        data = hbayes.build_growth_data(panel)
+        post = hbayes.fit_growth_model(data, n_draws=600, burn_in=200, seed=51,
+                                       keep_random_effects=True)
+        return post, data
+
+    def test_random_effects_retained_with_right_shape(self, fitted):
+        post, data = fitted
+        assert post.random_effects is not None
+        assert post.random_effects.shape == (post.n_draws, data.n_patients, 2)
+
+    def test_not_retained_by_default(self):
+        panel = simulate_panel(2.0, -0.1, 1.0, 0.1, 0.8, 60, 4, seed=52)
+        post = hbayes.fit_growth_model(hbayes.build_growth_data(panel),
+                                       n_draws=200, burn_in=100, seed=52)
+        assert post.random_effects is None
+        with pytest.raises(ValueError, match="keep_random_effects"):
+            hbayes.patient_parameters(post)
+
+    def test_one_latent_row_per_observation(self, fitted):
+        post, data = fitted
+        assert len(hbayes.latent_trajectories(post, data)) == data.n_obs
+
+    def test_latent_band_probabilities_sum_to_one(self, fitted):
+        post, data = fitted
+        lat = hbayes.latent_trajectories(post, data)
+        total = lat[["P_TD", "P_Indeterminate", "P_PIGD"]].sum(axis=1)
+        assert np.allclose(total, 1.0)
+
+    def test_latent_credible_interval_brackets_the_mean(self, fitted):
+        post, data = fitted
+        lat = hbayes.latent_trajectories(post, data)
+        assert (lat["latent_q0.025"] <= lat["latent_mean"]).all()
+        assert (lat["latent_mean"] <= lat["latent_q0.975"]).all()
+
+    def test_patient_parameters_one_row_each(self, fitted):
+        post, data = fitted
+        params = hbayes.patient_parameters(post)
+        assert len(params) == data.n_patients
+        assert params["PATNO"].is_unique
+        assert (params["slope_q2.5"] <= params["slope_mean"]).all()
+
+    def test_reliability_lies_in_the_unit_interval(self, fitted):
+        post, data = fitted
+        rel = hbayes.reliability(post, data)
+        for col in ("reliability_baseline", "reliability_slope"):
+            assert (rel[col] >= 0).all() and (rel[col] <= 1).all()
+
+    def test_reliability_rises_with_more_visits(self):
+        """The whole point of the statistic: more data means more of it is real."""
+        few = simulate_panel(2.0, -0.1, 1.0, 0.1, 0.8, 150, 2, seed=53)
+        many = simulate_panel(2.0, -0.1, 1.0, 0.1, 0.8, 150, 10, seed=53)
+        out = []
+        for panel in (few, many):
+            data = hbayes.build_growth_data(panel)
+            post = hbayes.fit_growth_model(data, n_draws=400, burn_in=200, seed=53,
+                                           keep_random_effects=True)
+            out.append(hbayes.reliability(post, data)["reliability_slope"].median())
+        assert out[1] > out[0]
+
+    def test_posterior_predictive_widens_with_horizon(self, fitted):
+        post, data = fitted
+        pred = hbayes.posterior_predictive(post, data, post.patients[0],
+                                           horizons=(1, 10))
+        width = pred["q97.5"] - pred["q2.5"]
+        assert width.iloc[1] >= width.iloc[0]
+
+    def test_posterior_predictive_probabilities_sum_to_one(self, fitted):
+        post, data = fitted
+        pred = hbayes.posterior_predictive(post, data, post.patients[0])
+        assert np.allclose(pred[["TD", "Indeterminate", "PIGD"]].sum(axis=1), 1.0)

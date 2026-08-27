@@ -115,6 +115,8 @@ class GrowthPosterior:
     n_patients: int
     n_obs: int
     n_draws: int
+    random_effects: np.ndarray | None = None   # (S, M, 2), if retained
+    patients: np.ndarray | None = None         # (M,) PATNO in index order
 
     def summary(self) -> pd.DataFrame:
         rows = {
@@ -148,6 +150,7 @@ def fit_growth_model(
     prior_beta_sd: float = 100.0,
     prior_shape: float = 0.01,
     prior_rate: float = 0.01,
+    keep_random_effects: bool = False,
 ) -> GrowthPosterior:
     """Gibbs sampler for the hierarchical growth model.
 
@@ -172,6 +175,7 @@ def fit_growth_model(
 
     prior_beta_prec = np.eye(2) / prior_beta_sd**2
     keep_beta, keep_sigma, keep_t0, keep_t1 = [], [], [], []
+    keep_b = [] if keep_random_effects else None
     total = burn_in + n_draws * thin
 
     for sweep in range(total):
@@ -210,6 +214,8 @@ def fit_growth_model(
             keep_sigma.append(sigma2)
             keep_t0.append(tau0_2)
             keep_t1.append(tau1_2)
+            if keep_b is not None:
+                keep_b.append(b.copy())
 
     return GrowthPosterior(
         beta=np.array(keep_beta),
@@ -219,6 +225,8 @@ def fit_growth_model(
         n_patients=M,
         n_obs=N,
         n_draws=len(keep_sigma),
+        random_effects=np.array(keep_b) if keep_b is not None else None,
+        patients=data.patients,
     )
 
 
@@ -363,4 +371,156 @@ def clinical_table(
         draws = predict_ratio(post, np.array([0.0]), np.array([current_ratio]),
                               float(t), seed=seed, max_draws=max_draws)
         rows.append({"horizon_years": float(t), **label_probabilities(draws)})
+    return pd.DataFrame(rows)
+
+
+# ---------------------------------------------------------------------------
+#  Stage 4: per-patient latent phenotype and its uncertainty
+# ---------------------------------------------------------------------------
+def latent_trajectories(
+    post: GrowthPosterior,
+    data: GrowthData,
+    quantiles=(0.025, 0.5, 0.975),
+) -> pd.DataFrame:
+    """Posterior of the latent ratio R_it for every patient at every visit.
+
+    This is the quantity the proposal's Stage 4 asks for. Requires the sampler
+    to have been run with ``keep_random_effects=True``.
+
+    The latent value here is the trajectory mean
+    ``(beta0 + b0i) + (beta1 + b1i) t``. Because the observation and process
+    variances are not separable (see the module docstring), the process noise
+    around that mean cannot be attributed, so this is the trajectory rather
+    than the proposal's R^true in the strict sense.
+    """
+    if post.random_effects is None:
+        raise ValueError("fit_growth_model(..., keep_random_effects=True) is required")
+
+    b = post.random_effects                       # (S, M, 2)
+    beta = post.beta                              # (S, 2)
+    idx, t = data.patient_index, data.t
+
+    intercepts = beta[:, 0][:, None] + b[:, :, 0]  # (S, M)
+    slopes = beta[:, 1][:, None] + b[:, :, 1]
+
+    latent = intercepts[:, idx] + slopes[:, idx] * t[None, :]   # (S, N)
+
+    out = pd.DataFrame(
+        {
+            "PATNO": data.patients[idx],
+            "years_from_baseline": t,
+            "observed_ratio": data.y,
+            "latent_mean": latent.mean(axis=0),
+            "latent_sd": latent.std(axis=0),
+        }
+    )
+    for q in quantiles:
+        out[f"latent_q{q:g}"] = np.quantile(latent, q, axis=0)
+
+    band = np.stack(
+        [
+            (latent > TD_THRESHOLD).mean(axis=0),
+            ((latent >= PIGD_THRESHOLD) & (latent <= TD_THRESHOLD)).mean(axis=0),
+            (latent < PIGD_THRESHOLD).mean(axis=0),
+        ],
+        axis=1,
+    )
+    out["P_TD"], out["P_Indeterminate"], out["P_PIGD"] = band[:, 0], band[:, 1], band[:, 2]
+    return out
+
+
+def patient_parameters(post: GrowthPosterior) -> pd.DataFrame:
+    """Per-patient baseline level and progression rate, with credible intervals."""
+    if post.random_effects is None:
+        raise ValueError("fit_growth_model(..., keep_random_effects=True) is required")
+
+    intercept = post.beta[:, 0][:, None] + post.random_effects[:, :, 0]
+    slope = post.beta[:, 1][:, None] + post.random_effects[:, :, 1]
+
+    return pd.DataFrame(
+        {
+            "PATNO": post.patients,
+            "baseline_mean": intercept.mean(axis=0),
+            "baseline_q2.5": np.quantile(intercept, 0.025, axis=0),
+            "baseline_q97.5": np.quantile(intercept, 0.975, axis=0),
+            "slope_mean": slope.mean(axis=0),
+            "slope_q2.5": np.quantile(slope, 0.025, axis=0),
+            "slope_q97.5": np.quantile(slope, 0.975, axis=0),
+            "P_slope_negative": (slope < 0).mean(axis=0),
+        }
+    )
+
+
+def reliability(post: GrowthPosterior, data: GrowthData) -> pd.DataFrame:
+    """How much of each patient's random effect comes from their own data.
+
+    Reliability is ``1 - Var_posterior(b) / tau^2``: zero means the estimate is
+    the population mean with the patient contributing nothing, one means the
+    patient's data determines it entirely. Reported alongside the per-patient
+    estimates because a patient-specific slope with reliability 0.05 is, for
+    practical purposes, the cohort average wearing that patient's name.
+    """
+    sigma2 = float(post.sigma2.mean())
+    tau = np.array([post.tau0_2.mean(), post.tau1_2.mean()])
+    D_inv = np.diag(1.0 / tau)
+
+    rows = []
+    for k, patno in enumerate(post.patients):
+        mask = data.patient_index == k
+        t = data.t[mask]
+        X = np.column_stack([np.ones_like(t), t])
+        V = np.linalg.inv(X.T @ X / sigma2 + D_inv)
+        rows.append(
+            {
+                "PATNO": patno,
+                "n_visits": int(mask.sum()),
+                "span_years": float(t.max() - t.min()) if len(t) else 0.0,
+                "reliability_baseline": 1.0 - V[0, 0] / tau[0],
+                "reliability_slope": 1.0 - V[1, 1] / tau[1],
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def posterior_predictive(
+    post: GrowthPosterior,
+    data: GrowthData,
+    patno,
+    horizons=(1, 2, 3, 5),
+    include_noise: bool = True,
+    seed: int = 0,
+) -> pd.DataFrame:
+    """Future latent phenotype for one patient, using their retained draws.
+
+    The proposal's Stage 4 second sentence: posterior predictive inference for
+    the latent phenotype at future visits.
+    """
+    if post.random_effects is None:
+        raise ValueError("fit_growth_model(..., keep_random_effects=True) is required")
+
+    k = int(np.where(post.patients == patno)[0][0])
+    last_t = float(data.t[data.patient_index == k].max())
+    rng = np.random.default_rng(seed)
+
+    intercept = post.beta[:, 0] + post.random_effects[:, k, 0]
+    slope = post.beta[:, 1] + post.random_effects[:, k, 1]
+
+    rows = []
+    for h in horizons:
+        t = last_t + float(h)
+        draws = intercept + slope * t
+        if include_noise:
+            draws = draws + rng.normal(0.0, np.sqrt(post.sigma2))
+        probs = label_probabilities(draws)
+        rows.append(
+            {
+                "PATNO": patno,
+                "years_ahead": float(h),
+                "t_absolute": t,
+                "predicted_mean": float(draws.mean()),
+                "q2.5": float(np.quantile(draws, 0.025)),
+                "q97.5": float(np.quantile(draws, 0.975)),
+                **probs,
+            }
+        )
     return pd.DataFrame(rows)

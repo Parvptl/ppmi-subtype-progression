@@ -15,7 +15,8 @@ transitioning to another over future follow-up.
 | Weeks 1–2 | Clean longitudinal dataset with subtype labels for every visit | **Complete** |
 | Weeks 3–4 | Transition matrices and progression visualisations | **Complete** |
 | Weeks 5–7 | Baseline probabilistic model, validated on held-out patients | **Complete** |
-| Later | Hierarchical Bayesian model; σᵢ-as-phenotype analysis | Not started |
+| Proposal Stages 1–7 | Data prep → exploration → HB model → posterior inference → prediction → validation → output | **All complete** |
+| Later | σᵢ-as-phenotype analysis (needs a restricted subcohort) | Not started |
 
 The panel covers **1,080 sporadic PD patients, 5,774 visits, 4,441 with a
 subtype label**, out to 14 years of follow-up.
@@ -61,9 +62,11 @@ BTP/
 │   ├── 02_transition_analysis.py
 │   ├── 03_progression_model.py
 │   ├── 04_hierarchical_bayes.py
-│   └── 05_new_patient_model.py
+│   ├── 05_new_patient_model.py
+│   ├── 06_ratio_exploration.py   proposal Stage 2
+│   └── 07_longitudinal_cv.py     proposal Stages 4 and 6
 │
-├── tests/                     ← 134 tests, all exercising src/
+├── tests/                     ← 144 tests, all exercising src/
 │   ├── test_subtype.py           classification rule and its edge cases
 │   ├── test_transitions.py       pairing, matrices, reversion, survival
 │   ├── test_ctmc.py              generator recovery from simulated data
@@ -83,7 +86,9 @@ BTP/
 │   ├── transitions/              9 CSV tables, 6 figures, report.txt
 │   ├── model/                    14 CSV tables, 5 figures, report.txt
 │   ├── hbayes/                   growth model + head-to-head comparison
-│   └── newpatient/               first-visit model: the clinical deliverable
+│   ├── newpatient/               first-visit model: the clinical deliverable
+│   ├── exploration/              Stage 2: exploratory analysis of the ratio
+│   └── validation/               Stages 4 and 6: latent posteriors, longitudinal CV
 │
 ├── report/                    ← LaTeX source + compiled PDF
 │   ├── Week3-4_Report.*          the Weeks 3–4 progress report (14 pp)
@@ -339,6 +344,46 @@ earn their place. The four non-motor markers — RBDSQ, SCOPA-AUT, UPSIT, MoCA �
 all sit at or below zero. Worth knowing before the proposal's second half is
 built on them, though not a refutation: that hypothesis concerns trajectory
 *stability*, which this model does not estimate.
+
+## Proposal Stages 2, 4 and 6
+
+`scripts/06_ratio_exploration.py` → `outputs/exploration/` ·
+`scripts/07_longitudinal_cv.py` → `outputs/validation/`
+
+**Stage 2 (exploration) found what modelling later confirmed.** Within-patient
+SD of the ratio is 1.22 against an Indeterminate band 0.25 wide — band
+membership was always going to be noise-dominated, and this is visible before
+any model is fitted. ICC 0.536, so 54% of ratio variance is between patients.
+Raw per-patient OLS slopes have SD 0.531 against the hierarchical τ₁ of 0.10, a
+factor of 5 — shrinkage is doing real work.
+
+**One exploratory result contradicts the modelling choice.** Lag-1
+residual autocorrelation is −0.219 against a simulated null of −0.332
+[−0.365, −0.294] for iid noise on the same visit pattern. Being *more positive*
+than the null means deviations persist between visits — the signature of
+accumulating process noise, which favours the **state-space** form over the
+growth form the proposal settled on. That same form is where σ_obs and σ_proc
+become separately identifiable. Two independent reasons to prefer it.
+
+**Stage 4 (posterior inference) is complete**: `latent_trajectories.csv` holds
+the posterior of the latent phenotype for every patient at every visit;
+`patient_parameters.csv` holds each patient's baseline and slope with credible
+intervals **and the reliability of each** — median 0.805 for baseline, 0.050
+for slope.
+
+**Stage 6 (longitudinal CV, withholding future visits)**:
+
+| Train on first | Future visits | Log-lik | Accuracy | 95% coverage |
+|---|---|---|---|---|
+| 1 visit | 2,707 | −1.0341 | 0.576 | 0.974 |
+| **2 visits** | 1,886 | **−0.8917** | 0.647 | **0.929** |
+| 3 visits | 1,256 | −0.9398 | 0.666 | 0.905 |
+
+Interval coverage is close to nominal, so the model's uncertainty is honest.
+**But its calibration is not**: the growth model under-predicts PIGD in *every*
+bin (0.018→0.078, 0.107→0.159, 0.232→0.305, 0.364→0.508, 0.535→0.729), mean
+absolute gap 0.105. That is a systematic one-directional bias, and it is unique
+to this model — the HMM and first-visit models are both well calibrated.
 
 ## The hierarchical Bayesian growth model
 
