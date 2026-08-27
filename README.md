@@ -50,6 +50,7 @@ BTP/
 │   ├── ctmc.py                   continuous-time Markov chain + baselines
 │   ├── hmm.py                    latent state + misclassification model
 │   ├── hbayes.py                 hierarchical Bayesian growth model (Gibbs)
+│   ├── newpatient.py             first-visit progression model (the clinical one)
 │   ├── splitting.py              patient-level train/test split
 │   ├── validate.py               agreement against PPMI's own derivations
 │   └── plots.py, model_plots.py  figures
@@ -59,7 +60,8 @@ BTP/
 │   ├── 01_build_panel.py         Run them in order.
 │   ├── 02_transition_analysis.py
 │   ├── 03_progression_model.py
-│   └── 04_hierarchical_bayes.py
+│   ├── 04_hierarchical_bayes.py
+│   └── 05_new_patient_model.py
 │
 ├── tests/                     ← 134 tests, all exercising src/
 │   ├── test_subtype.py           classification rule and its edge cases
@@ -80,7 +82,8 @@ BTP/
 │   ├── baseline.csv              one row per patient, with baseline predictors
 │   ├── transitions/              9 CSV tables, 6 figures, report.txt
 │   ├── model/                    14 CSV tables, 5 figures, report.txt
-│   └── hbayes/                   growth model + head-to-head comparison
+│   ├── hbayes/                   growth model + head-to-head comparison
+│   └── newpatient/               first-visit model: the clinical deliverable
 │
 ├── report/                    ← LaTeX source + compiled PDF
 │   ├── Week3-4_Report.*          the Weeks 3–4 progress report (14 pp)
@@ -304,6 +307,38 @@ latent against 3.4 observed; PIGD 16.5 against 2.3.
 
 **Clinical output.** A patient currently Indeterminate has a **63% chance of
 being PIGD within five years**, against 19% for a patient currently TD.
+
+## The clinical deliverable: predicting a brand-new patient
+
+`scripts/05_new_patient_model.py` → `outputs/newpatient/`.
+
+**The longitudinal models earn their accuracy from history, and a new patient
+has none.** Measured directly — predicting subtype at horizon *h* from a first
+visit only, five splits:
+
+| Model (baseline information only) | Held-out log-lik |
+|---|---|
+| **Baseline subtype + ratio + covariates** | **−0.7550** |
+| + covariates | −0.7625 |
+| + baseline ratio | −0.7735 |
+| Baseline subtype + horizon | −0.7813 |
+| HMM (nothing to filter) | −0.7869 |
+
+For a first visit the HMM is the *worst* of these. A direct model of
+P(subtype at h | first visit) beats it by **+0.032**, at 71.9% accuracy and
+well calibrated across the full probability range.
+
+**The HMM's value grows with follow-up** — its advantage over a lookup table
+runs +0.005 at one visit, +0.021 at two, +0.047 at six or more. The two models
+are complementary: this one answers the first visit, the HMM answers every
+visit after.
+
+**Which baseline measures matter** (held-out cost of dropping each): only
+`updrs2_score` (+0.015), DaTscan putamen binding (+0.005) and `age` (+0.004)
+earn their place. The four non-motor markers — RBDSQ, SCOPA-AUT, UPSIT, MoCA —
+all sit at or below zero. Worth knowing before the proposal's second half is
+built on them, though not a refutation: that hypothesis concerns trajectory
+*stability*, which this model does not estimate.
 
 ## The hierarchical Bayesian growth model
 
