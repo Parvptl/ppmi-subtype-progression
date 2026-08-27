@@ -101,8 +101,20 @@ class Config:
     def splits(self) -> dict[str, Any]:
         return self.raw["splits"]
 
+    @property
+    def model(self) -> dict[str, Any]:
+        return self.raw["model"]
 
-_REQUIRED_SECTIONS = ("seed", "paths", "subtype", "cohort", "stability_predictors", "splits")
+
+_REQUIRED_SECTIONS = (
+    "seed",
+    "paths",
+    "subtype",
+    "cohort",
+    "stability_predictors",
+    "splits",
+    "model",
+)
 
 
 def _validate(raw: dict[str, Any]) -> None:
@@ -165,6 +177,18 @@ def _validate(raw: dict[str, Any]) -> None:
     total = float(ratios["train"]) + float(ratios["test"])
     if abs(total - 1.0) > 1e-9:
         raise ConfigError(f"splits.train + splits.test must sum to 1.0, got {total}")
+
+    m = raw["model"]
+    for key in ("horizons", "emission_floor", "n_restarts", "bootstrap_draws"):
+        if key not in m:
+            raise ConfigError(f"config.yaml is missing model.{key}")
+
+    if not 0.0 < float(m["emission_floor"]) < 1.0:
+        raise ConfigError(
+            f"model.emission_floor must lie in (0, 1); got {m['emission_floor']}"
+        )
+    if not m["horizons"] or any(float(h) <= 0 for h in m["horizons"]):
+        raise ConfigError("model.horizons must be a non-empty list of positive years")
 
 
 def load_config(path: str | Path | None = None) -> Config:

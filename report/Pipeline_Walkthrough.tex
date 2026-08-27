@@ -1485,9 +1485,19 @@ visits lost are disproportionately those most likely to be PIGD. \textbf{The
 reported drift toward PIGD is therefore a lower bound.}
 
 \subsection*{Q7. Why Wilson intervals?}
-\textbf{Answer.} Row counts range from 334 to 2{,}261 and several probabilities
-sit near the boundary. The normal approximation yields intervals outside
-$[0,1]$ in exactly those cells.
+\textbf{Answer.} Because one estimator has to serve both the pooled matrix and
+the interval-stratified table, and the normal (Wald) approximation breaks down
+in the second. In the pooled $3\times3$ matrix Wald would in fact be adequate
+--- checked cell by cell, it never leaves $[0,1]$ and agrees with Wilson to
+within 0.004. But the stratified table has row counts as low as 9, and there
+Wald returns a \emph{negative} lower bound in five cells, for example
+Indeterminate\arr Indeterminate at $2.5$--$4.0$ years ($k=2$, $n=16$):
+Wald $[-0.037,\, 0.287]$ against Wilson $[0.035,\, 0.360]$.
+
+Even where Wald stays inside $[0,1]$ it is wrong at small $n$, because it
+forces a symmetric interval around $\hat p$ when the true uncertainty is
+skewed. Switching estimator between tables would be worse than using the one
+that is valid for both.
 
 \textbf{Evidence.} \code{transition\_counts\_with\_ci};
 \code{test\_wilson\_interval\_stays\_in\_unit\_range}.

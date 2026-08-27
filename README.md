@@ -14,7 +14,7 @@ transitioning to another over future follow-up.
 |---|---|---|
 | Weeks 1–2 | Clean longitudinal dataset with subtype labels for every visit | **Complete** |
 | Weeks 3–4 | Transition matrices and progression visualisations | **Complete** |
-| Weeks 5–7 | Baseline probabilistic (Markov) model | Not started |
+| Weeks 5–7 | Baseline probabilistic model, validated on held-out patients | **Complete** |
 | Later | Hierarchical Bayesian model; σᵢ-as-phenotype analysis | Not started |
 
 The panel covers **1,080 sporadic PD patients, 5,774 visits, 4,441 with a
@@ -47,17 +47,23 @@ BTP/
 │   ├── subtype.py                TD/PIGD subscores, ratio, 3-class decision rule
 │   ├── panel.py                  assembles the longitudinal patient-visit panel
 │   ├── transitions.py            transition matrices, reversion, Kaplan-Meier
+│   ├── ctmc.py                   continuous-time Markov chain + baselines
+│   ├── hmm.py                    latent state + misclassification model
+│   ├── splitting.py              patient-level train/test split
 │   ├── validate.py               agreement against PPMI's own derivations
-│   └── plots.py                  the six figures
+│   └── plots.py, model_plots.py  figures
 │
 ├── scripts/                   ← Thin drivers. They call src/ and save results;
 │   ├── 00_data_audit.py          they contain no analysis logic themselves.
 │   ├── 01_build_panel.py         Run them in order.
-│   └── 02_transition_analysis.py
+│   ├── 02_transition_analysis.py
+│   └── 03_progression_model.py
 │
-├── tests/                     ← 74 tests, all exercising src/
+├── tests/                     ← 118 tests, all exercising src/
 │   ├── test_subtype.py           classification rule and its edge cases
 │   ├── test_transitions.py       pairing, matrices, reversion, survival
+│   ├── test_ctmc.py              generator recovery from simulated data
+│   ├── test_hmm.py               latent recovery; reduces to plain chain
 │   └── test_validate.py          label-coding remaps
 │
 ├── data/                      ← PPMI source data (gitignored, not redistributable)
@@ -69,11 +75,13 @@ BTP/
 ├── outputs/                   ← Generated. Delete freely; scripts rebuild it.
 │   ├── visit_panel.csv           one row per patient-visit, with subtype labels
 │   ├── baseline.csv              one row per patient, with baseline predictors
-│   └── transitions/              9 CSV tables, 6 figures, report.txt
+│   ├── transitions/              9 CSV tables, 6 figures, report.txt
+│   └── model/                    14 CSV tables, 5 figures, report.txt
 │
 ├── report/                    ← LaTeX source + compiled PDF
-│   ├── Week3-4_Report.tex/pdf    the Weeks 3–4 progress report (14 pp)
-│   └── Pipeline_Walkthrough.*    how every number was generated (22 pp),
+│   ├── Week3-4_Report.*          the Weeks 3–4 progress report (14 pp)
+│   ├── Week5-7_Report.*          the Weeks 5–7 progression model (9 pp)
+│   └── Pipeline_Walkthrough.*    how every number was generated (23 pp),
 │                                 traced to the exact function that produced it
 ├── references/                ← The proposal and the source papers
 ├── docs/                      ← DATA_REQUIREMENTS.md: what to download and why
@@ -111,6 +119,12 @@ Run the transition analysis (Weeks 3–4 deliverable):
 python scripts/02_transition_analysis.py
 ```
 
+Fit and validate the progression model (Weeks 5–7 deliverable, ~20 min):
+
+```bash
+python scripts/03_progression_model.py
+```
+
 Run the tests:
 
 ```bash
@@ -145,6 +159,15 @@ data/clinical/          data/motor_updrs/
           · pathways                        transitions.state_sequences
                     ▼
         outputs/transitions/        3,361 pairs · 9 tables · 6 figures
+                    ▼
+        scripts/03_progression_model.py
+          · patient-level train/test split  splitting.split_patients
+          · test the Markov property        chi-squared on labelled triples
+          · discrete + continuous chains    ctmc.fit_dtmc, ctmc.fit_ctmc
+          · latent state + misclassification hmm.fit_hmm
+          · validate on held-out patients   10 independent splits
+                    ▼
+        outputs/model/              14 tables · 5 figures · clinical output table
 ```
 
 `data/` holds only what the pipeline actually reads. Genetics, biospecimen, the
@@ -247,6 +270,35 @@ continuous time rather than per-visit.
 their entire record; median state changes per patient is 0, mean 0.86. Across
 86 distinct pathways, the commonest are TD-only (46.0%), PIGD-only (10.1%) and
 TD → PIGD (7.7%).
+
+## Weeks 5–7: the progression model
+
+`scripts/03_progression_model.py` → `outputs/model/`. Three models fitted on
+755 training patients, validated on 325 held-out ones.
+
+**A Markov chain in the observed label is misspecified — provably.** For visits
+currently labelled TD, arriving from PIGD raises P(PIGD next visit) from 0.086
+to 0.393 (χ² = 156.6, p = 7.9×10⁻³³). The current state is not a sufficient
+summary of the past, which is the signature of a latent state read through
+noise.
+
+**The hidden Markov model wins 10/10 held-out splits**, by +0.028 ± 0.009
+log-likelihood per transition over the discrete baseline (paired t-test
+p = 5.4×10⁻⁶). Ranking: HMM > discrete chain > continuous-time chain > null.
+
+**The continuous-time chain did not help** — a negative result. It loses at
+every interval, most at long ones, because P(t) = exp(Qt) imposes consistency
+across intervals that a noisily-observed process does not satisfy.
+
+**Progression is sequential.** The latent direct TD → PIGD rate is 16× smaller
+than TD → Indeterminate, and PIGD → TD directly is zero. The model recovered an
+ordering it was never given.
+
+**The phenotype is far more stable than its label:** TD persists ~10 years
+latent against 3.4 observed; PIGD 16.5 against 2.3.
+
+**Clinical output.** A patient currently Indeterminate has a **63% chance of
+being PIGD within five years**, against 19% for a patient currently TD.
 
 **The results are a lower bound on the drift.** 23.1% of visits carry no label.
 Roughly half of that loss is exams that were performed but could not be fully

@@ -157,3 +157,27 @@ splits:
   train: 0.70
   test: 0.30
   stratify_by: baseline_subtype
+
+# -----------------------------------------------------------------------------
+#  Weeks 5-7 progression model.
+# -----------------------------------------------------------------------------
+model:
+  # Horizons for the clinical output table, in years.
+  horizons: [1, 2, 3, 5]
+
+  # Minimum probability that an examination records the true state correctly.
+  # Without this the maximum-likelihood HMM is degenerate: the latent
+  # Indeterminate state emits uniformly and PIGD becomes absorbing at the
+  # parameter boundary. See the note in src/ppmi_subtype/hmm.py.
+  emission_floor: 0.5
+
+  # Random restarts for each fit. The likelihood surface is not guaranteed
+  # unimodal, so the best optimum of several is kept.
+  n_restarts: 4
+
+  # Patient-level bootstrap draws for confidence intervals on the rates.
+  bootstrap_draws: 300
+
+  # Independent train/test splits used to check that the model ranking is not
+  # an artefact of one particular split.
+  robustness_splits: 10
