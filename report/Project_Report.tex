@@ -1,0 +1,891 @@
+% =============================================================================
+%  Full project report, Weeks 1-7
+%  Probabilistic Motor Subtype Progression Model for Parkinson's Disease
+%
+%  Figures are read from outputs/; regenerate with scripts/01 .. 07 then
+%  compile twice with pdflatex.
+% =============================================================================
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=2.4cm]{geometry}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{caption}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{float}
+\usepackage[hidelinks]{hyperref}
+
+\graphicspath{
+  {../outputs/transitions/figures/}
+  {../outputs/model/figures/}
+  {../outputs/hbayes/figures/}
+}
+
+\definecolor{warn}{HTML}{B7770B}
+
+\newcommand{\code}[1]{\texttt{\small #1}}
+\newcommand{\arr}{$\rightarrow$}
+
+\setlist[itemize]{itemsep=2pt,topsep=4pt}
+\setlist[enumerate]{itemsep=2pt,topsep=4pt}
+\captionsetup{font=small,labelfont=bf}
+
+\newenvironment{keypoint}
+  {\begin{center}\begin{minipage}{0.94\textwidth}%
+   \vspace{4pt}\hrule\vspace{7pt}\small}
+  {\vspace{7pt}\hrule\vspace{4pt}\end{minipage}\end{center}}
+
+\title{\textbf{A Probabilistic Model of Motor Subtype Progression\\
+       in Parkinson's Disease}\\[0.7em]
+       \large Project Report, Weeks 1--7}
+\author{Parv Patel \quad\textbullet\quad Mayank Tewatia\\[0.4em]
+        \small Supervisor: Prof.\ K.~R.\ Sahasranand\\
+        \small Department of Data Science, IIT Palakkad}
+\date{August 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+Parkinson's disease is classified into Tremor Dominant (TD), Indeterminate and
+Postural Instability / Gait Difficulty (PIGD) motor subtypes by a fixed ratio of
+MDS-UPDRS items. That rule describes a patient's present state and says nothing
+about their future. This project builds the probabilistic extension: given what
+is known about a patient today, the probability that they occupy each subtype at
+one, two, three and five years.
+
+Weeks 1--2 produced a labelled longitudinal panel of 1{,}080 sporadic PD patients
+from the PPMI dataset, with the three-class subtype recomputed from raw items and
+validated at 100.00\% against PPMI's own two-class derivation and 99.87\% against
+an archived three-class one. Weeks 3--4 characterised 3{,}361 observed
+transitions. Weeks 5--7 fitted and validated five progression models.
+
+Three findings shaped everything after them. \textbf{Indeterminate is a crossing,
+not a state} --- only 19.2\% of patients remain in it. \textbf{35.2\% of observed
+subtype changes reverse at the very next visit}, yet the movement is
+significantly asymmetric ($p = 1.8 \times 10^{-8}$), so the data is a genuine
+drift seen through a noisy measurement. And \textbf{a Markov chain in the observed
+label is provably misspecified} ($\chi^2 = 156.6$, $p = 7.9 \times 10^{-33}$).
+
+No single model wins. A hidden Markov model with misclassification predicts a
+patient's next visit best once they have follow-up history, beating the discrete
+baseline in 10 of 10 splits. The proposal's hierarchical Bayesian growth model
+supplies the interpretable progression rate --- the TD/PIGD ratio declines
+$0.093$ per year (95\% CI $0.068$--$0.116$) --- but predicts subtype less well
+and is systematically miscalibrated. For a patient seen for the \emph{first}
+time, which is the clinical question, both are beaten by a direct model using
+baseline measures, at 71.9\% accuracy.
+
+All seven stages of the proposal's roadmap are complete. The work is
+reproducible from seven commands and covered by 144 unit tests.
+\end{abstract}
+
+\clearpage
+\tableofcontents
+\clearpage
+
+% =============================================================================
+\section{Objective}
+% =============================================================================
+
+The TD/PIGD classification (Stebbins et al., 2013) computes two subscores from
+sixteen MDS-UPDRS items and takes their ratio:
+\[
+  \text{ratio} = \frac{\text{mean of 11 tremor items}}{\text{mean of 5 gait and postural items}}
+\]
+with $\text{ratio} \geq 1.15 \Rightarrow$ TD, $\text{ratio} \leq 0.90 \Rightarrow$
+PIGD, and the interval between them Indeterminate.
+
+The rule is widely used and clinically validated, but it is a snapshot. Patients
+move between subtypes as the disease progresses, and the classification carries
+no statement about how likely that is. The project's objective is to attach
+probabilities to it without replacing it --- to keep the existing thresholds and
+report, for an individual patient, the chance of remaining where they are or
+moving.
+
+\subsection{Scope of this report}
+
+Weeks 1--7 of the plan, and Stages 1--7 of the modelling roadmap. Section~9 maps
+the two onto each other. What has \emph{not} been done is stated in
+Section~11.
+
+% =============================================================================
+\section{Weeks 1--2: building a labelled longitudinal dataset}
+% =============================================================================
+
+\subsection{Sources}
+
+Four files, of which two had to be downloaded separately.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}lrl@{}}
+\toprule
+\textbf{Source} & \textbf{Size} & \textbf{Role} \\
+\midrule
+PPMI Curated Data Cut       & 19{,}450 $\times$ 212 & visit skeleton, covariates \\
+MDS-UPDRS Part II (items)   & 37{,}777 $\times$ 22  & 3 of the 16 items \\
+MDS-UPDRS Part III (items)  & 39{,}310 $\times$ 65  & 13 items, medication state \\
+Archived Apr-2020 cut       & \phantom{0}3{,}445 $\times$ 159 & three-class validation only \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{keypoint}
+\textbf{The curated cut alone cannot support the project}, which was established
+before any modelling. It ships \code{pigd} (the five-item PIGD mean) but no
+tremor subscore, so the ratio has a denominator and no numerator. Its
+\code{td\_pigd} is coded \emph{two}-class (TD / non-TD), collapsing Indeterminate
+away entirely. Both the continuous ratio and the middle class had to be
+recomputed from raw items.
+\end{keypoint}
+
+\subsection{Construction}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lrr@{}}
+\toprule
+\textbf{Step} & \textbf{Rows} & \textbf{Removed} \\
+\midrule
+Curated cut                                  & 19{,}450 & --- \\
+Restrict to sporadic PD                      & \phantom{0}5{,}789 & 13{,}661 \\
+Drop unscheduled and withdrawal visits       & \phantom{0}5{,}774 & \phantom{00,0}15 \\
+\midrule
+MDS-UPDRS Part III, all rows                 & 39{,}310 & --- \\
+Keep OFF-medication or untreated exams       & 29{,}356 & \phantom{0}9{,}954 \\
+Merge with Part II, deduplicate              & 37{,}886 & \phantom{00,0}11 \\
+\midrule
+\textbf{Panel after joining}                 & \textbf{5{,}774} & \\
+\quad of which carry a subtype label         & \textbf{4{,}441} & (76.9\%) \\
+\bottomrule
+\end{tabular}
+\caption{Every removed row was verified: all 9{,}954 dropped from Part III have
+\code{PDSTATE == 'ON'}, and none are OFF or untreated. The OFF exam is used
+because levodopa suppresses tremor, so scoring an ON exam would manufacture
+transitions that are pharmacological rather than pathological.}
+\end{table}
+
+\subsection{Two data traps}
+
+Both would have corrupted results silently rather than raising an error.
+
+\paragraph{``Unable to Rate'' is stored as the number 101.} In all thirteen
+Part III items, in the same numeric field as a real 0--4 rating. A single 101
+among the five PIGD items lifts their mean to roughly 20, driving the ratio to
+zero and relabelling a tremor-dominant visit as PIGD. \code{NP3PSTBL} alone
+carries 3{,}206 of them among OFF exams. The pipeline excludes values outside the
+valid 0--4 range, so a sentinel PPMI introduces later cannot enter a subscore
+either.
+
+\paragraph{The archived validation file uses a different coding.} Its
+\code{td\_pigd\_old} defines $2 =$ PIGD and $3 =$ Indeterminate, the reverse of
+the natural ordering. Compared without remapping, agreement reads 65.9\% and
+looks like a broken classifier. Confirmed against the archived data dictionary,
+remapped, and unit-tested.
+
+\subsection{Validation}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}llr@{}}
+\toprule
+\textbf{Reference} & \textbf{Classes} & \textbf{Agreement} \\
+\midrule
+Curated cut \code{td\_pigd}   & 2 (TD / non-TD)        & 4{,}431 / 4{,}431 $=$ \textbf{100.00\%} \\
+Archived \code{td\_pigd\_old} & 3 (TD / Indet.\ / PIGD) & 1{,}595 / 1{,}597 $=$ \textbf{99.87\%} \\
+\bottomrule
+\end{tabular}
+\caption{The three-class check covers 390 patients and is the only available test
+of the Indeterminate/PIGD boundary, since the curated cut collapses those two.}
+\end{table}
+
+\subsection{Result}
+
+\textbf{1{,}080 patients, 5{,}774 visits, 4{,}441 labelled, up to 14 years of
+follow-up.} Baseline distribution: TD 71.7\%, Indeterminate 10.1\%, PIGD 18.1\%.
+
+% =============================================================================
+\section{Weeks 3--4: what transitions actually look like}
+% =============================================================================
+
+3{,}361 consecutive labelled visit pairs from the 934 patients with at least two
+labelled visits; median interval 1.00 years.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+& \textbf{\arr\ TD} & \textbf{\arr\ Indeterminate} & \textbf{\arr\ PIGD} & \textbf{Row $n$} \\
+\midrule
+TD            & \textbf{0.808} & 0.080 & 0.112 & 2{,}261 \\
+Indeterminate & 0.440 & \textbf{0.192} & 0.368 & \phantom{0,}334 \\
+PIGD          & 0.184 & 0.114 & \textbf{0.702} & \phantom{0,}766 \\
+\bottomrule
+\end{tabular}
+\caption{Pooled transition matrix. All probabilities carry Wilson score
+intervals in \code{outputs/transitions/}.}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.66\textwidth]{transition_matrix.png}
+\caption{The same matrix. Cell counts are printed because row totals differ by
+an order of magnitude.}
+\end{figure}
+
+\subsection{Four findings}
+
+\paragraph{1. Indeterminate is a crossing, not a state.} Only 19.2\% remain;
+44.0\% return to TD and 36.8\% move to PIGD. Expected persistence 1.24 visits
+against 5.21 for TD. It behaves exactly as the neutral band of a continuous,
+noisily measured quantity would --- which is the proposal's premise, measured
+rather than assumed.
+
+\paragraph{2. PIGD is not absorbing.} 29.8\% of PIGD visits are followed by a
+non-PIGD assessment, 18.4\% straight back to TD. Much of the literature treats
+TD~\arr~PIGD as one-directional; this data does not.
+
+\paragraph{3. A third of observed changes reverse immediately.}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}llrrr@{}}
+\toprule
+\textbf{From} & \textbf{To} & \textbf{$n$} & \textbf{Reverted} & \textbf{Rate} \\
+\midrule
+TD & Indeterminate & 134 & 75 & \textbf{0.560} \\
+PIGD & Indeterminate & \phantom{0}54 & 27 & \textbf{0.500} \\
+PIGD & TD & 112 & 44 & 0.393 \\
+TD & PIGD & 172 & 55 & 0.320 \\
+Indeterminate & PIGD & \phantom{0}93 & 17 & 0.183 \\
+Indeterminate & TD & 108 & 19 & 0.176 \\
+\midrule
+\multicolumn{2}{@{}l}{\textbf{Overall}} & \textbf{673} & \textbf{237} & \textbf{0.352} \\
+\bottomrule
+\end{tabular}
+\caption{Share of observed state changes that return to the origin at the very
+next visit. Changes \emph{into} Indeterminate reverse most.}
+\end{table}
+
+\begin{keypoint}
+\textbf{But the movement is not symmetric, and that distinction carries the
+project.} If the changes were pure noise, forward and reverse counts would
+match. TD~\arr~PIGD occurs 253 times against 141 in reverse
+($p = 1.8\times10^{-8}$); Indeterminate~\arr~PIGD 123 against 87 ($p = 0.016$).
+Of 932 cross-state moves, 80.5\% cancels and 19.5\% is net drift toward PIGD.
+
+The correct reading is \emph{a genuine directional drift observed through a noisy
+measurement} --- which is the case \emph{for} a latent-variable model, not
+against it.
+\end{keypoint}
+
+\paragraph{4. Transition probabilities scale with the gap between visits.}
+TD~\arr~PIGD is 0.100 at intervals under 1.5 years and 0.289 beyond four. A
+single pooled matrix therefore averages one-year and multi-year transitions in
+whatever proportion attendance happened to produce; it describes the study design
+as much as the disease.
+
+\subsection{Time to PIGD conversion}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lrr@{}}
+\toprule
+& \textbf{Naive (1 visit)} & \textbf{Sustained (2 visits)} \\
+\midrule
+At risk (not PIGD at baseline) & 885 & 885 \\
+Converted                      & 263 \,(29.7\%) & 127 \,(14.4\%) \\
+KM cumulative incidence, year 5 & \textbf{35.3\%} & \textbf{15.3\%} \\
+\bottomrule
+\end{tabular}
+\caption{Requiring a conversion to hold for two consecutive visits eliminates
+51.7\% of them. The definition of ``converted'' moves the answer more than most
+modelling choices downstream of it.}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.78\textwidth]{time_to_pigd_conversion.png}
+\caption{Kaplan--Meier cumulative incidence under both definitions, truncated at
+year 12 where the risk set falls below 25. The at-risk counts are printed
+beneath the axis.}
+\end{figure}
+
+\subsection{A bias with a known direction}
+
+23.1\% of cohort visits carry no label. Roughly half are exams that were
+performed but could not be fully scored --- and in \textbf{1{,}243 of those
+1{,}253 exams the missing item is \code{NP3PSTBL}}, item 3.12, postural
+stability. The pull test is often unsafe in a patient with poor balance.
+
+Those exams come from materially more advanced patients: median Hoehn \& Yahr
+3.0 against 2.0 (Mann--Whitney $p = 1.4\times10^{-17}$). Postural stability is
+one of the five \emph{PIGD} items, so the visits lost are disproportionately
+those of patients most likely to be classified PIGD.
+
+\begin{keypoint}
+Every progression estimate in this report is therefore a \textbf{lower bound}.
+Relaxing the all-items rule is not a remedy: allowing one missing item recovers
+44 visits and changes no existing label, because the incomplete exams are
+missing many items rather than one.
+\end{keypoint}
+
+% =============================================================================
+\section{Weeks 5--7: probabilistic progression models}
+% =============================================================================
+
+Five models were fitted and validated on held-out patients. Splitting is always
+at the level of the \emph{patient}, stratified by baseline subtype, so no
+individual appears on both sides.
+
+\subsection{A Markov chain in the observed label is misspecified}
+
+A Markov chain assumes the current state summarises the past. That is directly
+testable on the 2{,}427 labelled triples.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Currently} & \textbf{Triples} & \textbf{$\chi^2$ (dof 4)} & \textbf{$p$} \\
+\midrule
+TD            & 1{,}583 & 156.6 & $7.9\times10^{-33}$ \\
+Indeterminate & \phantom{0,}235 & \phantom{0}15.3 & $4.2\times10^{-3}$ \\
+PIGD          & \phantom{0,}609 & \phantom{0}61.2 & $1.7\times10^{-12}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+For visits currently labelled TD, arriving from PIGD raises the probability of
+being PIGD next visit from \textbf{0.086 to 0.393}. Where a patient came from
+matters enormously, even conditioning on where they are. That is the signature of
+a latent state read through noise: if the true phenotype is PIGD but one exam
+scores TD, the next exam is likely to score PIGD again.
+
+\subsection{Model comparison}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Model} & \textbf{Log-lik / transition} & \textbf{Accuracy} & \textbf{Brier} \\
+\midrule
+HMM (latent state $+$ misclassification) & $\mathbf{-0.6384}$ & \textbf{0.770} & \textbf{0.3458} \\
+Discrete Markov chain (per visit)        & $-0.6653$ & 0.768 & 0.3625 \\
+Continuous-time Markov chain             & $-0.6752$ & 0.766 & 0.3670 \\
+Marginal (null)                          & $-0.8633$ & 0.625 & 0.5185 \\
+\bottomrule
+\end{tabular}
+\caption{276 held-out patients, 1{,}002 transitions.}
+\end{table}
+
+\begin{keypoint}
+The hidden Markov model beats the discrete baseline in \textbf{10 of 10}
+independent splits, by $+0.0284 \pm 0.0094$ log-likelihood per transition
+(paired $t$-test $p = 5.4\times10^{-6}$, Wilcoxon $p = 0.002$).
+
+The continuous-time chain --- the expected improvement, given that transition
+probabilities scale with the interval --- \textbf{does not help}. It loses at
+every interval and by most at long ones. Imposing $P(t) = e^{Qt}$ enforces a
+consistency across intervals that a noisily observed process does not satisfy,
+so a correct-looking constraint on a misspecified model makes it worse.
+\end{keypoint}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{model_comparison.png}
+\caption{Every model on every split. Grey lines join the four models within one
+split, so a line that never crosses shows a consistent ranking.}
+\end{figure}
+
+\subsection{What the hidden Markov model says}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{From} & \textbf{\arr\ TD} & \textbf{\arr\ Indeterminate} & \textbf{\arr\ PIGD} \\
+\midrule
+TD            & $-0.0994$ & 0.0937 & \textbf{0.0057} \\
+Indeterminate & 0.1156 & $-0.4713$ & 0.3557 \\
+PIGD          & \textbf{0.0000} & 0.0605 & $-0.0605$ \\
+\bottomrule
+\end{tabular}
+\caption{Latent generator $Q$, rates per year.}
+\end{table}
+
+\paragraph{Progression is sequential.} The direct TD~\arr~PIGD rate is 0.0057
+per year against 0.0937 for TD~\arr~Indeterminate --- \textbf{16 times smaller}
+--- and direct PIGD~\arr~TD is estimated at exactly zero. The model was never
+told the states are ordered; it recovered that. This is what a continuous
+underlying ratio implies: to cross from above 1.15 to below 0.90 a patient must
+pass through the middle band.
+
+\paragraph{The label is unreliable in a specific place.} The model estimates how
+often an examination records each true phenotype correctly:
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{True state} & \textbf{recorded TD} & \textbf{recorded Indet.} & \textbf{recorded PIGD} \\
+\midrule
+TD            & \textbf{0.941} & 0.038 & 0.021 \\
+Indeterminate & 0.250 & \textbf{0.500} & 0.250 \\
+PIGD          & 0.106 & 0.052 & \textbf{0.842} \\
+\bottomrule
+\end{tabular}
+\caption{Estimated misclassification. The Indeterminate row rests on an imposed
+floor of 0.50, so it reads as ``at most half of Indeterminate labels are
+correct''. This independently corroborates the Weeks 3--4 finding that changes
+into Indeterminate reverse most often (50--56\%), by an entirely different route.}
+\end{table}
+
+\paragraph{The phenotype is more stable than its label.} Separating measurement
+error from genuine change recovers a much slower underlying process:
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lrr@{}}
+\toprule
+\textbf{State} & \textbf{Observed label} & \textbf{Latent phenotype} \\
+\midrule
+TD            & 3.41 & \textbf{10.06} \\
+Indeterminate & 0.44 & \phantom{0}\textbf{2.12} \\
+PIGD          & 2.28 & \textbf{16.52} \\
+\bottomrule
+\end{tabular}
+\caption{Mean years before leaving a state. Treating the label as the state
+makes every phenotype look transient.}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{progression_curves.png}
+\caption{Predicted subtype over time by current phenotype. Because the latent
+process runs in continuous time, any horizon can be read off.}
+\end{figure}
+
+% =============================================================================
+\section{The proposal's hierarchical Bayesian growth model}
+% =============================================================================
+
+Implemented as specified (proposal pp.\ 13--15):
+\begin{align*}
+  R^{obs}_{it} &= R_{it} + \epsilon^{obs}_{it}, &
+  R_{it} &= (\beta_0 + b_{0i}) + (\beta_1 + b_{1i})\, t + \epsilon^{proc}_{it} \\
+  b_{0i} &\sim \mathcal{N}(0, \tau_0^2), & b_{1i} &\sim \mathcal{N}(0, \tau_1^2)
+\end{align*}
+Inference by Gibbs sampling with conjugate updates throughout; roughly one second
+over 573 patients, validated by recovering known parameters from simulated data.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Parameter} & \textbf{Mean} & \textbf{2.5\%} & \textbf{97.5\%} \\
+\midrule
+$\beta_0$ population baseline ratio   & 2.2920 & 2.1577 & 2.4272 \\
+$\beta_1$ population progression, /yr & $-0.0927$ & $-0.1159$ & $-0.0682$ \\
+$\sigma$ total residual SD            & 1.1380 & 1.0993 & 1.1778 \\
+$\tau_0$ SD of patient baselines      & 1.3408 & 1.2466 & 1.4421 \\
+$\tau_1$ SD of patient slopes, /yr    & 0.1033 & 0.0780 & 0.1315 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{growth_trajectories.png}
+\caption{Population trajectory with 60 patients drawn from the fitted
+random-effect distribution, and the posterior for the progression rate.}
+\end{figure}
+
+\noindent
+\textbf{The ratio declines 0.0927 per year}, $P(\beta_1 < 0) = 1.000$, robust
+across five very different prior specifications ($\tau_1$ moves only within
+0.094--0.116). From the mean baseline of 2.292 the population average reaches the
+TD threshold after a median 12.3 years.
+
+\subsection{Two problems in the specification, found by implementing it}
+
+\paragraph{The two variances are not separately identifiable.} Substituting the
+growth model into the observation model,
+\[
+  R^{obs}_{it} = (\beta_0 + b_{0i}) + (\beta_1 + b_{1i})\,t
+    + \underbrace{(\epsilon^{proc}_{it} + \epsilon^{obs}_{it})}_{\text{variance } \sigma^2_{proc} + \sigma^2_{obs}}
+\]
+Both terms are additive on the same observation, so the likelihood depends only
+on their sum --- verified numerically. Only $\sigma^2 = \sigma^2_{proc} +
+\sigma^2_{obs}$ is estimated, and this is stated rather than a split reported
+that the data cannot support. It matters because $P(TD) = P(R^{true} > 1.15)$
+refers to the latent ratio, whose spread excludes observation noise.
+
+\paragraph{A Normal likelihood cannot represent the ratio}, which is
+non-negative, right-skewed (skew 1.27) and has an atom at exactly zero (7.0\% of
+visits). The model places \textbf{12.2\% of its five-year predictive mass below
+zero}.
+
+\subsection{Comparison with the hidden Markov model}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Model} & \textbf{Log-lik / transition} & \textbf{Accuracy} & \textbf{Brier} \\
+\midrule
+HMM (latent states)          & $\mathbf{-0.6559}$ & \textbf{0.761} & \textbf{0.3573} \\
+Hierarchical Bayesian growth & $-0.6814$ & 0.737 & 0.3786 \\
+\bottomrule
+\end{tabular}
+\caption{825 shared held-out transitions. Over six independent splits the HMM is
+ahead in 6 of 6, mean $+0.0579$ (sd 0.0188), paired $t$-test $p = 6.6\times10^{-4}$.}
+\end{table}
+
+\begin{keypoint}
+\textbf{The reason is measurable, not a matter of model capacity.} The growth
+model's residual SD is $\sigma = 1.138$; the Indeterminate band is $0.25$ wide.
+\textbf{The noise is 4.6 times the width of the band the model must predict
+membership of.} Even a perfectly estimated trajectory places the next
+observation almost anywhere.
+\end{keypoint}
+
+\noindent
+The two models are complementary rather than competing. Only the growth model
+supplies an interpretable progression rate with a credible interval,
+patient-specific slopes, and a route to the $\sigma_i$ stability phenotype in the
+proposal's second half.
+
+% =============================================================================
+\section{The clinical question: a patient seen for the first time}
+% =============================================================================
+
+Every model above earns its accuracy by filtering a patient's \emph{history}
+forward. A new patient has none. Measured directly, over five splits, predicting
+subtype at horizon $h$ from a first visit only:
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lr@{}}
+\toprule
+\textbf{Model (baseline information only)} & \textbf{Held-out log-likelihood} \\
+\midrule
+Baseline subtype $+$ ratio $+$ covariates & $\mathbf{-0.7550}$ \\
+$+$ covariates                            & $-0.7625$ \\
+$+$ baseline ratio                        & $-0.7735$ \\
+Baseline subtype $+$ horizon              & $-0.7813$ \\
+Hidden Markov model (nothing to filter)   & $-0.7869$ \\
+Carry forward (``assume no change'')      & $-1.4114$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{keypoint}
+\textbf{On the first-visit question the hidden Markov model is the worst of the
+five}, not because it is a poor model but because it has nothing to work with. A
+direct model of $P(\text{subtype at } h \mid \text{first visit})$ beats it by
+$+0.032$, at \textbf{71.9\% accuracy}, and is well calibrated across the full
+probability range.
+
+The HMM is not superseded --- its advantage over a lookup table grows with
+history: $+0.005$ at one visit, $+0.021$ at two, $+0.047$ at six or more. Which
+model to use is decided by how much follow-up exists.
+\end{keypoint}
+
+\subsection{Example clinical output}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Horizon} & \textbf{P(TD)} & \textbf{P(Indeterminate)} & \textbf{P(PIGD)} \\
+\midrule
+now      & 1.000 & 0.000 & 0.000 \\
+1 year   & 0.821 & 0.094 & 0.086 \\
+2 years  & 0.785 & 0.105 & 0.110 \\
+3 years  & 0.749 & 0.113 & 0.138 \\
+5 years  & 0.671 & 0.122 & 0.207 \\
+\bottomrule
+\end{tabular}
+\caption{A new TD patient with an otherwise average baseline profile. This is
+the output format the proposal specifies.}
+\end{table}
+
+\subsection{Which baseline measures matter}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}lr|lr@{}}
+\toprule
+\textbf{Measure} & \textbf{Cost of dropping} & \textbf{Measure} & \textbf{Cost of dropping} \\
+\midrule
+MDS-UPDRS Part II   & $+0.0153$ & MoCA          & $-0.0005$ \\
+DaTscan putamen     & $+0.0050$ & UPSIT         & $-0.0008$ \\
+Age                 & $+0.0042$ & Disease duration & $-0.0010$ \\
+Hoehn \& Yahr       & $+0.0021$ & SCOPA-AUT     & $-0.0014$ \\
+Sex                 & $+0.0002$ & RBDSQ         & $-0.0016$ \\
+\bottomrule
+\end{tabular}
+\caption{Held-out cost of removing each covariate, one at a time.}
+\end{table}
+
+\begin{keypoint}
+\textbf{The four non-motor markers the proposal's second half is built on ---
+RBDSQ, SCOPA-AUT, UPSIT and MoCA --- all sit at or below zero.} The covariate
+gain comes from the motor and imaging measures.
+
+This is \emph{not} a refutation of the proposal's hypothesis, which concerns
+trajectory \emph{stability} ($\sigma_i$) rather than the trajectory mean, and
+leave-one-out understates a predictor that is redundant given another. But it is
+worth establishing before that half of the project is built on them.
+\end{keypoint}
+
+% =============================================================================
+\section{Exploratory analysis and validation (Stages 2, 4 and 6)}
+% =============================================================================
+
+\subsection{Stage 2: the ratio, before any model}
+
+\begin{itemize}
+  \item \textbf{Within-patient SD 1.22} against an Indeterminate band 0.25 wide.
+        Band membership was always going to be noise-dominated, and this is
+        visible before a model is fitted.
+  \item \textbf{ICC 0.536} --- 54\% of ratio variance is between patients.
+  \item Raw per-patient OLS slopes have SD \textbf{0.531} against the
+        hierarchical $\tau_1$ of 0.10, a factor of five. Shrinkage does real
+        work, and a prior on $\tau_1$ must not be centred on the naive spread.
+\end{itemize}
+
+\paragraph{One result argues against the modelling choice.} Lag-1 residual
+autocorrelation is $-0.219$. Read against zero this looks like mean reversion,
+but it cannot be read against zero: residuals from a line fitted to a handful of
+points are negatively correlated by construction. Simulating iid noise on the
+same visit pattern gives a null of $\mathbf{-0.332}$ $[-0.365, -0.294]$.
+
+The observed value is \emph{more positive} than the null and outside it, so
+deviations persist between visits --- the signature of accumulating process
+noise. That favours the \textbf{state-space} form over the growth form, and the
+state-space form is also where $\sigma_{obs}$ and $\sigma_{proc}$ become
+separately identifiable. Two independent reasons to prefer it.
+
+\subsection{Stage 4: how much of a patient-specific estimate is real}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+\textbf{Visits} & 2 & 3 & 5 & 8 & 10+ \\
+\midrule
+Patients                & 191 & 233 & 71 & 40 & 50 \\
+Median span (yr)        & 1.16 & 2.09 & 4.17 & 8.42 & 11.67 \\
+\textbf{Slope reliability}     & \textbf{0.008} & \textbf{0.024} & 0.112 & 0.384 & 0.569 \\
+Baseline reliability    & 0.737 & 0.804 & 0.854 & 0.857 & 0.877 \\
+\bottomrule
+\end{tabular}
+\caption{Reliability is $1 - \mathrm{Var}_{post}(b)/\tau^2$: zero means the
+estimate is the population mean with the patient contributing nothing.}
+\end{table}
+
+\begin{keypoint}
+\textbf{Median slope reliability is 0.050 and no patient exceeds 0.8.} For the
+typical patient, 95\% of their ``individual progression rate'' is the cohort
+average. The \emph{baseline level}, by contrast, is well identified for
+essentially everyone (median 0.805).
+
+So the defensible clinical claim is that a prediction is individualised
+\textbf{by position, not by rate}: we know where this patient is, and assume they
+move at the cohort's pace. Held-out, that individualisation is worth $+0.20$
+log-likelihood, of which 95\% comes from the baseline level.
+\end{keypoint}
+
+\subsection{Stage 6: longitudinal cross-validation}
+
+Withholding each patient's future visits, which is the design the proposal
+specifies:
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+\textbf{Train on first} & \textbf{Future visits} & \textbf{Log-lik} & \textbf{Accuracy} & \textbf{95\% coverage} \\
+\midrule
+1 visit  & 2{,}707 & $-1.0341$ & 0.576 & 0.974 \\
+\textbf{2 visits} & 1{,}886 & $\mathbf{-0.8917}$ & 0.647 & \textbf{0.929} \\
+3 visits & 1{,}256 & $-0.9398$ & 0.666 & 0.905 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent
+Interval coverage is close to nominal, so the model's stated uncertainty is
+honest. Its \emph{calibration} is not: the growth model under-predicts PIGD in
+every bin (0.018 against 0.078 observed, rising to 0.535 against 0.729), mean
+absolute gap 0.105. The bias is systematic, one-directional, and unique to this
+model among the three.
+
+% =============================================================================
+\section{Which model answers which question}
+% =============================================================================
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}p{6.6cm}ccc@{}}
+\toprule
+\textbf{Question} & \textbf{First-visit} & \textbf{HMM} & \textbf{Growth} \\
+\midrule
+New patient, no follow-up                    & \textbf{best} & worst & middle \\
+Patient with several visits                  & --- & \textbf{best} & weaker \\
+Progression rate on the clinical scale       & no & no & \textbf{yes} \\
+Patient-specific progression rate            & no & no & \textbf{yes} \\
+Quantifies label misclassification           & no & \textbf{yes} & no \\
+Uses visits with an undefined ratio (16.3\%) & \textbf{yes} & \textbf{yes} & no \\
+Well calibrated                              & \textbf{yes} & \textbf{yes} & no \\
+Route to the $\sigma_i$ phenotype            & no & no & \textbf{yes} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{keypoint}
+No single model dominates, and the project should keep all three. The clinical
+instrument is the first-visit model; the HMM takes over as follow-up accrues;
+the growth model is the scientific description of progression and the foundation
+for the proposal's second half.
+\end{keypoint}
+
+% =============================================================================
+\section{Mapping to the proposal}
+% =============================================================================
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}llp{7.2cm}@{}}
+\toprule
+\textbf{Stage} & \textbf{Status} & \textbf{Where} \\
+\midrule
+1. Data preparation          & complete & \code{outputs/visit\_panel.csv}, validated 100\%/99.87\% \\
+2. Exploratory longitudinal  & complete & \code{outputs/exploration/} \\
+3. Hierarchical Bayesian     & complete & \code{src/ppmi\_subtype/hbayes.py} \\
+4. Posterior inference       & complete & \code{outputs/validation/latent\_trajectories.csv} \\
+5. Probabilistic prediction  & complete & clinical tables for all three models \\
+6. Model validation          & complete & longitudinal CV, calibration, coverage \\
+7. Output visualisation      & complete & Figure 4 and the clinical tables \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Weeks} & \textbf{Deliverable} & \textbf{Status} \\
+\midrule
+1--2 & Clean longitudinal dataset with subtype labels & complete \\
+3--4 & Transition matrices and visualisations         & complete \\
+5--7 & Baseline probabilistic model, held-out validation & complete \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% =============================================================================
+\section{Limitations}
+% =============================================================================
+
+\begin{enumerate}
+  \item \textbf{Label availability is not random.} 23.1\% of visits are
+        unlabelled, concentrated in patients who cannot complete the pull test
+        and who are more advanced. All progression estimates are lower bounds.
+
+  \item \textbf{Per-patient progression rates are largely not recoverable.}
+        Median slope reliability 0.050; no patient above 0.8. Individualisation
+        is by baseline level, not rate.
+
+  \item \textbf{The $\sigma_i$ analysis is not feasible on the full cohort.} A
+        patient-specific variance needs more information than a slope, and after
+        fitting an intercept and slope the median patient has one residual degree
+        of freedom. Only 182 patients have six or more visits.
+
+  \item \textbf{The growth model is systematically miscalibrated}, under-
+        predicting PIGD in every bin.
+
+  \item \textbf{Time-homogeneity is assumed and violated.} The TD~\arr~PIGD rate
+        is 0.045/yr before year 3 and 0.085/yr after.
+
+  \item \textbf{16.3\% of labelled visits have no finite ratio}, so any
+        ratio-based model silently loses them.
+
+  \item \textbf{Sporadic PD only}, and validation is a random split of one
+        cohort. Nothing has been tested externally.
+
+  \item \textbf{The emission floor is an assumption.} The HMM's Indeterminate row
+        rests on it; unconstrained the MLE is degenerate.
+\end{enumerate}
+
+% =============================================================================
+\section{Recommendations}
+% =============================================================================
+
+\begin{enumerate}
+  \item \textbf{Move to a transformed observation scale.} Three symptoms ---
+        $\sigma$ exceeding the band width, negative predictions, right skew ---
+        all follow from a symmetric Normal on a non-negative quantity. Thresholds
+        carry over exactly, since $R > 1.15 \iff \log R > \log 1.15$. Care is
+        needed because the ratio is exactly zero at some visits.
+
+  \item \textbf{Adopt the state-space form.} Two independent arguments now point
+        to it: residual autocorrelation exceeds its iid null, and it is the form
+        in which the two variances become identifiable.
+
+  \item \textbf{Model the two subscores rather than their ratio.} This recovers
+        the 16.3\% of visits with no finite ratio and removes the zero-denominator
+        problem at source.
+
+  \item \textbf{Settle the $\sigma_i$ question on the 182-patient subcohort}
+        before building the second half of the project on it.
+
+  \item \textbf{Report reliability alongside every per-patient estimate.}
+\end{enumerate}
+
+% =============================================================================
+\section{Reproducibility}
+% =============================================================================
+
+\begin{verbatim}
+    python scripts/00_data_audit.py          # verify source files
+    python scripts/01_build_panel.py         # labelled longitudinal panel
+    python scripts/02_transition_analysis.py # Weeks 3-4
+    python scripts/03_progression_model.py   # Weeks 5-7 Markov models
+    python scripts/04_hierarchical_bayes.py  # the proposal's growth model
+    python scripts/05_new_patient_model.py   # the clinical deliverable
+    python scripts/06_ratio_exploration.py   # Stage 2
+    python scripts/07_longitudinal_cv.py     # Stages 4 and 6
+    python -m pytest tests/ -q               # 144 tests
+\end{verbatim}
+
+\noindent
+Roughly 3{,}000 lines of Python across fourteen modules, with every item list,
+threshold, cohort rule and model parameter in \code{config/config.yaml} and
+validated on load. Nothing is hardcoded in the source. Each stage writes its
+tables, figures and a plain-text report recording every number quoted here.
+
+\vspace{1em}
+\noindent\textbf{Reference.} Stebbins GT, Goetz CG, Burn DJ, Jankovic J, Khoo TK,
+Tilley BC. How to identify tremor dominant and postural instability/gait
+difficulty groups with the Movement Disorder Society Unified Parkinson's Disease
+Rating Scale. \emph{Movement Disorders} 2013;28(5):668--70.
+
+\end{document}

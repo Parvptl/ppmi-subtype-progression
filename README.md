@@ -91,6 +91,7 @@ BTP/
 │   └── validation/               Stages 4 and 6: latent posteriors, longitudinal CV
 │
 ├── report/                    ← LaTeX source + compiled PDF
+│   ├── Project_Report.*          ★ FULL REPORT, Weeks 1–7 (15 pp)
 │   ├── Week3-4_Report.*          the Weeks 3–4 progress report (14 pp)
 │   ├── Week5-7_Report.*          the Weeks 5–7 progression model (9 pp)
 │   ├── Model_Comparison_Report.* growth model vs HMM (5 pp)
