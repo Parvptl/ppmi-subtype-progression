@@ -1,5 +1,5 @@
 % =============================================================================
-%  Full project report, Weeks 1-7
+%  Full project report
 %  Probabilistic Motor Subtype Progression Model for Parkinson's Disease
 %
 %  Figures are read from outputs/; regenerate with scripts/01 .. 07 then
@@ -44,7 +44,7 @@
 
 \title{\textbf{A Probabilistic Model of Motor Subtype Progression\\
        in Parkinson's Disease}\\[0.7em]
-       \large Project Report, Weeks 1--7}
+       \large Project Report}
 \author{Parv Patel \quad\textbullet\quad Mayank Tewatia\\[0.4em]
         \small Supervisor: Prof.\ K.~R.\ Sahasranand\\
         \small Department of Data Science, IIT Palakkad}
@@ -62,11 +62,12 @@ about their future. This project builds the probabilistic extension: given what
 is known about a patient today, the probability that they occupy each subtype at
 one, two, three and five years.
 
-Weeks 1--2 produced a labelled longitudinal panel of 1{,}080 sporadic PD patients
-from the PPMI dataset, with the three-class subtype recomputed from raw items and
-validated at 100.00\% against PPMI's own two-class derivation and 99.87\% against
-an archived three-class one. Weeks 3--4 characterised 3{,}361 observed
-transitions. Weeks 5--7 fitted and validated five progression models.
+The work proceeds in three parts. A labelled longitudinal panel of 1{,}080
+sporadic PD patients was built from the PPMI dataset, with the three-class
+subtype recomputed from raw MDS-UPDRS items and validated at 100.00\% against
+PPMI's own two-class derivation and 99.87\% against an archived three-class one.
+The 3{,}361 observed transitions in that panel were then characterised. Finally
+five progression models were fitted and validated on held-out patients.
 
 Three findings shaped everything after them. \textbf{Indeterminate is a crossing,
 not a state} --- only 19.2\% of patients remain in it. \textbf{35.2\% of observed
@@ -84,8 +85,8 @@ and is systematically miscalibrated. For a patient seen for the \emph{first}
 time, which is the clinical question, both are beaten by a direct model using
 baseline measures, at 71.9\% accuracy.
 
-All seven stages of the proposal's roadmap are complete. The work is
-reproducible from seven commands and covered by 144 unit tests.
+Every objective set out for this phase of the project has been met. The work is
+reproducible from a short sequence of commands and is covered by 144 unit tests.
 \end{abstract}
 
 \clearpage
@@ -111,14 +112,15 @@ probabilities to it without replacing it --- to keep the existing thresholds and
 report, for an individual patient, the chance of remaining where they are or
 moving.
 
-\subsection{Scope of this report}
+\subsection{Scope}
 
-Weeks 1--7 of the plan, and Stages 1--7 of the modelling roadmap. Section~9 maps
-the two onto each other. What has \emph{not} been done is stated in
-Section~11.
+This report covers the first phase of the project: building the dataset,
+measuring how subtypes change over time, and fitting and validating models that
+turn those measurements into predictions. Section~9 lists what was produced and
+where it lives; Section~10 states plainly what has \emph{not} been done.
 
 % =============================================================================
-\section{Weeks 1--2: building a labelled longitudinal dataset}
+\section{Constructing a labelled longitudinal dataset}
 % =============================================================================
 
 \subsection{Sources}
@@ -215,7 +217,7 @@ of the Indeterminate/PIGD boundary, since the curated cut collapses those two.}
 follow-up.} Baseline distribution: TD 71.7\%, Indeterminate 10.1\%, PIGD 18.1\%.
 
 % =============================================================================
-\section{Weeks 3--4: what transitions actually look like}
+\section{What subtype transitions actually look like}
 % =============================================================================
 
 3{,}361 consecutive labelled visit pairs from the 934 patients with at least two
@@ -342,7 +344,7 @@ missing many items rather than one.
 \end{keypoint}
 
 % =============================================================================
-\section{Weeks 5--7: probabilistic progression models}
+\section{Probabilistic models of progression}
 % =============================================================================
 
 Five models were fitted and validated on held-out patients. Splitting is always
@@ -448,7 +450,7 @@ PIGD          & 0.106 & 0.052 & \textbf{0.842} \\
 \end{tabular}
 \caption{Estimated misclassification. The Indeterminate row rests on an imposed
 floor of 0.50, so it reads as ``at most half of Indeterminate labels are
-correct''. This independently corroborates the Weeks 3--4 finding that changes
+correct''. This independently corroborates the finding in Section~3 that changes
 into Indeterminate reverse most often (50--56\%), by an entirely different route.}
 \end{table}
 
@@ -475,10 +477,11 @@ makes every phenotype look transient.}
 \includegraphics[width=\textwidth]{progression_curves.png}
 \caption{Predicted subtype over time by current phenotype. Because the latent
 process runs in continuous time, any horizon can be read off.}
+\label{fig:progression}
 \end{figure}
 
 % =============================================================================
-\section{The proposal's hierarchical Bayesian growth model}
+\section{A hierarchical Bayesian growth model of the ratio}
 % =============================================================================
 
 Implemented as specified (proposal pp.\ 13--15):
@@ -620,6 +623,7 @@ now      & 1.000 & 0.000 & 0.000 \\
 \end{tabular}
 \caption{A new TD patient with an otherwise average baseline profile. This is
 the output format the proposal specifies.}
+\label{tab:clinical-new}
 \end{table}
 
 \subsection{Which baseline measures matter}
@@ -653,10 +657,10 @@ worth establishing before that half of the project is built on them.
 \end{keypoint}
 
 % =============================================================================
-\section{Exploratory analysis and validation (Stages 2, 4 and 6)}
+\section{Exploratory analysis and model validation}
 % =============================================================================
 
-\subsection{Stage 2: the ratio, before any model}
+\subsection{The ratio, examined before any model is fitted}
 
 \begin{itemize}
   \item \textbf{Within-patient SD 1.22} against an Indeterminate band 0.25 wide.
@@ -680,7 +684,7 @@ noise. That favours the \textbf{state-space} form over the growth form, and the
 state-space form is also where $\sigma_{obs}$ and $\sigma_{proc}$ become
 separately identifiable. Two independent reasons to prefer it.
 
-\subsection{Stage 4: how much of a patient-specific estimate is real}
+\subsection{How much of a patient-specific estimate is real}
 
 \begin{table}[H]
 \centering
@@ -710,7 +714,7 @@ move at the cohort's pace. Held-out, that individualisation is worth $+0.20$
 log-likelihood, of which 95\% comes from the baseline level.
 \end{keypoint}
 
-\subsection{Stage 6: longitudinal cross-validation}
+\subsection{Validation by withholding each patient's future visits}
 
 Withholding each patient's future visits, which is the design the proposal
 specifies:
@@ -766,39 +770,50 @@ for the proposal's second half.
 \end{keypoint}
 
 % =============================================================================
-\section{Mapping to the proposal}
+\section{Summary of deliverables}
 % =============================================================================
 
 \begin{table}[H]
 \centering
 \small
-\begin{tabular}{@{}llp{7.2cm}@{}}
+\begin{tabular}{@{}p{5.4cm}p{9.0cm}@{}}
 \toprule
-\textbf{Stage} & \textbf{Status} & \textbf{Where} \\
+\textbf{What was produced} & \textbf{Where it lives} \\
 \midrule
-1. Data preparation          & complete & \code{outputs/visit\_panel.csv}, validated 100\%/99.87\% \\
-2. Exploratory longitudinal  & complete & \code{outputs/exploration/} \\
-3. Hierarchical Bayesian     & complete & \code{src/ppmi\_subtype/hbayes.py} \\
-4. Posterior inference       & complete & \code{outputs/validation/latent\_trajectories.csv} \\
-5. Probabilistic prediction  & complete & clinical tables for all three models \\
-6. Model validation          & complete & longitudinal CV, calibration, coverage \\
-7. Output visualisation      & complete & Figure 4 and the clinical tables \\
+Labelled longitudinal dataset ---
+one row per patient-visit with the TD/PIGD ratio and three-class subtype
+  & \code{outputs/visit\_panel.csv}, validated at 100.00\% and 99.87\% against
+    two independent PPMI derivations \\
+\addlinespace
+Description of the ratio's behaviour ---
+distribution, within- and between-patient variability, effect of irregular
+follow-up
+  & \code{outputs/exploration/} \\
+\addlinespace
+Empirical transition analysis ---
+matrices with confidence intervals, interval stratification, reversion,
+time-to-conversion, pathways
+  & \code{outputs/transitions/} (9 tables, 6 figures) \\
+\addlinespace
+Five fitted progression models with held-out comparison
+  & \code{outputs/model/}, \code{outputs/hbayes/}, \code{outputs/newpatient/} \\
+\addlinespace
+Per-patient latent phenotype and progression rate, each with a credible
+interval and a reliability figure
+  & \code{outputs/validation/latent\_trajectories.csv} and
+    \code{patient\_parameters.csv} \\
+\addlinespace
+Validation --- held-out patients, withheld future visits, calibration and
+interval coverage
+  & \code{outputs/validation/}, \code{outputs/model/} \\
+\addlinespace
+Clinical output tables giving the probability of each subtype at 1, 2, 3 and 5
+years
+  & Table~\ref{tab:clinical-new} and Figure~\ref{fig:progression} \\
 \bottomrule
 \end{tabular}
-\end{table}
-
-\begin{table}[H]
-\centering
-\small
-\begin{tabular}{@{}lll@{}}
-\toprule
-\textbf{Weeks} & \textbf{Deliverable} & \textbf{Status} \\
-\midrule
-1--2 & Clean longitudinal dataset with subtype labels & complete \\
-3--4 & Transition matrices and visualisations         & complete \\
-5--7 & Baseline probabilistic model, held-out validation & complete \\
-\bottomrule
-\end{tabular}
+\caption{Everything set out for this phase of the project has been produced.
+Each stage also writes a plain-text report recording every number quoted here.}
 \end{table}
 
 % =============================================================================
@@ -867,12 +882,12 @@ for the proposal's second half.
 \begin{verbatim}
     python scripts/00_data_audit.py          # verify source files
     python scripts/01_build_panel.py         # labelled longitudinal panel
-    python scripts/02_transition_analysis.py # Weeks 3-4
-    python scripts/03_progression_model.py   # Weeks 5-7 Markov models
-    python scripts/04_hierarchical_bayes.py  # the proposal's growth model
-    python scripts/05_new_patient_model.py   # the clinical deliverable
-    python scripts/06_ratio_exploration.py   # Stage 2
-    python scripts/07_longitudinal_cv.py     # Stages 4 and 6
+    python scripts/02_transition_analysis.py # observed transition analysis
+    python scripts/03_progression_model.py   # Markov and hidden Markov models
+    python scripts/04_hierarchical_bayes.py  # hierarchical Bayesian growth model
+    python scripts/05_new_patient_model.py   # first-visit prediction
+    python scripts/06_ratio_exploration.py   # exploratory analysis of the ratio
+    python scripts/07_longitudinal_cv.py     # latent posteriors, longitudinal CV
     python -m pytest tests/ -q               # 144 tests
 \end{verbatim}
 
