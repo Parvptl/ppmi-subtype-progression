@@ -1,0 +1,655 @@
+% =============================================================================
+%  Weeks 5-7, step by step.
+%  A narrative walkthrough written to be read aloud in a supervision meeting.
+% =============================================================================
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=2.3cm]{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{caption}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{float}
+\usepackage{titlesec}
+\usepackage[hidelinks]{hyperref}
+
+\graphicspath{{../outputs/model/figures/}{../outputs/hbayes/figures/}}
+
+\definecolor{stepblue}{HTML}{1F4E79}
+\definecolor{boxbg}{HTML}{F4F6F8}
+\definecolor{askgrey}{HTML}{52514E}
+
+\newcommand{\code}[1]{\texttt{\small #1}}
+\newcommand{\arr}{$\rightarrow$}
+
+\setlist[itemize]{itemsep=2pt,topsep=3pt}
+\setlist[enumerate]{itemsep=2pt,topsep=3pt}
+\captionsetup{font=small,labelfont=bf}
+
+\titleformat{\section}{\color{stepblue}\Large\bfseries}{\thesection.}{0.6em}{}
+\titlespacing*{\section}{0pt}{18pt}{8pt}
+
+% "What we found" box
+\newenvironment{found}
+  {\begin{center}\begin{minipage}{0.95\textwidth}%
+   \vspace{4pt}\hrule\vspace{6pt}\small}
+  {\vspace{6pt}\hrule\vspace{4pt}\end{minipage}\end{center}}
+
+% "If the professor asks" block
+\newcommand{\ifasked}[2]{%
+  \vspace{4pt}\noindent{\small\color{askgrey}\textbf{If asked: ``#1''}\\ #2}\vspace{3pt}}
+
+\title{\textbf{What We Did in Weeks 5--7}\\[0.5em]
+       \large A step-by-step walkthrough}
+\author{Parv Patel \quad\textbullet\quad Mayank Tewatia\\[0.3em]
+        \small Department of Data Science, IIT Palakkad}
+\date{August 2026}
+
+\begin{document}
+\maketitle
+
+\vspace{-1em}
+\begin{found}
+\textbf{The one-sentence summary, if you only get to say one thing.}
+
+We built the Markov model the plan asked for, found it did not work, tested
+\emph{why} rather than guessing, and the test told us the observed subtype is a
+noisy reading of a hidden state. The model built on that finding beats the
+baseline in 10 out of 10 validation splits.
+\end{found}
+
+\noindent
+This document walks through the fortnight in the order the work actually
+happened, so it can be read straight through. Each step has three parts: what
+we did, why we did it, and what we found. Where a question is likely, the
+answer is given underneath.
+
+\clearpage
+\tableofcontents
+\clearpage
+
+% =============================================================================
+\section{Where we were starting from}
+% =============================================================================
+
+\textbf{What we had.} A dataset of 1{,}080 Parkinson's patients, 4{,}441 visits
+where we could compute the TD/PIGD subtype, and 3{,}361 observed transitions
+between subtypes. Every label had been checked against PPMI's own
+classification and agreed 100.00\% on the two-class version and 99.87\% on the
+three-class version.
+
+\textbf{What we already knew from the previous fortnight.} Three things, and all
+three turned out to matter:
+
+\begin{enumerate}
+  \item Indeterminate is barely a state --- only 19.2\% of patients are still
+        Indeterminate at their next visit.
+  \item 35.2\% of all observed subtype changes reverse at the very next visit.
+  \item The chance of changing subtype depends strongly on how long the gap
+        between visits was.
+\end{enumerate}
+
+\textbf{What we were asked to do.} Build a simple probabilistic model --- a
+Markov model --- that says, for a patient in a given subtype, how likely they
+are to stay or move. Then validate it on patients the model has never seen.
+
+% =============================================================================
+\section{Step 1 --- We built the simple model first}
+% =============================================================================
+
+\textbf{What we did.} A discrete Markov chain. This is the model the plan
+describes. It is one table of probabilities: given the subtype at this visit,
+the probability of each subtype at the next visit.
+
+\textbf{Why.} It is the simplest thing that answers the question, and it is what
+we were asked for. Starting anywhere more complicated would mean we could not
+say whether the complexity was earning anything.
+
+\textbf{What we found.} It works reasonably. On patients held out from fitting,
+it predicts the next subtype correctly 76.8\% of the time, and comfortably beats
+a null model that ignores the current subtype entirely.
+
+\ifasked{Why start with something so basic?}{Because if we had started with a
+complicated model and it worked, we would not know whether the complication was
+necessary. Every model after this one had to beat it on data it had never seen.}
+
+% =============================================================================
+\section{Step 2 --- We built the model we expected to be better}
+% =============================================================================
+
+\textbf{What we did.} A continuous-time Markov chain. Instead of one table, this
+estimates a matrix of \emph{rates}, and gives the transition probability for
+\emph{any} elapsed time through $P(t) = e^{Qt}$.
+
+\textbf{Why.} Two reasons. First, the previous fortnight showed the chance of
+changing subtype depends heavily on the gap between visits --- so a model that
+ignores the gap is throwing away information. Second, a clinician needs answers
+at 1, 2, 3 and 5 years, and a per-visit table cannot give those, because visits
+are not one year apart.
+
+\textbf{What we found.} \textbf{It was worse.} Not slightly --- it lost at every
+interval length, and it lost by the most at long intervals, which is exactly
+where accounting for the gap should have helped the most.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Gap between visits} & \textbf{$n$} & \textbf{Continuous-time} & \textbf{Discrete} \\
+\midrule
+Up to 1.5 years & 890 & $-0.6534$ & $-0.6488$ \\
+1.5 to 2.5 years & \phantom{0}71 & $-0.8151$ & $-0.7907$ \\
+Over 2.5 years & \phantom{0}41 & $-0.9054$ & $-0.8061$ \\
+\bottomrule
+\end{tabular}
+\caption{Held-out score, higher is better. The continuous-time model is behind
+everywhere, and furthest behind on long gaps.}
+\end{table}
+
+\ifasked{So the previous fortnight's finding was wrong?}{No. The finding was
+that transition probability depends on the gap, and that is still true. What
+this shows is that \emph{correcting} for the gap inside this particular model
+does not help --- which means something more basic is wrong with the model.
+That is what we investigated next.}
+
+% =============================================================================
+\section{Step 3 --- Instead of guessing, we tested the assumption}
+% =============================================================================
+
+\textbf{What we did.} Both models rest on the same assumption, called the Markov
+property: that knowing a patient's subtype \emph{today} tells you everything
+useful --- where they were before should not matter.
+
+That is a statement we can check directly. We took every patient with three
+labelled visits in a row --- 2{,}427 of them --- and asked: given where they are
+now, does where they came from change what happens next?
+
+\textbf{Why.} Because if we had simply tried a third model and it worked better,
+we would not know why. A failed model is much more useful if you can say what
+broke.
+
+\textbf{What we found.} The assumption is false, and not marginally.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Patients currently labelled TD, who arrived from\ldots} & \textbf{\arr\ TD} & \textbf{\arr\ Indet.} & \textbf{\arr\ PIGD} \\
+\midrule
+TD (they were TD before too)   & 84.9\% & 6.5\% & \textbf{8.6\%} \\
+PIGD (they were PIGD before)   & 48.2\% & 12.5\% & \textbf{39.3\%} \\
+\bottomrule
+\end{tabular}
+\caption{$\chi^2 = 156.6$, $p = 7.9 \times 10^{-33}$. Rejected in all three states.}
+\end{table}
+
+\begin{found}
+\textbf{Read this row out loud if nothing else.} Two patients are both labelled
+TD today. One was TD last time; the other was PIGD last time. The first has an
+8.6\% chance of being PIGD next visit. The second has a 39.3\% chance.
+
+\textbf{That is a 4.6-fold difference, and the Markov assumption says it should
+be zero.}
+\end{found}
+
+\textbf{What that pattern means.} If a patient's true state is PIGD but one
+examination happens to record TD, the next examination will probably record PIGD
+again. The patient's history is carrying information that the current
+\emph{label} has lost. That is the signature of a hidden state being observed
+through a noisy measurement.
+
+\ifasked{Could this just be noise in the test?}{No --- $p = 7.9\times10^{-33}$
+on 1{,}583 observations for the TD row alone, and the test is rejected
+independently in all three states.}
+
+% =============================================================================
+\section{Step 4 --- We built the model the diagnosis pointed to}
+% =============================================================================
+
+\textbf{What we did.} A hidden Markov model. It has two layers:
+
+\begin{itemize}
+  \item A \textbf{true phenotype} that we never observe directly, which changes
+        over time at estimated rates.
+  \item A \textbf{measurement} of that phenotype at each visit, which can be
+        wrong, with the chance of being wrong also estimated from the data.
+\end{itemize}
+
+\textbf{Why.} Because that is exactly the structure the Step 3 test pointed to,
+and --- worth saying to the professor --- it is the same structure the project
+proposal already specifies, in the line \emph{observed ratio = true ratio +
+measurement noise}. We did not invent a new direction; we arrived at the one
+already written down, from the data.
+
+\textbf{What we found.} It wins, and not on one lucky split.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Model} & \textbf{Score} & \textbf{Accuracy} & \textbf{Brier} \\
+\midrule
+Hidden Markov (true state $+$ measurement error) & $\mathbf{-0.6384}$ & \textbf{77.0\%} & \textbf{0.346} \\
+Discrete Markov chain & $-0.6653$ & 76.8\% & 0.363 \\
+Continuous-time Markov chain & $-0.6752$ & 76.6\% & 0.367 \\
+Null model & $-0.8633$ & 62.5\% & 0.519 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{found}
+We repeated the entire procedure --- new random split of patients, refit every
+model from scratch --- \textbf{ten times}. The hidden Markov model won
+\textbf{10 out of 10}. Mean advantage $+0.028 \pm 0.009$ per prediction, paired
+$t$-test $p = 5.4\times10^{-6}$.
+\end{found}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{model_comparison.png}
+\caption{Each grey line is one split, joining the four models. No line crosses
+between the hidden Markov model and the rest, so the ranking is consistent
+rather than an average of mixed results.}
+\end{figure}
+
+\ifasked{A more complicated model beating a simpler one --- isn't that just overfitting?}{%
+Overfitting shows up as doing better on the data you fitted and worse on data
+you did not. Every number here is on patients the model never saw during
+fitting, and the win repeats on ten independent splits. If it were overfitting,
+it would lose out of sample, not win ten times.}
+
+% =============================================================================
+\section{Step 5 --- What the model tells us about the disease}
+% =============================================================================
+
+Two results here are worth presenting as findings in their own right.
+
+\subsection*{Progression is sequential --- patients pass through the middle}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{From} & \textbf{\arr\ TD} & \textbf{\arr\ Indeterminate} & \textbf{\arr\ PIGD} \\
+\midrule
+TD            & --- & 0.0937 & \textbf{0.0057} \\
+Indeterminate & 0.1156 & --- & 0.3557 \\
+PIGD          & \textbf{0.0000} & 0.0605 & --- \\
+\bottomrule
+\end{tabular}
+\caption{Estimated rates per year for the true, unobserved phenotype.}
+\end{table}
+
+Going from TD straight to PIGD has a rate of 0.0057 per year. Going from TD to
+Indeterminate has a rate of 0.0937 --- \textbf{sixteen times higher}. And going
+from PIGD directly back to TD is estimated at exactly zero.
+
+\textbf{Why this matters.} We never told the model the three states are ordered.
+It worked that out on its own. And it is what you would expect if the underlying
+thing is a continuous ratio: to get from above 1.15 to below 0.90, you have to
+pass through the range in between.
+
+\subsection*{The clinical label is unreliable, and we can say where}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{If the true state is\ldots} & \textbf{recorded TD} & \textbf{recorded Indet.} & \textbf{recorded PIGD} \\
+\midrule
+TD            & \textbf{94.1\%} & 3.8\% & 2.1\% \\
+Indeterminate & 25.0\% & \textbf{50.0\%} & 25.0\% \\
+PIGD          & 10.6\% & 5.2\% & \textbf{84.2\%} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+TD and PIGD are recorded correctly most of the time. Indeterminate is recorded
+correctly at most half the time.
+
+\textbf{Why this is convincing.} The previous fortnight found, by a completely
+different method --- counting how often a change reverses --- that changes
+\emph{into} Indeterminate reverse most often, 50 to 56\% of the time. Two
+independent analyses landed on the same conclusion about the same state.
+
+\subsection*{And a consequence: the phenotype is far more stable than its label}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lrr@{}}
+\toprule
+\textbf{State} & \textbf{Looking at the label} & \textbf{The true phenotype} \\
+\midrule
+TD            & 3.4 years & \textbf{10.1 years} \\
+Indeterminate & 0.4 years & \phantom{0}\textbf{2.1 years} \\
+PIGD          & 2.3 years & \textbf{16.5 years} \\
+\bottomrule
+\end{tabular}
+\caption{Average time before leaving a state. Treating the label as the truth
+makes the disease look like it changes three to seven times faster than it
+does.}
+\end{table}
+
+% =============================================================================
+\section{Step 6 --- We implemented the proposal's Bayesian model}
+% =============================================================================
+
+\textbf{What we did.} The hierarchical Bayesian growth model written out on
+pages 13--15 of the proposal, exactly as specified. Each patient gets their own
+starting level and their own rate of change, both drawn from a population
+distribution. We wrote the sampler ourselves --- Gibbs sampling, about a second
+to run --- and checked it by generating data from known values and confirming it
+recovers them.
+
+\textbf{Why.} It was in the plan, and it answers a different question. The
+Markov model says \emph{whether} a patient will change. This one says \emph{how
+fast their ratio is moving}, on the clinical scale, with a confidence interval.
+
+\textbf{What we found.}
+
+\begin{found}
+\textbf{The TD/PIGD ratio falls by 0.093 per year} (95\% credible interval 0.068
+to 0.116). The probability that the population is declining is essentially 1.
+
+Starting from the average baseline ratio of 2.29, the average patient reaches
+the TD threshold after about \textbf{12.3 years}. Patients differ: the
+between-patient spread in rate is 0.103 per year, about as large as the average
+rate itself.
+\end{found}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{growth_trajectories.png}
+\caption{Left: the fitted population trajectory, with 60 individual patients
+drawn from the model. Right: the posterior for the rate of decline.}
+\end{figure}
+
+% =============================================================================
+\section{Step 7 --- We found two problems in the specification}
+% =============================================================================
+
+Both were found by implementing the model, not by reading it. Present them as
+contributions, not complaints.
+
+\subsection*{Problem 1: two of the model's terms cannot be told apart}
+
+The proposal has two separate error terms --- measurement error and process
+noise. If you substitute one equation into the other, both are added to the same
+observation, so the data can only ever see their \emph{sum}. We confirmed this
+numerically: hold the total fixed, move any amount between the two, and the
+likelihood does not change at all.
+
+\textbf{Why it matters.} The headline output $P(\mathrm{TD}) = P(R^{true} >
+1.15)$ refers to the \emph{true} ratio, whose spread excludes measurement error.
+Without being able to separate the two, that quantity is not identified.
+
+\textbf{What we did about it.} We estimate and report only the total, and say so
+explicitly, rather than reporting a split the data cannot support.
+
+\subsection*{Problem 2: a normal distribution does not fit a ratio}
+
+The TD/PIGD ratio cannot be negative, is strongly skewed to the right, and is
+exactly zero at 7\% of visits. A symmetric normal distribution cannot represent
+that. The consequence is measurable: \textbf{12.2\% of the model's five-year
+predictions are for a negative ratio}, which is impossible.
+
+\ifasked{Are you saying the proposal's model is wrong?}{No --- it is a
+reasonable model and it gives the interpretable progression rate that nothing
+else gives. These are two specification details that only show up when you fit
+it, and both have clean fixes: model the ratio on a log-like scale, and use the
+state-space form the proposal also mentions, in which the two error terms
+\emph{do} become separable.}
+
+% =============================================================================
+\section{Step 8 --- We compared the two models fairly}
+% =============================================================================
+
+\textbf{What we did.} Fitted both on the same training patients, and scored both
+on exactly the same held-out transitions --- only those where every visit
+involved has a usable ratio, so that neither model is given transitions the
+other cannot attempt.
+
+\textbf{What we found.} The hidden Markov model predicts subtype better, in
+\textbf{6 splits out of 6}, by $+0.058 \pm 0.019$ (paired $t$-test $p =
+6.6\times10^{-4}$).
+
+\textbf{And we can say exactly why.}
+
+\begin{found}
+The growth model's residual spread is $\sigma = 1.138$. The Indeterminate band
+is $1.15 - 0.90 = 0.25$ wide.
+
+\textbf{The noise is 4.6 times wider than the band the model is being asked to
+place a patient inside.} Even a perfectly estimated trajectory would land the
+next observation almost anywhere.
+\end{found}
+
+\textbf{The conclusion we drew.} They are not competitors. The Markov model is
+the better classifier; the growth model is the better description of
+progression, and it is the one that leads to the second half of the project.
+Keep both.
+
+% =============================================================================
+\section{Step 9 --- We realised we had been testing the wrong thing}
+% =============================================================================
+
+\textbf{What prompted it.} The clinical purpose is to help a doctor with a
+patient in front of them --- often a patient being seen for the \emph{first}
+time.
+
+Every model above earns its accuracy by following a patient's history forward. A
+new patient has no history. We had never tested that case.
+
+\textbf{What we did.} Re-ran the comparison using only each patient's
+\emph{first} visit, predicting their subtype at each later visit.
+
+\textbf{What we found.}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lrr@{}}
+\toprule
+\textbf{Using only the first visit} & \textbf{Score} & \textbf{Accuracy} \\
+\midrule
+Baseline subtype $+$ ratio $+$ clinical measures & $\mathbf{-0.7550}$ & \textbf{71.9\%} \\
+Baseline subtype $+$ clinical measures & $-0.7625$ & \\
+Baseline subtype $+$ ratio & $-0.7735$ & \\
+Baseline subtype alone & $-0.7813$ & \\
+Hidden Markov model & $-0.7869$ & 68.1\% \\
+Assume no change & $-1.4114$ & 64.6\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{found}
+\textbf{On the question that actually matters clinically, our best model was the
+worst of the five.} Not because it is bad, but because it had nothing to work
+with.
+
+What a new patient \emph{does} have is a full baseline assessment. A direct
+model using that beats the hidden Markov model by $+0.032$, at 71.9\% accuracy,
+and is well calibrated.
+\end{found}
+
+\textbf{The rule this gives us.} The hidden Markov model's advantage grows as
+follow-up accumulates: $+0.005$ after one visit, $+0.021$ after two, $+0.047$
+after six or more. So: use the baseline model at the first visit, and switch to
+the hidden Markov model once the patient has been seen a few times.
+
+\ifasked{So was the Markov work wasted?}{No. It is the better model for every
+visit after the first, which is most of the visits in a patient's care. What
+changed is that we now know which model to use when, and we know it from
+measurement rather than assumption.}
+
+% =============================================================================
+\section{Step 10 --- What a doctor would actually be shown}
+% =============================================================================
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Horizon} & \textbf{P(TD)} & \textbf{P(Indeterminate)} & \textbf{P(PIGD)} \\
+\midrule
+now      & 100\% & 0\% & 0\% \\
+1 year   & 82.1\% & 9.4\% & 8.6\% \\
+2 years  & 78.5\% & 10.5\% & 11.0\% \\
+3 years  & 74.9\% & 11.3\% & 13.8\% \\
+5 years  & 67.1\% & 12.2\% & 20.7\% \\
+\bottomrule
+\end{tabular}
+\caption{A new TD patient with an otherwise typical baseline profile. This is
+the output format the proposal asks for.}
+\end{table}
+
+\noindent
+The model is well calibrated, which is what makes the numbers usable:
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+Predicted chance of PIGD & 4.5\% & 10.7\% & 21.4\% & 40.9\% & 66.8\% \\
+What actually happened   & 2.0\% & 14.0\% & 24.5\% & 42.5\% & 63.7\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% =============================================================================
+\section{Step 11 --- One result that runs against the plan}
+% =============================================================================
+
+We tested which baseline measures actually help, by removing each one and seeing
+how much the held-out prediction worsens.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}lr|lr@{}}
+\toprule
+\textbf{Measure} & \textbf{Value} & \textbf{Measure} & \textbf{Value} \\
+\midrule
+MDS-UPDRS Part II & $+0.0153$ & MoCA (cognition) & $-0.0005$ \\
+DaTscan putamen   & $+0.0050$ & UPSIT (smell)    & $-0.0008$ \\
+Age               & $+0.0042$ & Disease duration & $-0.0010$ \\
+Hoehn \& Yahr     & $+0.0021$ & SCOPA-AUT (autonomic) & $-0.0014$ \\
+Sex               & $+0.0002$ & RBDSQ (sleep disorder) & $-0.0016$ \\
+\bottomrule
+\end{tabular}
+\caption{Positive means the measure is earning its place.}
+\end{table}
+
+\begin{found}
+\textbf{The four non-motor markers the second half of the project is built on
+--- RBDSQ, SCOPA-AUT, UPSIT and MoCA --- all sit at or below zero.} The useful
+information came from the motor and imaging measures instead.
+\end{found}
+
+\textbf{How to present this honestly.} It is not a refutation. The hypothesis in
+the proposal is that these markers predict trajectory \emph{stability}
+($\sigma_i$), and this test is about the trajectory \emph{mean}. Also, the
+measures are correlated, so a genuinely useful marker can look worthless if
+another measure already carries the same information.
+
+But it is worth knowing before we build on them.
+
+% =============================================================================
+\section{Step 12 --- We finished the remaining pieces of the plan}
+% =============================================================================
+
+\begin{itemize}
+  \item \textbf{Exploratory analysis of the ratio.} Done properly this time on
+        the continuous ratio rather than the label. It shows the noise problem
+        before any model is fitted --- within-patient spread 1.22 against a band
+        0.25 wide.
+
+  \item \textbf{Per-patient results.} We now produce, for every patient at every
+        visit, the estimated true phenotype with a credible interval, plus each
+        patient's own starting level and rate of change.
+
+  \item \textbf{Validation by hiding the future.} Train on each patient's first
+        two visits, predict all their later ones: 64.7\% accuracy over 1{,}886
+        future visits, and 92.9\% of observations fell inside the 95\%
+        prediction interval --- so the model's stated uncertainty is honest.
+\end{itemize}
+
+\subsection*{An important caveat we should raise ourselves}
+
+\begin{found}
+We measured how much of each patient's ``personal'' progression rate really
+comes from their own data, rather than being the group average.
+
+The answer is \textbf{5\%} for the typical patient. \textbf{No patient in the
+cohort exceeds 80\%.} Their \emph{starting level}, by contrast, is well
+determined for essentially everyone.
+
+So the honest claim is that a prediction is personalised \textbf{by where the
+patient is, not by how fast they are moving.} That is still worth a lot --- it
+accounts for 95\% of the benefit of personalising at all --- but it is a weaker
+claim than ``this patient progresses faster than average'', and we should not
+make the stronger one.
+\end{found}
+
+\textbf{Why we are raising it.} The second half of the project wants to estimate
+a patient-specific \emph{variability}. That needs more information than a rate
+does, and the typical patient has only three visits. It would need the 182
+patients with six or more visits, and that is better settled now than after
+building on it.
+
+% =============================================================================
+\section{How to close}
+% =============================================================================
+
+\begin{enumerate}
+  \item We built the model that was asked for. It works, and it is the baseline
+        everything else had to beat.
+
+  \item The obvious improvement failed. We tested why instead of guessing, and
+        the test showed the observed subtype is a noisy reading of a hidden
+        state --- $p = 7.9\times10^{-33}$.
+
+  \item The model built on that finding wins 10 out of 10 validation splits, and
+        it recovers the ordering of the three subtypes without being told it.
+
+  \item We implemented the proposal's Bayesian model, got the progression rate
+        with a confidence interval, and found two specification issues with
+        clean fixes.
+
+  \item We then realised the clinical question is a \emph{new} patient, tested
+        that specifically, and found a different model wins there --- so we know
+        which to use when.
+
+  \item Every number is on patients the model never saw, repeated across
+        independent splits, and reproducible from a single command. 144 automated
+        tests cover the code.
+\end{enumerate}
+
+\vspace{0.8em}
+\begin{found}
+\textbf{The three questions most likely to come up.}
+
+\smallskip
+\emph{``Is the complicated model just overfitting?''} --- Every result is on
+held-out patients, and the win repeats on ten independent splits.
+
+\smallskip
+\emph{``You said the interval matters, then the interval model failed. Which is it?''}
+--- Both. The interval does matter; correcting for it inside a model that is
+wrong in a more basic way makes things worse, and Step 3 identifies that basic
+problem.
+
+\smallskip
+\emph{``Does a subtype change mean the disease actually progressed?''} --- Not on
+its own; a third of observed changes reverse immediately. But the movement is
+significantly one-directional ($p = 1.8\times10^{-8}$), so there is a real drift
+underneath the noise. That is the case for this whole modelling approach.
+\end{found}
+
+\end{document}
