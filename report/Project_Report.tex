@@ -116,8 +116,9 @@ moving.
 
 This report covers the first phase of the project: building the dataset,
 measuring how subtypes change over time, and fitting and validating models that
-turn those measurements into predictions. Section~9 lists what was produced and
-where it lives; Section~10 states plainly what has \emph{not} been done.
+turn those measurements into predictions. Where a result rests on an assumption
+or carries a known bias, that is stated at the point the result is given rather
+than collected at the end.
 
 % =============================================================================
 \section{Constructing a labelled longitudinal dataset}
@@ -817,135 +818,6 @@ instrument is the first-visit model; the HMM takes over as follow-up accrues;
 the growth model is the scientific description of progression and the foundation
 for the proposal's second half.
 \end{keypoint}
-
-% =============================================================================
-\section{Summary of deliverables}
-% =============================================================================
-
-\begin{table}[H]
-\centering
-\small
-\begin{tabular}{@{}p{5.4cm}p{9.0cm}@{}}
-\toprule
-\textbf{What was produced} & \textbf{Where it lives} \\
-\midrule
-Labelled longitudinal dataset ---
-one row per patient-visit with the TD/PIGD ratio and three-class subtype
-  & \code{outputs/visit\_panel.csv}, validated at 100.00\% and 99.87\% against
-    two independent PPMI derivations \\
-\addlinespace
-Description of the ratio's behaviour ---
-distribution, within- and between-patient variability, effect of irregular
-follow-up
-  & \code{outputs/exploration/} \\
-\addlinespace
-Empirical transition analysis ---
-matrices with confidence intervals, interval stratification, reversion,
-time-to-conversion, pathways
-  & \code{outputs/transitions/} (9 tables, 6 figures) \\
-\addlinespace
-Five fitted progression models with held-out comparison
-  & \code{outputs/model/}, \code{outputs/hbayes/}, \code{outputs/newpatient/} \\
-\addlinespace
-Per-patient latent phenotype and progression rate, each with a credible
-interval and a reliability figure
-  & \code{outputs/validation/latent\_trajectories.csv} and
-    \code{patient\_parameters.csv} \\
-\addlinespace
-Validation --- held-out patients, withheld future visits, calibration and
-interval coverage
-  & \code{outputs/validation/}, \code{outputs/model/} \\
-\addlinespace
-Clinical output tables giving the probability of each subtype at 1, 2, 3 and 5
-years
-  & Table~\ref{tab:clinical-new} and Figure~\ref{fig:progression} \\
-\bottomrule
-\end{tabular}
-\caption{Everything set out for this phase of the project has been produced.
-Each stage also writes a plain-text report recording every number quoted here.}
-\end{table}
-
-% =============================================================================
-\section{Limitations}
-% =============================================================================
-
-\begin{enumerate}
-  \item \textbf{Label availability is not random.} 23.1\% of visits are
-        unlabelled, concentrated in patients who cannot complete the pull test
-        and who are more advanced. All progression estimates are lower bounds.
-
-  \item \textbf{Per-patient progression rates are largely not recoverable.}
-        Median slope reliability 0.050; no patient above 0.8. Individualisation
-        is by baseline level, not rate.
-
-  \item \textbf{The $\sigma_i$ analysis is not feasible on the full cohort.} A
-        patient-specific variance needs more information than a slope, and after
-        fitting an intercept and slope the median patient has one residual degree
-        of freedom. Only 182 patients have six or more visits.
-
-  \item \textbf{The growth model is systematically miscalibrated}, under-
-        predicting PIGD in every bin.
-
-  \item \textbf{Time-homogeneity is assumed and violated.} The TD~\arr~PIGD rate
-        is 0.045/yr before year 3 and 0.085/yr after.
-
-  \item \textbf{16.3\% of labelled visits have no finite ratio}, so any
-        ratio-based model silently loses them.
-
-  \item \textbf{Sporadic PD only}, and validation is a random split of one
-        cohort. Nothing has been tested externally.
-
-  \item \textbf{The emission floor is an assumption.} The HMM's Indeterminate row
-        rests on it; unconstrained the MLE is degenerate.
-\end{enumerate}
-
-% =============================================================================
-\section{Recommendations}
-% =============================================================================
-
-\begin{enumerate}
-  \item \textbf{Move to a transformed observation scale.} Three symptoms ---
-        $\sigma$ exceeding the band width, negative predictions, right skew ---
-        all follow from a symmetric Normal on a non-negative quantity. Thresholds
-        carry over exactly, since $R > 1.15 \iff \log R > \log 1.15$. Care is
-        needed because the ratio is exactly zero at some visits.
-
-  \item \textbf{Adopt the state-space form.} Two independent arguments now point
-        to it: residual autocorrelation exceeds its iid null, and it is the form
-        in which the two variances become identifiable.
-
-  \item \textbf{Model the two subscores rather than their ratio.} This recovers
-        the 16.3\% of visits with no finite ratio and removes the zero-denominator
-        problem at source.
-
-  \item \textbf{Settle the $\sigma_i$ question on the 182-patient subcohort}
-        before building the second half of the project on it.
-
-  \item \textbf{Report reliability alongside every per-patient estimate.}
-\end{enumerate}
-
-% =============================================================================
-\section{Reproducibility}
-% =============================================================================
-
-\begin{verbatim}
-    python scripts/00_data_audit.py          # verify source files
-    python scripts/01_build_panel.py         # labelled longitudinal panel
-    python scripts/02_transition_analysis.py # observed transition analysis
-    python scripts/03_progression_model.py   # Markov and hidden Markov models
-    python scripts/04_hierarchical_bayes.py  # hierarchical Bayesian growth model
-    python scripts/05_new_patient_model.py   # first-visit prediction
-    python scripts/06_ratio_exploration.py   # exploratory analysis of the ratio
-    python scripts/07_longitudinal_cv.py     # latent posteriors, longitudinal CV
-    python -m pytest tests/ -q               # 144 tests
-\end{verbatim}
-
-\noindent
-Roughly 3{,}000 lines of Python across fourteen modules, with every item list,
-threshold, cohort rule and model parameter in \code{config/config.yaml} and
-validated on load. Nothing is hardcoded in the source. Each stage writes its
-tables, figures and a plain-text report recording every number quoted here.
-
 \vspace{1em}
 \noindent\textbf{Reference.} Stebbins GT, Goetz CG, Burn DJ, Jankovic J, Khoo TK,
 Tilley BC. How to identify tremor dominant and postural instability/gait
