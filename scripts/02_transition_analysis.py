@@ -213,7 +213,24 @@ def main() -> int:
 
     # --------------------------------------------------------------- pathways
     section("6. PROGRESSION PATHWAYS")
-    seqs = T.state_sequences(panel)
+
+    # A pathway needs at least two labelled visits to exist. Including patients
+    # seen once counts them among those who "never changed" when they never had
+    # the opportunity, which overstates stability.
+    # Count LABELLED visits only. `panel` still carries the 1,333 visits with no
+    # subtype, and counting those would let a patient with one labelled visit
+    # qualify on the strength of visits that carry no subtype at all.
+    labelled_per_patient = labelled.groupby("PATNO").size()
+    followed = labelled[
+        labelled["PATNO"].isin(labelled_per_patient[labelled_per_patient >= 2].index)
+    ]
+    say(f"  patients with at least one labelled visit  {labelled['PATNO'].nunique():,}")
+    say(f"  patients with two or more labelled visits  {followed['PATNO'].nunique():,}"
+        f"   <- pathways are computed on these")
+    say(f"  seen once only, so no pathway exists        "
+        f"{labelled['PATNO'].nunique() - followed['PATNO'].nunique():,}")
+
+    seqs = T.state_sequences(followed)
     collapsed = seqs.apply(T.collapse_runs)
     as_names = collapsed.apply(lambda t: " → ".join(names[s] for s in t))
 
@@ -221,15 +238,17 @@ def main() -> int:
     path_counts["share"] = path_counts["n_patients"] / path_counts["n_patients"].sum()
     path_counts.to_csv(out_dir / "pathways.csv", index=False)
 
-    say("  Most common pathways after collapsing repeated states "
+    say("\n  Most common pathways after collapsing repeated states "
         f"({len(path_counts):,} distinct pathways across {len(collapsed):,} patients):\n")
     say("    " + path_counts.head(12).round(3).to_string(index=False).replace("\n", "\n    "))
 
     n_changes = collapsed.apply(len) - 1
     say(f"\n  State changes per patient: median {n_changes.median():.0f}, mean {n_changes.mean():.2f}, "
         f"max {n_changes.max()}")
-    say(f"  Patients who never changed state: {(n_changes == 0).sum():,} of {len(n_changes):,} "
-        f"({(n_changes == 0).mean():.1%})")
+    say(f"  Patients with no recorded change of state: {(n_changes == 0).sum():,} of "
+        f"{len(n_changes):,} ({(n_changes == 0).mean():.1%})")
+    say("  Note the wording: no recorded change is not the same as no progression.")
+    say("  A patient can worsen without crossing a subtype threshold.")
 
     # ---------------------------------------------------------------- figures
     section("7. FIGURES")

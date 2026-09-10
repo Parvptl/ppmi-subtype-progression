@@ -1191,9 +1191,9 @@ attended rather than by what happened to them.
 \centering
 \begin{tabular}{@{}lrr@{}}
 \toprule
-Patients with $\geq 1$ label & 1{,}080 & \\
-Distinct collapsed pathways  & 86 & \\
-Never changed state          & 622 & 57.6\% \\
+Patients with $\geq 2$ labels & 934 & \\
+Distinct collapsed pathways   & 86 & \\
+No recorded change of state   & 476 & 51.0\% \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1361,7 +1361,7 @@ TRANSITION PAIRS                                   3,361 pairs
      +--> ..._by_interval          -> 4 interval strata (2,882 / 302 / 111 / 66)
      +--> reversion_after_change   -> 673 changes, 237 reverted = 35.2%
      +--> first_entry + kaplan_meier -> 885 at risk, 263 / 127 converted
-     +--> state_sequences          -> 86 distinct pathways, 622 never changed
+     +--> state_sequences          -> 86 pathways over 934 patients, 476 unchanged
      v
 FINAL RESULTS                                      outputs/transitions/
                                                    9 CSV tables, 6 figures, report.txt

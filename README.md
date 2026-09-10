@@ -280,10 +280,14 @@ well-defined quantity — it averages one-year and multi-year transitions in
 whatever proportion attendance happened to produce. Weeks 5–7 should work in
 continuous time rather than per-visit.
 
-**Most patients never change state.** 622 of 1,080 (57.6%) hold one subtype for
-their entire record; median state changes per patient is 0, mean 0.86. Across
-86 distinct pathways, the commonest are TD-only (46.0%), PIGD-only (10.1%) and
-TD → PIGD (7.7%).
+**About half of followed patients show no recorded change of state.** 476 of the
+934 patients with two or more labelled visits (51.0%) hold one subtype for their
+entire record; median state changes per patient is 0, mean 1.00. Across 86
+distinct pathways, the commonest are TD-only (42.7%), TD → PIGD (8.9%) and
+PIGD-only (7.6%). Pathways are computed on the 934, not on all 1,080: a patient
+with a single labelled visit has no opportunity to change and counting them
+would overstate stability. *No recorded change* is also not *no progression* — a
+patient can worsen without crossing a subtype threshold.
 
 ## Weeks 5–7: the progression model
 
