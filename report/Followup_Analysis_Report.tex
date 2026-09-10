@@ -1,0 +1,594 @@
+% =============================================================================
+%  Follow-up analyses carried out after the researcher review meeting.
+%
+%  Scope: only the additional work done in response to that feedback. The
+%  original project, the dataset construction and the development of the
+%  hidden Markov model are all assumed known and are not repeated here.
+%
+%  Figures are read from outputs/; regenerate with scripts/02 and scripts/08,
+%  then compile twice with pdflatex.
+% =============================================================================
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=2.4cm]{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+
+\graphicspath{
+  {../outputs/patient_level/figures/}
+  {../outputs/transitions/figures/}
+  {../outputs/model/figures/}
+  {figures/}
+}
+
+\captionsetup{font=small,labelfont=bf}
+\setlist[itemize]{itemsep=2pt,topsep=4pt}
+\setlist[enumerate]{itemsep=2pt,topsep=4pt}
+
+\title{\textbf{Follow-up Analyses of Motor Subtype Progression}\\[0.6em]
+       \large Additional work carried out after the research review meeting}
+\author{Parv Patel \quad\textbullet\quad Mayank Tewatia\\[0.4em]
+        \small Supervisor: Prof.\ K.~R.\ Sahasranand\\
+        \small Department of Data Science, IIT Palakkad}
+\date{2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+After reviewing our earlier work on TD/Indeterminate/PIGD motor subtype
+progression in the PPMI cohort, several questions were raised about how we were
+analysing and presenting the results. This report covers only the additional
+analyses carried out in response, and assumes the earlier work is already
+familiar.
+
+Five things were asked for: a look at where inside the Indeterminate range those
+observations actually fall; subtype progression shown for individual patients
+rather than as a population summary; the conversion analysis repeated in the
+direction of TD as well as PIGD; the raw measured tremor/PIGD ratio shown
+directly rather than only through a fitted model; and the separate
+population-level model plots combined into one.
+
+The Indeterminate ratios were found to be concentrated near the two boundaries of
+the Indeterminate range: about 78\% of the visits with a computable ratio occur
+at just two values, one slightly above the PIGD threshold and one slightly below
+the TD threshold. Correcting the patient-level progression analysis to use only
+the 934 patients who have at least two labelled visits, 476 (51.0\%) show no
+recorded subtype change, 210 (22.5\%) change once and 248 (26.6\%) change more
+than once. Conversion is recorded in both directions, and requiring the new
+subtype to persist to the next visit roughly halves the estimated rate in both
+cases. The raw ratio shows a downward trend over follow-up, and also moves by
+more than the entire width of the Indeterminate range between consecutive visits
+of the same patient in about three quarters of cases.
+
+The Indeterminate distribution is presented here as an observation, for
+discussion, without further analysis of what follows from it. The remaining
+results suggest that individual recorded subtype changes should be read
+cautiously, and that a sustained change carries more weight than a single one.
+\end{abstract}
+
+% =============================================================================
+\section{Purpose of the follow-up analysis}
+% =============================================================================
+
+The discussion of our earlier results raised a number of questions that we could
+not answer from the analyses we had already run. They fell into five groups.
+
+The first concerned the Indeterminate category. We had reported that it is
+unstable, with only about a fifth of Indeterminate visits followed by another
+Indeterminate visit. The question raised was where inside the Indeterminate range
+those observations actually sit, and in particular whether they lie close to one
+of the two subtype boundaries.
+
+The second concerned how we were presenting progression. Our figures summarised
+the whole population at each follow-up year, which mixes genuine change with the
+fact that different patients are present at different times. What was wanted was
+a view of what happens to individual patients.
+
+The third was that our conversion analysis only looked in one direction. We had
+estimated how long it takes to be recorded as PIGD, but not how often patients
+move the other way.
+
+The fourth concerned the ratio itself. The subtype label is produced by cutting a
+continuous quantity into three categories, and our figure of ratio progression
+showed a fitted model rather than the measurements. The request was to see the
+raw values.
+
+The fifth was a presentation issue: the model-based population results were
+spread across three separate panels, which makes the three starting subtypes
+difficult to compare.
+
+We addressed each of these. None of the analyses below changes the dataset, the
+subtype definition, the medication filter or any fitted model; they are new views
+of data we already had, with one correction to a calculation that is described in
+Section~\ref{sec:patient}.
+
+For reference, the classification rule being used throughout is unchanged:
+\[
+  R = \frac{\text{mean of the 11 tremor items}}{\text{mean of the 5 gait and postural items}},
+  \qquad
+  \begin{cases}
+    R \geq 1.15 & \text{TD} \\
+    0.90 < R < 1.15 & \text{Indeterminate} \\
+    R \leq 0.90 & \text{PIGD}
+  \end{cases}
+\]
+In words: the ratio compares how severe a patient's tremor symptoms are against
+how severe their gait and balance symptoms are, and two fixed cut-offs turn that
+comparison into a label.
+
+% =============================================================================
+\section{Where inside the Indeterminate range do these observations sit?}
+\label{sec:indeterminate}
+% =============================================================================
+
+The suggestion was to take the visits recorded as Indeterminate, particularly
+those arriving from TD or from PIGD, and look at their actual ratio values rather
+than only at how many there are. This section reports what the distribution looks
+like. We have deliberately not taken the analysis further than that, so that the
+observation can be discussed before anything is concluded from it.
+
+There are 441 Indeterminate visits in the panel. Of these, 381 have a ratio that
+can be computed; the remaining 60 have both subscores equal to zero, so the ratio
+is undefined even though the classification rule still assigns them to
+Indeterminate. Of the 381, 287 follow an earlier labelled visit and 94 are the
+patient's first labelled visit, so they have no preceding subtype. Across the
+whole panel, 332 transitions end in Indeterminate.
+
+The observed ratios are concentrated near the two boundaries of the Indeterminate
+range. Across all 381 visits only 11 distinct ratio values occur, and two of them
+account for most of the observations:
+
+\begin{itemize}
+  \item \textbf{52.0\%} of these visits occur at $R = 0.9091$, which lies
+        $0.009$ above the PIGD threshold of $0.90$;
+  \item \textbf{26.2\%} occur at $R = 1.1364$, which lies $0.014$ below the TD
+        threshold of $1.15$;
+  \item together these two values account for \textbf{78.2\%} of the
+        Indeterminate visits with a computable ratio.
+\end{itemize}
+
+The remaining nine values are spread thinly through the middle of the range, none
+of them accounting for more than 11\% of observations.
+Figure~\ref{fig:indeterminate-boundary} shows this distribution in its left
+panel, with each bar split by the subtype recorded at the patient's previous
+visit. Its right panel carries the accompanying next-visit breakdown from the
+same analysis, which we are not discussing here.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{indeterminate_boundary.png}
+\caption{Distribution of the tremor/PIGD ratio among visits recorded as
+Indeterminate. \emph{Left:} every ratio value that occurs inside the range
+$0.90 < R < 1.15$, across the 381 Indeterminate visits for which the ratio can be
+computed. Bar length gives the number of visits and colour shows the subtype
+recorded at the patient's previous visit, with visits that have no preceding
+labelled visit shown separately in grey. The dashed lines mark the PIGD threshold
+at $0.90$ and the TD threshold at $1.15$. \emph{Right:} for the 282 of those
+visits that are followed by another labelled visit, the subtype recorded at that
+next visit, grouped by where in the range the patient's ratio was sitting. The
+figure was produced in response to the suggestion to examine where inside the
+Indeterminate range these observations fall. The left panel shows a strong
+concentration at the two values closest to the lower and upper boundaries; the
+right panel is included as part of the analysis and is left for discussion.}
+\label{fig:indeterminate-boundary}
+\end{figure}
+
+Broken down by where the patient came from, of the 287 Indeterminate visits that
+follow an earlier labelled visit, 165 follow a visit recorded as TD, 75 follow a
+visit recorded as PIGD and 47 follow another Indeterminate visit. The
+concentration at the two boundary values is present in all three groups and in
+the visits with no preceding label.
+
+We are reporting this distribution as an observation and leaving its
+interpretation open for discussion.
+
+% =============================================================================
+\section{Patient-level subtype progression}
+\label{sec:patient}
+% =============================================================================
+
+Our earlier figures showed the share of the assessed population in each subtype
+at each follow-up year. That summary has a known weakness: patients enter and
+leave the study at different times, so a shift in the proportions mixes real
+change with changes in who is being assessed. The request was to show individual
+patients instead.
+
+\subsection*{A correction to the population used}
+
+Producing the patient-level version made us re-examine how we had been counting
+subtype changes, and we found an error in the earlier figure.
+
+There are 1{,}080 patients with at least one labelled visit, but 146 of them have
+exactly one. A patient seen once cannot show a subtype change, because there is
+no second observation to compare against. Our earlier calculation nevertheless
+included them, and because their record collapses to a single subtype they were
+counted among the patients who never changed. That inflated the apparent
+stability of the cohort.
+
+The correct population for any question about change is the \textbf{934 patients
+with at least two labelled visits}. All patient-level results below use that
+group, and the earlier figure has been regenerated.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lrr@{}}
+\toprule
+\textbf{Recorded subtype changes} & \textbf{Patients} & \textbf{Share} \\
+\midrule
+None                & 476 & \phantom{0}51.0\% \\
+One                 & 210 & \phantom{0}22.5\% \\
+Two or more         & 248 & \phantom{0}26.6\% \\
+\midrule
+Total               & 934 & 100.0\% \\
+\bottomrule
+\end{tabular}
+\caption{Frequency of recorded subtype change among the 934 patients with at
+least two labelled visits. The 146 patients with a single labelled visit are
+excluded because they have no opportunity to show a change.}
+\label{tab:change-frequency}
+\end{table}
+
+It is worth being explicit about what the first row means. ``No recorded
+change'' means that the same subtype label was assigned at every labelled visit
+the patient had. It does not mean the patient's condition was unchanged. A
+patient can worsen substantially and still stay on the same side of the
+threshold, and patients with short follow-up have fewer opportunities to be seen
+changing. The figure is best read as a statement about the record rather than
+about the disease.
+
+\subsection*{Individual trajectories}
+
+Figure~\ref{fig:patient-trajectories} shows every one of the 934 patients as a
+single row. This is the direct answer to the request: nothing is averaged, and no
+patient is left out.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.78\textwidth]{patient_carpet.png}
+\caption{Motor subtype trajectories for all 934 patients with at least two
+labelled visits. Each horizontal row is one patient; colour shows the subtype
+recorded at that patient's most recent visit, and blank space means follow-up had
+ended. Rows are grouped by the subtype recorded at the first visit and then
+ordered by how much of the follow-up period was recorded as PIGD. Reading down
+each block shows how varied individual courses are, and the staircase shape on
+the right is the loss of patients to follow-up, which is what made the earlier
+population-level summary difficult to interpret.}
+\label{fig:patient-trajectories}
+\end{figure}
+
+\subsection*{Recorded subtype courses}
+
+A complementary way to summarise the same data is by the \emph{course} a patient
+follows: the sequence of subtype labels across their visits, with repeats
+collapsed, so that a patient recorded as TD, TD, PIGD, PIGD has the course
+TD $\rightarrow$ PIGD. There are 86 distinct courses among the 934 patients. The
+twelve commonest cover 775 patients (83.0\%); the remaining 159 patients are
+spread across 74 rarer courses.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lrr@{}}
+\toprule
+\textbf{Recorded course} & \textbf{Patients} & \textbf{Share} \\
+\midrule
+TD                                                               & 399 & 42.7\% \\
+TD $\rightarrow$ PIGD                                            & \phantom{0}83 & \phantom{0}8.9\% \\
+PIGD                                                             & \phantom{0}71 & \phantom{0}7.6\% \\
+TD $\rightarrow$ Indeterminate                                   & \phantom{0}39 & \phantom{0}4.2\% \\
+TD $\rightarrow$ Indeterminate $\rightarrow$ TD                  & \phantom{0}35 & \phantom{0}3.7\% \\
+Indeterminate $\rightarrow$ PIGD                                 & \phantom{0}27 & \phantom{0}2.9\% \\
+Indeterminate $\rightarrow$ TD                                   & \phantom{0}26 & \phantom{0}2.8\% \\
+PIGD $\rightarrow$ TD                                            & \phantom{0}24 & \phantom{0}2.6\% \\
+TD $\rightarrow$ Indeterminate $\rightarrow$ PIGD                & \phantom{0}21 & \phantom{0}2.2\% \\
+TD $\rightarrow$ PIGD $\rightarrow$ TD                           & \phantom{0}20 & \phantom{0}2.1\% \\
+PIGD $\rightarrow$ TD $\rightarrow$ PIGD                         & \phantom{0}19 & \phantom{0}2.0\% \\
+Indeterminate $\rightarrow$ TD $\rightarrow$ PIGD                & \phantom{0}11 & \phantom{0}1.2\% \\
+\midrule
+Twelve commonest courses                                         & 775 & 83.0\% \\
+\bottomrule
+\end{tabular}
+\caption{The twelve commonest recorded subtype courses among the 934 patients
+with at least two labelled visits. Courses ending where they started, such as
+TD $\rightarrow$ Indeterminate $\rightarrow$ TD and PIGD $\rightarrow$ TD
+$\rightarrow$ PIGD, together account for a noticeable share of patients.}
+\label{tab:courses}
+\end{table}
+
+Figure~\ref{fig:subtype-courses} draws one representative patient for each of
+these twelve courses, so that what a course looks like in time can be seen
+directly. The representatives were picked as the patient with the typical number
+of visits for that course rather than the longest followed, because choosing the
+longest would make a decade of follow-up look normal when the median patient
+contributes three visits over about two years.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.82\textwidth]{patient_timelines.png}
+\caption{One representative patient for each of the twelve commonest recorded
+subtype courses. Dots mark actual visits and the coloured bar between two dots
+shows the subtype recorded at the earlier of them. The number beside each row is
+how many of the 934 patients follow that course, not how many patients are drawn;
+one patient is drawn per course. Note the short follow-up in most rows, which is
+typical of the cohort.}
+\label{fig:subtype-courses}
+\end{figure}
+
+Two things stand out in Table~\ref{tab:courses}. Nearly half the patients have a
+course consisting of a single subtype, which is consistent with
+Table~\ref{tab:change-frequency}. And among those who do change, courses that
+return to where they started are common: TD $\rightarrow$ Indeterminate
+$\rightarrow$ TD, PIGD $\rightarrow$ TD $\rightarrow$ PIGD and TD $\rightarrow$
+PIGD $\rightarrow$ TD together account for 74 patients. This is the same
+instability we had already reported, seen from the level of the individual
+patient.
+
+% =============================================================================
+\section{Conversion towards PIGD and towards TD}
+% =============================================================================
+
+Our earlier analysis estimated how long it takes for a patient to be recorded as
+PIGD. The request was to run the same analysis in the opposite direction. We did
+this using exactly the same method, so that the two are comparable: patients
+count as being at risk if their first labelled visit is not the target subtype,
+conversion is their first visit recorded as that subtype, patients who never
+convert are censored at their last labelled visit, and a patient who moves back
+and forth is counted only at their first qualifying entry.
+
+Two definitions of conversion are reported in both directions. Under the
+\emph{single-visit} definition, one visit recorded as the target subtype counts.
+Under the \emph{sustained} definition, the target subtype must still be recorded
+at the following visit. The gap between them measures how much of the apparent
+conversion consists of one-off assessments that are not repeated.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}llrrrr@{}}
+\toprule
+\textbf{Direction} & \textbf{Definition} & \textbf{At risk} &
+\textbf{Conversions} & \textbf{5-year estimate} & \textbf{Median time} \\
+\midrule
+towards PIGD & single visit & 885 & 263 & 35.3\% & 3.00 years \\
+towards PIGD & sustained    & 885 & 127 & 15.3\% & 3.00 years \\
+\addlinespace
+towards TD   & single visit & 304 & 125 & 61.2\% & 1.09 years \\
+towards TD   & sustained    & 304 & \phantom{0}60 & 33.9\% & 1.33 years \\
+\bottomrule
+\end{tabular}
+\caption{Recorded conversion in both directions, estimated by the same
+survival method. The two at-risk groups are different populations and different
+sizes, so the percentages are not a head-to-head comparison.}
+\label{tab:conversion}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{conversion_both_directions.png}
+\caption{Estimated cumulative probability of being recorded in the target subtype
+over follow-up, for conversion towards PIGD (left) and towards TD (right), under
+both definitions. Both panels use the same method, the same axes and the same
+truncation point, so the shapes can be compared even though the two at-risk
+groups differ. The dot marks the five-year estimate. Shaded bands are 95\%
+intervals. The right-hand panel was added in response to the request to examine
+conversion in the reverse direction.}
+\label{fig:conversion-both}
+\end{figure}
+
+Three points about Table~\ref{tab:conversion} need stating carefully.
+
+First, the two rows for each direction differ by a factor of roughly two.
+Requiring a subtype to still be recorded at the next visit more than halves the
+estimated five-year rate in both directions. Much of what looks like conversion
+under the looser definition is a single assessment that is not repeated.
+
+Second, the at-risk groups are not the same. The group at risk of being recorded
+as PIGD is 885 patients; the group at risk of being recorded as TD is 304,
+because most of the cohort starts as TD. The 61.2\% and 35.3\% figures are
+therefore not directly comparable, and we would not want them presented side by
+side as though they were.
+
+Third, and most important, a recorded conversion towards TD should not be read as
+clinical improvement. Under the single-visit definition, 61.2\% of the relevant
+at-risk group were recorded as TD within five years, and half of those within
+about one year. But the group at risk consists of patients whose first visit was
+recorded as PIGD or Indeterminate, and the Indeterminate label in particular is
+the least reliable of the three. A substantial part of this movement is likely to
+be a first assessment that was not representative, corrected at the second visit,
+rather than a patient whose symptoms genuinely shifted. The observed subtype can
+also change again later, so a single TD observation is not a permanent state.
+
+% =============================================================================
+\section{The raw tremor/PIGD ratio over follow-up}
+% =============================================================================
+
+The subtype label is produced by cutting a continuous measurement into three
+categories, so any statement about label stability is really a statement about
+that measurement. Our earlier figure of ratio progression showed a fitted model,
+and the request was to see the measurements themselves.
+Figure~\ref{fig:raw-ratio-progression} does that: every observation is plotted,
+each patient's visits are joined, and no model is involved.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.90\textwidth]{raw_ratio_progression.png}
+\caption{Raw observed tremor/PIGD ratio at every visit where it can be computed:
+3{,}716 visits from 1{,}009 patients. Grey lines join visits belonging to the same
+patient. The dashed lines are the TD threshold at $1.15$ and the PIGD threshold
+at $0.90$, with the Indeterminate range shaded between them. The black line is
+the median of the observations actually present in each year; it is a summary of
+the raw data, not a fitted trend, and is affected by which patients are still
+attending. The lower panel gives the number of visits contributing to each year.
+No model output appears anywhere in this figure.}
+\label{fig:raw-ratio-progression}
+\end{figure}
+
+Two things can be read from it. There is a downward trend: the median observed
+ratio sits at about $1.82$ through the first three years and falls to about
+$0.91$ by year 10. That is consistent with the direction we had estimated
+previously, and it is visible in the measurements without any modelling. But the
+later part of that line rests on very few patients --- by year 12 only 52 visits
+remain --- and the median rises again there, which is a change in who is still
+attending rather than a change in the patients. The count panel is part of the
+reading.
+
+The second and more important thing is how much scatter there is. The individual
+patient lines cross the Indeterminate band repeatedly and in both directions. To
+quantify this:
+
+\begin{itemize}
+  \item the standard deviation of the ratio \emph{within} a patient over time is
+        about $1.22$, against an Indeterminate range only $0.25$ wide;
+  \item about 54\% of the total variation in the ratio is between patients and
+        46\% is within a patient over time, an intraclass correlation of
+        $0.536$;
+  \item the median change in a patient's own ratio from one visit to the next is
+        $0.68$, and in 73\% of consecutive visit pairs the ratio moves by more
+        than the entire width of the Indeterminate range.
+\end{itemize}
+
+Figure~\ref{fig:ratio-within-patient} shows the last of these directly.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.72\textwidth]{ratio_within_patient.png}
+\caption{Size of the change in a single patient's own tremor/PIGD ratio between
+one visit and the next, across 2{,}707 consecutive visit pairs. The vertical line
+marks the width of the whole Indeterminate range for comparison. Because this
+compares the same patient measured twice, it isolates variation within a person
+from variation between people.}
+\label{fig:ratio-within-patient}
+\end{figure}
+
+The practical consequence is the one that matters for how the subtype labels
+should be read. If the ratio routinely moves by more than the width of the band
+between two visits of the same patient, then a patient whose ratio happens to sit
+near a threshold will cross it from time to time for reasons unrelated to
+progression. A single recorded change of subtype is therefore weak evidence on
+its own, which is also what the gap between the two conversion definitions in
+Table~\ref{tab:conversion} suggests.
+
+% =============================================================================
+\section{Combined population-level view of the model results}
+% =============================================================================
+
+The last request was a presentation one. The model-based population results had
+been drawn as three separate panels, one for each starting subtype, which makes
+it hard to compare them. Figure~\ref{fig:combined-hmm-population} puts all three
+on one set of axes. This is the same model and the same numbers as before, drawn
+differently; nothing about the model itself has changed.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{progression_combined.png}
+\caption{Model-based probability of occupying each subtype over time, for
+patients starting in each of the three subtypes, drawn on one set of axes.
+Colour shows the subtype being predicted and line style shows the subtype the
+patient starts in. Percentages are read at year 5. These are probabilities
+produced by the fitted model for a patient's underlying subtype, not observed
+proportions in the cohort. Replacing the earlier three-panel version allows the
+three starting subtypes to be compared without moving between figures.}
+\label{fig:combined-hmm-population}
+\end{figure}
+
+Read at five years, the model gives:
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Starting subtype} & \textbf{TD at 5 years} &
+\textbf{Indeterminate at 5 years} & \textbf{PIGD at 5 years} \\
+\midrule
+TD            & 66\% & 15\% & 19\% \\
+Indeterminate & 18\% & 19\% & 63\% \\
+PIGD          & \phantom{0}4\% & 11\% & 86\% \\
+\bottomrule
+\end{tabular}
+\caption{Model-based probabilities at a five-year horizon, by starting subtype.}
+\label{tab:hmm-five-year}
+\end{table}
+
+Putting the three on one axis makes the asymmetry easy to see. A patient in TD
+now has roughly a one-in-five chance of being in PIGD in five years, while a
+patient in PIGD now has about a one-in-twenty-five chance of being in TD.
+Patients currently in Indeterminate resemble PIGD far more than TD, with 63\% of
+them in PIGD at five years. This is the same directional drift we see in the
+observed transitions, expressed as a probability over a fixed horizon.
+
+Two caveats attach to this figure. The probabilities refer to the model's
+estimate of a patient's underlying subtype, not to the label that would be
+recorded at a visit, and they are not observed proportions in the cohort. And the
+projection assumes the fitted transition behaviour continues to apply over the
+whole horizon; we have some evidence that rates are not constant over follow-up,
+so the five-year values should be treated as indicative rather than exact.
+
+% =============================================================================
+\section{What these analyses taken together suggest}
+% =============================================================================
+
+The five pieces of work were requested separately, but they point in a
+consistent direction.
+
+About half of the patients who can be assessed show no recorded subtype change
+at all during their follow-up, and the other half change at least once, often
+more than once and often returning to where they started. Separately, the
+Indeterminate observations were found to cluster at the two values closest to the
+boundaries of the Indeterminate range. That distribution is recorded here as an
+observation; what should be made of it is left for discussion.
+
+The conversion analysis run in both directions shows that movement is recorded
+towards TD as well as towards PIGD, and that requiring a change to persist to the
+following visit roughly halves the estimated rate in both directions. The raw
+ratio explains why: within a single patient the measurement moves by more than
+the width of the Indeterminate range between most pairs of consecutive visits.
+
+The practical conclusion is about interpretation rather than about the disease. A
+single recorded change of subtype is not strong evidence that a patient's
+condition has changed, and a change that persists across two visits should be
+given considerably more weight than one that does not. Where a result depends on
+counting subtype changes, it is worth checking how sensitive it is to that
+distinction. This applies to our own earlier results as much as to anything else,
+and Table~\ref{tab:conversion} is the clearest illustration of the size of the
+effect.
+
+Separately, correcting the population used for the patient-level analysis matters
+in its own right. Restricting to patients who can actually demonstrate a change
+lowered the proportion recorded as never changing, and we have used the corrected
+figure of 51.0\% throughout.
+
+% =============================================================================
+\section{Current status and the next validation step}
+% =============================================================================
+
+All five of the requested analyses are complete. The distribution of ratios
+within the Indeterminate range was examined and is reported in
+Section~\ref{sec:indeterminate} for discussion. The patient-level progression
+analysis was
+corrected and regenerated on the appropriate population of 934 patients.
+Conversion towards TD was added using the same method as the existing PIGD
+analysis. The raw ratio was examined directly, without a model. The
+population-level model results were combined into a single figure.
+
+A stricter patient-level leave-one-out validation of the existing hidden Markov
+model is currently being performed as a separate analysis. In that analysis each
+patient is held out completely, the model is fitted using the remaining patients,
+and the held-out patient's next recorded subtype is predicted one visit at a time
+using only the history available before each prediction. Those results will be
+reported separately.
+
+\vspace{1em}
+\noindent
+\small
+Data used in the preparation of this report were obtained from the Parkinson's
+Progression Markers Initiative (PPMI) database.
+
+\end{document}
