@@ -265,8 +265,9 @@ def conversion_curves(
     path: Path,
     min_at_risk: int = 25,
     label_at: float = 5.0,
+    target_name: str = "PIGD",
 ) -> Path:
-    """Cumulative incidence of PIGD conversion under two conversion definitions.
+    """Cumulative incidence of conversion to `target_name` under two definitions.
 
     The curves are truncated where the risk set falls below `min_at_risk`. Past
     that point a Kaplan-Meier estimate is driven by a handful of patients and
@@ -330,9 +331,9 @@ def conversion_curves(
     ax.axvline(label_at, color=GRID, linewidth=1.0, zorder=0)
     ax.set_xlim(0, cutoff)
     ax.set_ylim(0, 1)
-    ax.set_ylabel("cumulative probability of PIGD conversion", color=INK_MUTED, fontsize=10)
+    ax.set_ylabel(f"cumulative probability of {target_name} conversion", color=INK_MUTED, fontsize=10)
     ax.set_title(
-        "Time to first PIGD conversion, by how strictly conversion is defined",
+        f"Time to first {target_name} conversion, by how strictly conversion is defined",
         fontsize=12, fontweight="bold", pad=12, loc="left",
     )
     ax.grid(color=GRID, linewidth=0.8, alpha=0.6)
@@ -355,7 +356,7 @@ def conversion_curves(
 
     fig.text(
         0.008, -0.04,
-        f"Kaplan-Meier, censored at last labelled visit; risk set is patients not already PIGD at baseline.\n"
+        f"Kaplan-Meier, censored at last labelled visit; risk set is patients not already {target_name} at baseline.\n"
         f"Truncated at year {cutoff:.0f}, where the risk set falls below {min_at_risk}. The gap between the curves is the\n"
         "share of apparent conversions produced by a single assessment that did not hold at the next visit.",
         fontsize=8.5, color=INK_MUTED,
