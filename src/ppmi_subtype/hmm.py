@@ -111,31 +111,43 @@ def build_sequences(
 # ---------------------------------------------------------------------------
 #  Parameter packing
 # ---------------------------------------------------------------------------
-def _unpack(theta: np.ndarray, n_states: int) -> tuple:
-    """Split the flat parameter vector into Q, E and the initial distribution."""
-    n_rates = n_states * (n_states - 1)
-    n_emit = n_states * (n_states - 1)
+def _unpack(theta: np.ndarray, n_hidden: int, n_observed: int | None = None) -> tuple:
+    """Split the flat parameter vector into Q, E and the initial distribution.
+
+    ``n_observed`` defaults to ``n_hidden``, which is the square case the
+    three-state model uses. When the two differ, E is a rectangular
+    ``(n_hidden, n_observed)`` matrix: each hidden state still emits a
+    distribution over the observed labels, there are simply fewer labels than
+    states. One entry per row is pinned to zero because a softmax row is
+    invariant to a shift; for the square case that entry is the diagonal, which
+    keeps this function's output identical to before.
+    """
+    n_observed = n_hidden if n_observed is None else n_observed
+    n_rates = n_hidden * (n_hidden - 1)
+    n_emit = n_hidden * (n_observed - 1)
 
     rates = np.exp(theta[:n_rates])
-    Q = build_generator(rates, n_states)
+    Q = build_generator(rates, n_hidden)
 
-    emit_logits = np.zeros((n_states, n_states))
+    emit_logits = np.zeros((n_hidden, n_observed))
     k = n_rates
-    for a in range(n_states):
-        for b in range(n_states):
-            if a != b:
+    for a in range(n_hidden):
+        pinned = a if n_hidden == n_observed else 0
+        for b in range(n_observed):
+            if b != pinned:
                 emit_logits[a, b] = theta[k]
                 k += 1
     E = softmax(emit_logits, axis=1)
 
-    init_logits = np.zeros(n_states)
+    init_logits = np.zeros(n_hidden)
     init_logits[1:] = theta[n_rates + n_emit :]
     pi = softmax(init_logits)
     return Q, E, pi
 
 
-def _n_params(n_states: int) -> int:
-    return 2 * n_states * (n_states - 1) + (n_states - 1)
+def _n_params(n_hidden: int, n_observed: int | None = None) -> int:
+    n_observed = n_hidden if n_observed is None else n_observed
+    return n_hidden * (n_hidden - 1) + n_hidden * (n_observed - 1) + (n_hidden - 1)
 
 
 # ---------------------------------------------------------------------------
@@ -230,8 +242,8 @@ def _gap_lookup(Q: np.ndarray, unique_gaps: np.ndarray) -> dict:
     return {round(float(g), 3): mats[k] for k, g in enumerate(unique_gaps)}
 
 
-def _neg_loglik(theta, batch: SequenceBatch, n_states) -> float:
-    Q, E, pi = _unpack(theta, n_states)
+def _neg_loglik(theta, batch: SequenceBatch, n_hidden, n_observed=None) -> float:
+    Q, E, pi = _unpack(theta, n_hidden, n_observed)
     ll = _forward_loglik(Q, E, pi, batch)
     return -ll if np.isfinite(ll) else 1e12
 
@@ -251,31 +263,55 @@ class HMMFit:
     n_observations: int
     n_params: int
     converged: bool
-    emission_floor: float = DEFAULT_EMISSION_FLOOR
+    emission_floor: float | None = DEFAULT_EMISSION_FLOOR
+    #: Number of latent states. Equal to len(states) for the square model; a
+    #: model with more hidden states than observed labels sets this larger.
+    n_hidden: int | None = None
+    #: Names for the latent states. Defaults to the observed names, which is
+    #: correct only when the two counts match.
+    hidden_names: list | None = None
+
+    def __post_init__(self) -> None:
+        if self.n_hidden is None:
+            object.__setattr__(self, "n_hidden", self.Q.shape[0])
+        if self.hidden_names is None:
+            names = (list(self.state_names) if self.n_hidden == len(self.state_names)
+                     else [f"H{k + 1}" for k in range(self.n_hidden)])
+            object.__setattr__(self, "hidden_names", names)
+
+    @property
+    def is_square(self) -> bool:
+        """True when there is one latent state per observed label."""
+        return self.n_hidden == len(self.state_names)
 
     @property
     def aic(self) -> float:
         return 2 * self.n_params - 2 * self.loglik
 
     def generator_frame(self) -> pd.DataFrame:
-        return pd.DataFrame(self.Q, index=self.state_names, columns=self.state_names)
+        return pd.DataFrame(self.Q, index=self.hidden_names, columns=self.hidden_names)
 
     def emission_frame(self) -> pd.DataFrame:
-        """Rows are the true latent state, columns the label actually recorded."""
-        return pd.DataFrame(self.E, index=self.state_names, columns=self.state_names)
+        """Rows are the latent state, columns the label actually recorded."""
+        return pd.DataFrame(self.E, index=self.hidden_names, columns=self.state_names)
 
     def P(self, t: float) -> pd.DataFrame:
         mat = transition_probabilities(self.Q, np.array([float(t)]))[0]
-        return pd.DataFrame(mat, index=self.state_names, columns=self.state_names)
+        return pd.DataFrame(mat, index=self.hidden_names, columns=self.hidden_names)
 
     def mean_sojourn(self) -> pd.Series:
         d = np.diag(self.Q)
         with np.errstate(divide="ignore"):
             out = np.where(d < 0, -1.0 / d, np.inf)
-        return pd.Series(out, index=self.state_names)
+        return pd.Series(out, index=self.hidden_names)
 
     def accuracy_by_state(self) -> pd.Series:
-        """P(label is correct | true state) --- the diagonal of E."""
+        """P(label is correct | true state) --- only defined for the square model."""
+        if not self.is_square:
+            raise ValueError(
+                "accuracy_by_state is undefined when the hidden and observed "
+                "state counts differ; read emission_frame() instead"
+            )
         return pd.Series(np.diag(self.E), index=self.state_names)
 
 
@@ -287,34 +323,57 @@ def fit_hmm(
     n_restarts: int = 3,
     init_rates: np.ndarray | None = None,
     emission_floor: float = DEFAULT_EMISSION_FLOOR,
+    n_hidden: int | None = None,
 ) -> HMMFit:
     """Maximum-likelihood fit of the misclassification HMM.
 
     `emission_floor` is the minimum probability that an examination records the
     true state correctly; see :data:`DEFAULT_EMISSION_FLOOR` for why it is
     needed.
+
+    `n_hidden` defaults to one latent state per observed label. Setting it
+    larger gives the chain more latent states than there are labels, so several
+    latent states may emit the same label. The emission floor is *not defined*
+    in that case --- it constrains P(label i | state i), and with more states
+    than labels there is no such pairing --- so it must be passed as ``None``.
+    Choosing which label each extra state should favour would impose the very
+    structure such a model is usually fitted to test.
     """
-    n_states = len(states)
+    n_observed = len(states)
+    n_hidden = n_observed if n_hidden is None else int(n_hidden)
     state_names = state_names or [str(s) for s in states]
     if not sequences:
         raise ValueError("no sequences supplied")
+    if n_hidden < n_observed:
+        raise ValueError(
+            f"n_hidden ({n_hidden}) must be at least the number of observed "
+            f"labels ({n_observed})"
+        )
+    if n_hidden != n_observed and emission_floor is not None:
+        raise ValueError(
+            "emission_floor is only defined when there is one latent state per "
+            "observed label; pass emission_floor=None to fit an unconstrained "
+            f"model with {n_hidden} latent states and {n_observed} labels"
+        )
 
     batch = prepare_batch(sequences)
-    n_rates = n_states * (n_states - 1)
-    n_emit = n_states * (n_states - 1)
+    n_rates = n_hidden * (n_hidden - 1)
+    n_emit = n_hidden * (n_observed - 1)
     rng = np.random.default_rng(seed)
 
-    emit_bound = _emission_logit_bound(emission_floor, n_states)
+    emit_bound = (0.0 if emission_floor is None
+                  else _emission_logit_bound(emission_floor, n_observed))
+    emit_upper = 8.0 if emission_floor is None else emit_bound
 
-    base = np.empty(_n_params(n_states))
+    base = np.empty(_n_params(n_hidden, n_observed))
     base[:n_rates] = np.log(init_rates) if init_rates is not None else np.log(0.15)
     base[n_rates : n_rates + n_emit] = min(-2.0, emit_bound)   # ~10% misclassification
     base[n_rates + n_emit :] = 0.0
 
     bounds = (
         [_LOG_RATE_BOUNDS] * n_rates
-        + [(-8.0, emit_bound)] * n_emit
-        + [_INIT_BOUNDS] * (n_states - 1)
+        + [(-8.0, emit_upper)] * n_emit
+        + [_INIT_BOUNDS] * (n_hidden - 1)
     )
 
     best = None
@@ -327,7 +386,7 @@ def fit_hmm(
         res = minimize(
             _neg_loglik,
             theta0,
-            args=(batch, n_states),
+            args=(batch, n_hidden, n_observed),
             method="L-BFGS-B",
             bounds=bounds,
             options={"maxiter": 3000, "ftol": 1e-11, "gtol": 1e-9},
@@ -335,7 +394,7 @@ def fit_hmm(
         if best is None or res.fun < best.fun:
             best = res
 
-    Q, E, pi = _unpack(best.x, n_states)
+    Q, E, pi = _unpack(best.x, n_hidden, n_observed)
     return HMMFit(
         Q=Q,
         E=E,
@@ -345,9 +404,12 @@ def fit_hmm(
         loglik=-float(best.fun),
         n_sequences=batch.n_sequences,
         n_observations=batch.n_observations,
-        n_params=_n_params(n_states),
+        n_params=_n_params(n_hidden, n_observed),
         converged=bool(best.success),
-        emission_floor=float(emission_floor),
+        emission_floor=None if emission_floor is None else float(emission_floor),
+        n_hidden=n_hidden,
+        hidden_names=(list(state_names) if n_hidden == n_observed
+                      else [f"H{k + 1}" for k in range(n_hidden)]),
     )
 
 

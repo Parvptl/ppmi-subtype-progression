@@ -108,10 +108,22 @@ def run_fold(
     held_out,
     seed: int,
     n_restarts: int,
-    emission_floor: float,
+    emission_floor: float | None,
     with_baselines: bool = True,
+    n_hidden: int | None = None,
 ) -> pd.DataFrame:
-    """Fit on every other patient, then predict this patient's visits in order."""
+    """Fit on every other patient, then predict this patient's visits in order.
+
+    `n_hidden` is passed straight to the fitter. Left as None it gives one
+    latent state per observed label, which is the baseline. Set larger, the
+    chain has more latent states than labels and `emission_floor` must be None,
+    because the floor constrains P(label i | state i) and there is no such
+    pairing once the counts differ.
+
+    The baselines are unaffected by `n_hidden`: they are chains in the observed
+    label and have no latent layer, which is what keeps them comparable across
+    experiments.
+    """
     train_sequences = [s for s in data.sequences if s["PATNO"] != held_out]
     train_pairs = data.pairs[data.pairs["PATNO"] != held_out]
     assert_no_leakage(held_out, train_sequences, train_pairs)
@@ -126,6 +138,7 @@ def run_fold(
         seed=seed,
         n_restarts=n_restarts,
         emission_floor=emission_floor,
+        n_hidden=n_hidden,
     )
     preds = hmm.predictive_distributions(fit, [test_sequence])
     preds = preds.rename(columns={"step": "visit_index"})
@@ -133,6 +146,7 @@ def run_fold(
     preds["train_loglik"] = fit.loglik
     preds["train_converged"] = fit.converged
     preds["n_train_patients"] = len(train_sequences)
+    preds["n_hidden"] = fit.n_hidden
 
     frames = [preds]
 
@@ -168,6 +182,7 @@ def run_fold(
             frame["train_loglik"] = np.nan
             frame["train_converged"] = True
             frame["n_train_patients"] = len(train_sequences)
+            frame["n_hidden"] = np.nan          # no latent layer in the baselines
             frames.append(frame)
 
     out = pd.concat(frames, ignore_index=True)
@@ -182,15 +197,40 @@ def run_loo(
     data: LOOData,
     seed: int,
     n_restarts: int,
-    emission_floor: float,
+    emission_floor: float | None,
     checkpoint: Path | None = None,
     checkpoint_every: int = 25,
     limit: int | None = None,
     with_baselines: bool = True,
     progress_every: int = 25,
+    patients_subset: list | None = None,
+    n_hidden: int | None = None,
 ) -> pd.DataFrame:
-    """Hold out every patient in turn, resuming from a checkpoint if one exists."""
-    patients = data.patients[:limit] if limit else data.patients
+    """Hold out every patient in turn, resuming from a checkpoint if one exists.
+
+    `patients_subset` restricts the loop to the patients named, so one run can
+    cover part of the cohort and several runs together cover all of it. It does
+    not change what any fold does: each held-out patient is still fitted against
+    *every other patient in the full cohort*, not merely the others in the
+    subset, because :func:`run_fold` derives its training set from ``data``. A
+    shard is therefore a division of the work, not of the data.
+
+    Each concurrent run needs its own `checkpoint` path; two runs sharing one
+    would overwrite each other.
+    """
+    if patients_subset is not None:
+        known = set(data.patients)
+        unknown = [p for p in patients_subset if p not in known]
+        if unknown:
+            raise ValueError(
+                f"{len(unknown)} patient(s) in patients_subset are not in the "
+                f"cohort, first few: {unknown[:5]}"
+            )
+        patients = list(patients_subset)
+    elif limit:
+        patients = data.patients[:limit]
+    else:
+        patients = data.patients
 
     done: set = set()
     collected: list[pd.DataFrame] = []
@@ -207,7 +247,8 @@ def run_loo(
 
     for n, patno in enumerate(pending, start=1):
         buffer.append(
-            run_fold(data, patno, seed, n_restarts, emission_floor, with_baselines)
+            run_fold(data, patno, seed, n_restarts, emission_floor,
+                     with_baselines, n_hidden=n_hidden)
         )
         if progress_every and n % progress_every == 0:
             print(f"  fold {n:,}/{len(pending):,}  (patient {patno})", flush=True)
