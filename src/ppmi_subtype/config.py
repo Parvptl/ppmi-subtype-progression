@@ -6,6 +6,8 @@ at startup rather than halfway through a long pipeline run.
 
 from __future__ import annotations
 
+import os
+
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -38,6 +40,10 @@ class SubtypeConfig:
     medication_state: str
     pdstate_column: str
     treatment_column: str
+    #: "outer" closes TD/PIGD on the thresholds and leaves the Indeterminate
+    #: band open; "inner" closes the band instead. Defaults to the published
+    #: rule so an existing config without the key behaves as it always has.
+    band_boundaries: str = "outer"
 
     @property
     def all_items(self) -> tuple[str, ...]:
@@ -87,6 +93,7 @@ class Config:
             medication_state=str(s["medication_state"]).upper(),
             pdstate_column=s["pdstate_column"],
             treatment_column=s["treatment_column"],
+            band_boundaries=str(s.get("band_boundaries", "outer")).lower(),
         )
 
     @property
@@ -156,6 +163,12 @@ def _validate(raw: dict[str, Any]) -> None:
     if overlap:
         raise ConfigError(f"items appear in both tremor and PIGD lists: {sorted(overlap)}")
 
+    band = str(s.get("band_boundaries", "outer")).lower()
+    if band not in {"outer", "inner"}:
+        raise ConfigError(
+            f"subtype.band_boundaries must be 'outer' or 'inner'; got {band!r}"
+        )
+
     if not float(s["pigd_threshold"]) < float(s["td_threshold"]):
         raise ConfigError(
             "subtype.pigd_threshold must be strictly less than subtype.td_threshold "
@@ -192,8 +205,16 @@ def _validate(raw: dict[str, Any]) -> None:
 
 
 def load_config(path: str | Path | None = None) -> Config:
-    """Load and validate config.yaml."""
+    """Load and validate config.yaml.
+
+    With no argument the file is taken from the ``PPMI_CONFIG`` environment
+    variable if it is set, otherwise from ``config/config.yaml``. That lets a
+    sensitivity analysis run against an alternative config without editing the
+    one the baseline was produced from.
+    """
     root = project_root()
+    if path is None:
+        path = os.environ.get("PPMI_CONFIG") or None
     cfg_path = Path(path) if path is not None else root / "config" / "config.yaml"
     if not cfg_path.exists():
         raise ConfigError(f"config file not found: {cfg_path}")

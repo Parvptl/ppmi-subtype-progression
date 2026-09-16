@@ -47,7 +47,7 @@ def section(title: str) -> None:
 
 def main() -> int:
     cfg = load_config()
-    out_dir = cfg.root / "outputs" / "patient_level"
+    out_dir = cfg.path("outputs") / "patient_level"
     fig_dir = out_dir / "figures"
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -55,7 +55,7 @@ def main() -> int:
     L = cfg.subtype.labels
     td_thr, pigd_thr = cfg.subtype.td_threshold, cfg.subtype.pigd_threshold
 
-    panel = pd.read_csv(cfg.root / "outputs" / "visit_panel.csv", low_memory=False)
+    panel = pd.read_csv(cfg.path("outputs") / "visit_panel.csv", low_memory=False)
     panel = panel[panel["subtype"].notna()].sort_values(["PATNO", "years_from_baseline"])
     pairs = T.consecutive_pairs(panel)
 
@@ -242,8 +242,13 @@ def main() -> int:
         "course counts sum to the followed population": int(common.sum()) == n_followed,
         "no single-visit patient in the course counts": len(seqs) == n_followed,
         "change frequencies partition the population": n_never + n_once + n_more == n_followed,
-        "top 12 courses sum to 775": top12 == 775,
-        "remaining patients == 159": n_followed - top12 == 159,
+        # Relational rather than absolute: the course *counts* depend on the
+        # subtype thresholds, so a sensitivity run legitimately produces
+        # different ones. What must always hold is that the parts add up.
+        "top 12 courses plus the rest equal the population":
+            top12 + int(common.iloc[12:].sum()) == n_followed,
+        "top 12 courses are the twelve largest":
+            top12 == int(common.nlargest(12).sum()),
     }
     say("\n  Consistency checks:")
     for name, ok in checks.items():

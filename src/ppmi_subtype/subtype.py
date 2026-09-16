@@ -143,11 +143,20 @@ def classify(
     with np.errstate(divide="ignore", invalid="ignore"):
         ratio = t / p.where(p != 0)
 
-    result[divisible & (ratio >= cfg.td_threshold)] = labels["TD"]
-    result[divisible & (ratio <= cfg.pigd_threshold)] = labels["PIGD"]
-    result[divisible & (ratio > cfg.pigd_threshold) & (ratio < cfg.td_threshold)] = labels[
-        "Indeterminate"
-    ]
+    # Which side of each threshold is closed. "outer" is the published rule:
+    # TD and PIGD take the boundary and the band between them is open. "inner"
+    # reverses that, giving the band both endpoints. Only a ratio sitting
+    # exactly on a threshold can tell the two apart.
+    if cfg.band_boundaries == "inner":
+        is_td = ratio > cfg.td_threshold
+        is_pigd = ratio < cfg.pigd_threshold
+    else:
+        is_td = ratio >= cfg.td_threshold
+        is_pigd = ratio <= cfg.pigd_threshold
+
+    result[divisible & is_td] = labels["TD"]
+    result[divisible & is_pigd] = labels["PIGD"]
+    result[divisible & ~is_td & ~is_pigd] = labels["Indeterminate"]
 
     # Degenerate cases, applied last so they cannot be overwritten.
     result[pigd_zero_only] = labels["TD"]

@@ -68,6 +68,19 @@ subtype:
   td_threshold: 1.15
   pigd_threshold: 0.90
 
+  # Which side of each threshold the Indeterminate band is closed on.
+  #
+  #   outer   TD if ratio >= td_threshold, PIGD if ratio <= pigd_threshold, so
+  #           the band is open at both ends. This is the published rule and the
+  #           project baseline; leave it alone unless running an experiment.
+  #   inner   TD if ratio >  td_threshold, PIGD if ratio <  pigd_threshold, so
+  #           the band is closed at both ends.
+  #
+  # The distinction only matters for a visit whose ratio sits exactly on a
+  # threshold, but the two settings are different rules and a sensitivity
+  # analysis has to be able to state which one it used.
+  band_boundaries: outer
+
   labels:
     TD: 1
     Indeterminate: 2

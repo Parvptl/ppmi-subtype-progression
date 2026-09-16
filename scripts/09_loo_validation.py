@@ -109,14 +109,14 @@ def main() -> int:
     args = ap.parse_args()
 
     cfg = load_config()
-    out_dir = cfg.root / "outputs" / "loo"
+    out_dir = cfg.path("outputs") / "loo"
     fig_dir = out_dir / "figures"
     out_dir.mkdir(parents=True, exist_ok=True)
 
     names = {v: k for k, v in cfg.subtype.labels.items()}
     states = [cfg.subtype.labels[s] for s in loo.STATE_NAMES]
 
-    panel = pd.read_csv(cfg.root / "outputs" / "visit_panel.csv", low_memory=False)
+    panel = pd.read_csv(cfg.path("outputs") / "visit_panel.csv", low_memory=False)
     data = loo.prepare(panel, states)
 
     # ---------------------------------------------------------------- design

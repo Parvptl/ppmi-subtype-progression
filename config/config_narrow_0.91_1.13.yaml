@@ -1,0 +1,209 @@
+# =============================================================================
+#  SENSITIVITY EXPERIMENT - narrower Indeterminate interval
+#
+#  Byte-identical to config/config.yaml except for four values: the two
+#  thresholds, the side each boundary is closed on, and the output directory.
+#
+#      baseline   PIGD <= 0.90   0.90 <  I <  1.15   TD >= 1.15
+#      this file  PIGD <  0.91   0.91 <= I <= 1.13   TD >  1.13
+#
+#  Run with PPMI_CONFIG pointing at this file. The baseline config and the
+#  baseline outputs are untouched.
+# =============================================================================
+
+# =============================================================================
+#  Probabilistic Motor Subtype Progression Model - configuration
+#
+#  Everything the pipeline needs lives here. No paths, item lists, thresholds
+#  or cohort definitions are hardcoded in the source.
+# =============================================================================
+
+seed: 42
+
+paths:
+  data_root: data
+  outputs: experiments/threshold_narrow_0.91_1.13
+
+  # Curated Data Cut. Longitudinal, one row per patient-visit.
+  curated_cut: data/clinical/PPMI_Curated_Data_Cut_Public_20260511.xlsx
+  curated_cut_sheet: "20260511"
+  curated_cut_dictionary_sheet: "Data dictionary"
+
+  participant_status: data/clinical/Participant_Status_26Jul2026.csv
+
+  # Archived Apr-2020 snapshot. Only source in the repo carrying a 3-class
+  # td_pigd_old label; used to validate our recomputed labels.
+  archived_original_cohort: data/validation/PPMI_Original_Cohort_BL_to_Year_5_Dataset_Apr2020.csv
+
+  # Item-level MDS-UPDRS. Downloaded separately from LONI -> Study Data ->
+  # Motor Assessments. Globs, so the date suffix in the filename does not
+  # matter. See docs/DATA_REQUIREMENTS.md.
+  # Note the wildcard between MDS and UPDRS: PPMI ships Part II with an
+  # underscore (MDS_UPDRS_Part_II__...) and Part III with a hyphen
+  # (MDS-UPDRS_Part_III_...). The double underscore in the Part II pattern is
+  # what keeps it from also matching Part III.
+  updrs_part2_glob: "data/motor_updrs/MDS*UPDRS_Part_II__Patient_Questionnaire*.csv"
+  updrs_part3_glob: "data/motor_updrs/MDS*UPDRS_Part_III_*.csv"
+
+# -----------------------------------------------------------------------------
+#  TD/PIGD classification
+#
+#  Definition follows Stebbins et al., Movement Disorders 2013, and matches the
+#  derivation notes in the Curated Data Cut dictionary for `td_pigd` verbatim.
+# -----------------------------------------------------------------------------
+subtype:
+  tremor_items:
+    - NP2TRMR    # 2.10 tremor (patient questionnaire)
+    - NP3PTRMR   # 3.15a postural tremor, right hand
+    - NP3PTRML   # 3.15b postural tremor, left hand
+    - NP3KTRMR   # 3.16a kinetic tremor, right hand
+    - NP3KTRML   # 3.16b kinetic tremor, left hand
+    - NP3RTARU   # 3.17a rest tremor amplitude, RUE
+    - NP3RTALU   # 3.17b rest tremor amplitude, LUE
+    - NP3RTARL   # 3.17c rest tremor amplitude, RLE
+    - NP3RTALL   # 3.17d rest tremor amplitude, LLE
+    - NP3RTALJ   # 3.17e rest tremor amplitude, lip/jaw
+    - NP3RTCON   # 3.18 constancy of rest tremor
+
+  pigd_items:
+    - NP2WALK    # 2.12 walking and balance
+    - NP2FREZ    # 2.13 freezing
+    - NP3GAIT    # 3.10 gait
+    - NP3FRZGT   # 3.11 freezing of gait
+    - NP3PSTBL   # 3.12 postural stability
+
+  # Ratio = mean(tremor_items) / mean(pigd_items)
+  #   ratio >= td_threshold                      -> TD
+  #   pigd_score == 0 and tremor_score >  0      -> TD
+  #   ratio <= pigd_threshold                    -> PIGD
+  #   pigd_threshold < ratio < td_threshold      -> Indeterminate
+  #   tremor_score == 0 and pigd_score == 0      -> Indeterminate
+  td_threshold: 1.13
+  pigd_threshold: 0.91
+
+  # Which side of each threshold the Indeterminate band is closed on.
+  #
+  #   outer   TD if ratio >= td_threshold, PIGD if ratio <= pigd_threshold, so
+  #           the band is open at both ends. This is the published rule and the
+  #           project baseline; leave it alone unless running an experiment.
+  #   inner   TD if ratio >  td_threshold, PIGD if ratio <  pigd_threshold, so
+  #           the band is closed at both ends.
+  #
+  # The distinction only matters for a visit whose ratio sits exactly on a
+  # threshold, but the two settings are different rules and a sensitivity
+  # analysis has to be able to state which one it used.
+  band_boundaries: inner
+
+  labels:
+    TD: 1
+    Indeterminate: 2
+    PIGD: 3
+
+  # Coding used by `td_pigd_old` in the archived Apr-2020 snapshot, our only
+  # 3-class reference. It is NOT the same as `labels` above: its dictionary
+  # defines 2 = PIGD and 3 = Indeterminate. Comparing without this remap looks
+  # like a 66% agreement failure when the labels in fact match.
+  archived_reference_labels:
+    TD: 1
+    PIGD: 2
+    Indeterminate: 3
+
+  # Sentinel codes that occupy the same numeric field as a real 0-4 score.
+  # In the MDS-UPDRS Part III file, 101 = "Unable to Rate" for every one of the
+  # 13 items used here. Treated as a score it is catastrophic: a single 101
+  # among the five PIGD items lifts their mean to roughly 20, driving the ratio
+  # to zero and mislabelling the visit as PIGD. NP3PSTBL alone carries 4,302 of
+  # them, postural stability being frequently untestable.
+  missing_value_codes: [101]
+
+  # Valid MDS-UPDRS item range. Anything outside it is treated as missing and
+  # counted, so a future sentinel code cannot enter a subscore unnoticed.
+  valid_score_range: [0, 4]
+
+  # How many of the constituent items may be missing before the subscore is
+  # set to NaN. PPMI's own derivation requires all items present; we keep it
+  # configurable so the sensitivity of the label to this choice can be tested.
+  max_missing_tremor_items: 0
+  max_missing_pigd_items: 0
+
+  # Medication state. The canonical classification uses the OFF/untreated exam.
+  # PDSTATE is 'OFF' / 'ON'; untreated participants (PDTRTMNT == 0) carry no
+  # PDSTATE and are treated as OFF.
+  medication_state: "OFF"          # OFF | ON | ANY
+  pdstate_column: PDSTATE
+  treatment_column: PDTRTMNT
+
+# -----------------------------------------------------------------------------
+#  Cohort
+# -----------------------------------------------------------------------------
+cohort:
+  # `subgroup` values from the curated cut to retain. Sporadic PD is the
+  # primary analysis population; the genetic PD subgroups are listed so a
+  # sensitivity analysis can switch them on without touching code.
+  primary_subgroups:
+    - Sporadic PD
+  extended_subgroups:
+    - Sporadic PD
+    - LRRK2
+    - GBA
+    - SNCA
+    - PRKN
+    - Normosmic
+
+  # Visits to exclude outright. ST = unscheduled, PW = premature withdrawal.
+  excluded_events: [ST, PW, U01, U02]
+
+  min_visits_per_patient: 2        # need >=2 to observe a transition
+  max_follow_up_years: 15
+
+# -----------------------------------------------------------------------------
+#  Baseline predictors of trajectory stability (proposal Part II).
+#  Hypothesis: markers of diffuse synucleinopathy predict higher sigma_i.
+# -----------------------------------------------------------------------------
+stability_predictors:
+  hypothesis_driven:
+    - rem                    # RBDSQ total
+    - scopa                  # SCOPA-AUT total
+    - upsit                  # UPSIT raw
+    - moca                   # MoCA, education-adjusted
+    - MIA_PUTAMEN_BILAT      # DaTscan SBR, bilateral putamen
+    - age
+  covariates:
+    - SEX
+    - EDUCYRS
+    - duration_yrs
+    - ageonset
+    - LEDD
+    - hy
+
+# -----------------------------------------------------------------------------
+#  Splits. Patient-level, seeded, saved as a manifest.
+# -----------------------------------------------------------------------------
+splits:
+  train: 0.70
+  test: 0.30
+  stratify_by: baseline_subtype
+
+# -----------------------------------------------------------------------------
+#  Weeks 5-7 progression model.
+# -----------------------------------------------------------------------------
+model:
+  # Horizons for the clinical output table, in years.
+  horizons: [1, 2, 3, 5]
+
+  # Minimum probability that an examination records the true state correctly.
+  # Without this the maximum-likelihood HMM is degenerate: the latent
+  # Indeterminate state emits uniformly and PIGD becomes absorbing at the
+  # parameter boundary. See the note in src/ppmi_subtype/hmm.py.
+  emission_floor: 0.5
+
+  # Random restarts for each fit. The likelihood surface is not guaranteed
+  # unimodal, so the best optimum of several is kept.
+  n_restarts: 4
+
+  # Patient-level bootstrap draws for confidence intervals on the rates.
+  bootstrap_draws: 300
+
+  # Independent train/test splits used to check that the model ranking is not
+  # an artefact of one particular split.
+  robustness_splits: 10
