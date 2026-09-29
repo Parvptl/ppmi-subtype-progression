@@ -170,6 +170,27 @@ def _baseline_prediction(name: str, t_hist, y_hist, t_target, beta) -> float:
 # ---------------------------------------------------------------------------
 #  One fold
 # ---------------------------------------------------------------------------
+
+def _kernel_spec(entry):
+    """Normalise a kernel entry to (label, kernel, fit_mean).
+
+    A plain string behaves exactly as before: `"K1"` means kernel K1 with the
+    fitted linear mean, reported under the name "K1". A triple lets a variant
+    of the same kernel be scored alongside it in the same fold --- for example
+    `("K2_zeromean", "K2", False)` fits K2 with the mean fixed at zero and
+    reports it as a separate model.
+
+    Running both arms inside one fold is what makes the comparison paired: they
+    see the identical training set, the identical held-out targets and the
+    identical histories, so any difference is the mean specification and
+    nothing else.
+    """
+    if isinstance(entry, str):
+        return entry, entry, True
+    label, kernel, fit_mean = entry
+    return str(label), str(kernel), bool(fit_mean)
+
+
 def _row(model, kernel, patno, k, t_hist, t_target, observed, subtype, mean, sd,
          n_train, converged, td, pigd) -> dict:
     probs = gpr.subtype_probabilities(mean, sd, td, pigd)
@@ -229,7 +250,7 @@ def run_fold(
     fitted: dict = {}
 
     # ----------------------------------------------------------- GP kernels
-    for kernel in kernels:
+    for label, kernel, fit_mean in (_kernel_spec(e) for e in kernels):
         fit = gpr.fit_gpr(
             train,
             kernel=kernel,
@@ -237,12 +258,15 @@ def run_fold(
             seed=int(settings["seed"]),
             max_iter=int(settings["max_iter"]),
             jitter=float(settings["jitter"]),
+            fit_mean=fit_mean,
         )
-        fitted[kernel] = fit
+        fitted[label] = fit
         fits.append(
             {
                 "held_out_patient": patno,
-                "kernel": kernel,
+                "kernel": label,
+                "base_kernel": kernel,
+                "fit_mean": fit_mean,
                 "loglik": fit.log_marginal_likelihood,
                 "beta0": float(fit.beta[0]),
                 "beta1": float(fit.beta[1]),
@@ -256,7 +280,7 @@ def run_fold(
             mean, sd = gpr.predict_one(fit, t_all[:k], y_all[:k], float(t_all[k]),
                                        jitter=float(settings["jitter"]))
             predictions.append(
-                _row(kernel, kernel, patno, k, t_all[:k], t_all[k], y_all[k],
+                _row(label, kernel, patno, k, t_all[:k], t_all[k], y_all[k],
                      s_all[k], mean, sd, n_train, fit.converged, td, pigd)
             )
 
@@ -326,16 +350,17 @@ def run_multistep_fold(data: FoldData, patno, kernels: list, settings: dict,
     td, pigd = float(settings["td_threshold"]), float(settings["pigd_threshold"])
     rows = []
 
-    for kernel in kernels:
-        fit = (fitted or {}).get(kernel)
+    for label, kernel, fit_mean in (_kernel_spec(e) for e in kernels):
+        fit = (fitted or {}).get(label)
         if fit is None:
             fit = gpr.fit_gpr(
                 data.sequences(exclude=patno), kernel=kernel,
                 n_restarts=int(settings["n_restarts"]), seed=int(settings["seed"]),
                 max_iter=int(settings["max_iter"]), jitter=float(settings["jitter"]),
+                fit_mean=fit_mean,
             )
         elif fit.kernel != kernel:
-            raise ValueError(f"fitted GP for {kernel!r} carries kernel {fit.kernel!r}")
+            raise ValueError(f"fitted GP for {label!r} carries kernel {fit.kernel!r}")
         mean, cov = gpr.posterior(fit, t_all[:m], y_all[:m], t_all[m:],
                                   jitter=float(settings["jitter"]))
         sd = np.sqrt(np.clip(np.diag(cov), 0.0, None))
@@ -355,7 +380,7 @@ def run_multistep_fold(data: FoldData, patno, kernels: list, settings: dict,
             rows.append(
                 {
                     "held_out_patient": patno,
-                    "model": kernel,
+                    "model": label,
                     "history_length": m,
                     "step": j + 1,
                     "target_index": k,

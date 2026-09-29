@@ -343,3 +343,59 @@ class TestCheckpointing:
         out, _, _ = gpr_loo.run_lopo(data, ["K0"], SETTINGS, with_hbayes=False,
                                      multistep=False, jobs=1, checkpoint=ck)
         assert out["held_out_patient"].nunique() == 6
+
+
+class TestKernelSpec:
+    """Mean-function variants must be scorable beside their fitted-mean twin.
+
+    The held-out mean-function comparison only means anything if both arms see
+    the same training set, targets and histories, which is why they are fitted
+    inside the same fold rather than in two separate runs.
+    """
+
+    def test_a_plain_string_behaves_exactly_as_before(self):
+        assert gpr_loo._kernel_spec("K1") == ("K1", "K1", True)
+
+    def test_a_triple_carries_a_label_and_a_mean_specification(self):
+        assert gpr_loo._kernel_spec(("K2_zeromean", "K2", False)) == (
+            "K2_zeromean", "K2", False)
+
+    def test_both_arms_are_scored_on_identical_points(self):
+        data = make_data(n_patients=5, n_visits=4)
+        preds, fits, fitted = gpr_loo.run_fold(
+            data, 0, ["K2", ("K2_zeromean", "K2", False)], SETTINGS,
+            with_hbayes=False, with_baselines=False,
+        )
+        df = pd.DataFrame(preds)
+
+        assert set(df["model"]) == {"K2", "K2_zeromean"}
+        a = df[df.model == "K2"].set_index("target_index")
+        b = df[df.model == "K2_zeromean"].set_index("target_index")
+        assert list(a.index) == list(b.index)
+        # identical targets and identical histories, by construction
+        assert (a["observed_ratio"] == b["observed_ratio"]).all()
+        assert (a["history_length"] == b["history_length"]).all()
+        assert set(fitted) == {"K2", "K2_zeromean"}
+
+    def test_the_zero_mean_arm_really_has_no_fitted_mean(self):
+        data = make_data(n_patients=5, n_visits=4)
+        _, fits, _ = gpr_loo.run_fold(
+            data, 0, [("K2_zeromean", "K2", False)], SETTINGS,
+            with_hbayes=False, with_baselines=False,
+        )
+        row = fits[0]
+        assert row["beta0"] == 0.0 and row["beta1"] == 0.0
+        assert row["fit_mean"] is False
+        assert row["base_kernel"] == "K2"
+
+    def test_the_two_arms_give_different_predictions(self):
+        """If they agreed exactly, the flag would not be doing anything."""
+        data = make_data(n_patients=6, n_visits=4)
+        preds, _, _ = gpr_loo.run_fold(
+            data, 0, ["K2", ("K2_zeromean", "K2", False)], SETTINGS,
+            with_hbayes=False, with_baselines=False,
+        )
+        df = pd.DataFrame(preds)
+        a = df[df.model == "K2"]["pred_mean"].to_numpy()
+        b = df[df.model == "K2_zeromean"]["pred_mean"].to_numpy()
+        assert not np.allclose(a, b)
