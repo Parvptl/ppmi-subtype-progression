@@ -112,6 +112,110 @@ class Config:
     def model(self) -> dict[str, Any]:
         return self.raw["model"]
 
+    @property
+    def trajectory(self) -> dict[str, Any]:
+        """Step 3 trajectory and extreme-profile settings.
+
+        Absent from a config written before Step 3, so a default is supplied
+        rather than breaking every earlier stage's config file.
+        """
+        return self.raw.get("trajectory", _TRAJECTORY_DEFAULT)
+
+    @property
+    def gpr(self) -> dict[str, Any]:
+        """Step 3 Gaussian process settings. Defaulted like `trajectory`."""
+        return self.raw.get("gpr", _GPR_DEFAULT)
+
+
+#: Used when a config predating Step 3 is loaded. Mirrors config.yaml.
+_TRAJECTORY_DEFAULT: dict[str, Any] = {
+    "min_finite_visits": 2,
+    "min_finite_visits_multistep": 3,
+    "criteria": {
+        "A4": {"type": "degenerate_fraction", "min_fraction": 0.80},
+        "D1": {"type": "boundary_fraction", "high": 2.30, "low": 0.45,
+               "min_fraction": 0.80},
+        "E2": {"type": "run_and_fraction", "high": 2.30, "low": 0.45,
+               "min_run": 3, "min_fraction": 0.60},
+    },
+    "primary": "A4",
+}
+
+_GPR_DEFAULT: dict[str, Any] = {
+    "kernels": ["K0", "K1", "K2", "K3"],
+    "n_restarts": 4,
+    "max_iter": 300,
+    "jitter": 1.0e-8,
+}
+
+#: Criterion types `trajectory.criteria` may use, and the keys each needs.
+_CRITERION_KEYS = {
+    "degenerate_fraction": ("min_fraction",),
+    "boundary_fraction": ("high", "low", "min_fraction"),
+    "run_and_fraction": ("high", "low", "min_run", "min_fraction"),
+}
+
+
+def _validate_trajectory(raw: dict[str, Any]) -> None:
+    """Check the Step 3 sections, if the config carries them."""
+    if "trajectory" in raw:
+        t = raw["trajectory"]
+        for key in ("min_finite_visits", "min_finite_visits_multistep", "criteria",
+                    "primary"):
+            if key not in t:
+                raise ConfigError(f"config.yaml is missing trajectory.{key}")
+
+        if int(t["min_finite_visits"]) < 2:
+            raise ConfigError(
+                "trajectory.min_finite_visits must be at least 2: a patient "
+                "with one observation offers no history to predict from"
+            )
+        if int(t["min_finite_visits_multistep"]) < int(t["min_finite_visits"]):
+            raise ConfigError(
+                "trajectory.min_finite_visits_multistep cannot be below "
+                "trajectory.min_finite_visits"
+            )
+
+        for name, spec in t["criteria"].items():
+            kind = spec.get("type")
+            if kind not in _CRITERION_KEYS:
+                raise ConfigError(
+                    f"trajectory.criteria.{name}.type must be one of "
+                    f"{sorted(_CRITERION_KEYS)}; got {kind!r}"
+                )
+            for key in _CRITERION_KEYS[kind]:
+                if key not in spec:
+                    raise ConfigError(
+                        f"trajectory.criteria.{name} is a {kind} and needs {key}"
+                    )
+            if not 0.0 < float(spec["min_fraction"]) <= 1.0:
+                raise ConfigError(
+                    f"trajectory.criteria.{name}.min_fraction must lie in (0, 1]"
+                )
+            if kind != "degenerate_fraction" and not float(spec["low"]) < float(spec["high"]):
+                raise ConfigError(
+                    f"trajectory.criteria.{name}: low must be below high, got "
+                    f"{spec['low']} and {spec['high']}"
+                )
+
+        if t["primary"] not in t["criteria"]:
+            raise ConfigError(
+                f"trajectory.primary is {t['primary']!r}, which is not defined "
+                f"in trajectory.criteria ({sorted(t['criteria'])})"
+            )
+
+    if "gpr" in raw:
+        g = raw["gpr"]
+        for key in ("kernels", "n_restarts", "max_iter", "jitter"):
+            if key not in g:
+                raise ConfigError(f"config.yaml is missing gpr.{key}")
+        if not g["kernels"]:
+            raise ConfigError("gpr.kernels must be a non-empty list")
+        if int(g["n_restarts"]) < 1:
+            raise ConfigError("gpr.n_restarts must be at least 1")
+        if float(g["jitter"]) <= 0:
+            raise ConfigError("gpr.jitter must be positive")
+
 
 _REQUIRED_SECTIONS = (
     "seed",
@@ -202,6 +306,8 @@ def _validate(raw: dict[str, Any]) -> None:
         )
     if not m["horizons"] or any(float(h) <= 0 for h in m["horizons"]):
         raise ConfigError("model.horizons must be a non-empty list of positive years")
+
+    _validate_trajectory(raw)
 
 
 def load_config(path: str | Path | None = None) -> Config:

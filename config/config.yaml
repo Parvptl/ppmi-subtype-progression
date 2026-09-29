@@ -194,3 +194,82 @@ model:
   # Independent train/test splits used to check that the model ranking is not
   # an artefact of one particular split.
   robustness_splits: 10
+
+# -----------------------------------------------------------------------------
+#  Step 3: patient trajectories and persistently extreme profiles.
+#
+#  A trajectory is one patient's chronological sequence of ratio observations.
+#  Visits whose ratio is undefined (PIGD subscore zero) stay in the trajectory
+#  table but cannot enter a model defined on the ratio, so the modellable
+#  cohort is smaller than the labelled one. That is a structural consequence of
+#  the ratio's definition, not a filtering choice.
+# -----------------------------------------------------------------------------
+trajectory:
+  # Finite-ratio observations a patient needs to contribute a one-step-ahead
+  # prediction, and to take part in the multi-step forecast. The second is
+  # higher because a forecast conditioned on one observation is a population
+  # prediction wearing a patient's name.
+  min_finite_visits: 2
+  min_finite_visits_multistep: 3
+
+  # Persistently extreme profiles. Every criterion is evaluated per patient
+  # over that patient's labelled visits, never per visit: the ratio moves by a
+  # median of 0.68 between consecutive visits, so a single-visit rule would be
+  # removing noise excursions rather than sustained profiles.
+  #
+  # No criterion may be defined on the subtype label. "Every visit is TD"
+  # conditions directly on the outcome variable and cannot be justified as
+  # "this patient shows little variation in the ratio".
+  criteria:
+    # A degenerate visit is one where the ratio cannot be graded at all: the
+    # PIGD subscore is zero, so the ratio is undefined, or the tremor subscore
+    # is zero, so the ratio is exactly zero. This is the arithmetic extreme
+    # rather than a chosen percentile, which is why it is the primary rule.
+    A4:
+      type: degenerate_fraction
+      min_fraction: 0.80
+
+    # Magnitude: persistently beyond twice the TD threshold, or persistently
+    # below half the PIGD threshold. Undefined ratios count towards the high
+    # side, being the limit of tremor/pigd as the denominator falls to zero.
+    D1:
+      type: boundary_fraction
+      high: 2.30
+      low: 0.45
+      min_fraction: 0.80
+
+    # Persistence and magnitude together: a run of consecutive extreme visits
+    # on one side, and a majority of all visits on that side. Closest to the
+    # "Patient A versus Patient B" distinction.
+    E2:
+      type: run_and_fraction
+      high: 2.30
+      low: 0.45
+      min_run: 3
+      min_fraction: 0.60
+
+  # Which criterion the primary filtered analysis uses. The others are run as
+  # sensitivity analyses, and the unfiltered cohort remains the reference.
+  primary: A4
+
+# -----------------------------------------------------------------------------
+#  Step 3: Gaussian process regression on the ratio trajectory.
+#
+#  K0 is the hierarchical growth model written as a kernel: a random intercept
+#  contributes a constant term, a random slope contributes a linear term, and
+#  the residual contributes white noise. It exists to be checked against
+#  hbayes, not because it is a new model.
+# -----------------------------------------------------------------------------
+gpr:
+  kernels: [K0, K1, K2, K3]
+
+  # Deterministic restarts of the marginal-likelihood optimiser. The surface is
+  # not guaranteed unimodal; restart 0 is the unperturbed start, so the run is
+  # reproducible and adding restarts can only improve the optimum found.
+  n_restarts: 4
+  max_iter: 300
+
+  # Added to the diagonal before factorising. The noise term normally keeps the
+  # matrix well conditioned; this guards the case where the optimiser drives it
+  # towards zero.
+  jitter: 1.0e-8

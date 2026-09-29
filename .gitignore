@@ -36,3 +36,4 @@ venv/
 *.out
 *.toc
 *.synctex.gz
+.backup_step3/
