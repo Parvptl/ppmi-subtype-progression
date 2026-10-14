@@ -1,0 +1,14 @@
+srun: job 13360 queued and waiting for resources
+srun: job 13360 has been allocated resources
+real {'skew_slope_pigd': 2.17, 'kurt_slope_pigd': 6.9, 'skew_slope_tremor': 0.72, 'kurt_slope_tremor': 2.25, 'skew_int_pigd': 1.72, 'share_pigd_zero_visits': 0.16}
+           skew_slope_pigd  kurt_slope_pigd  skew_slope_tremor  kurt_slope_tremor  skew_int_pigd  share_pigd_zero_visits
+delta nu                                                                                                                
+0.60  3.0             1.32             4.50               0.78               4.37           1.32                    0.22
+      4.0             1.17             3.13               0.72               3.44           1.39                    0.22
+      6.0             0.76             1.20               0.62               2.38           0.87                    0.22
+0.90  3.0             1.67             6.33               1.08               5.45           1.68                    0.21
+      4.0             1.57             5.50               0.94               4.30           1.72                    0.22
+      6.0             1.05             2.19               0.88               3.97           1.14                    0.23
+0.99  3.0             1.88             7.81               1.20               5.85           2.00                    0.20
+      4.0             1.74             6.39               1.06               5.09           2.08                    0.22
+      6.0             1.21             2.63               0.99               4.32           1.32                    0.23

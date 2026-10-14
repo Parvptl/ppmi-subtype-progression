@@ -1,0 +1,32 @@
+{
+  "argv": [
+    "scripts/30_pigd_measurement_audit.py",
+    "--out",
+    "/home/vikaskumar/projects/ppmi-subtype-progression/experiments/20261014T143819Z_pigd_measurement_audit"
+  ],
+  "panel_md5": "fb038ddbdc19ab3368e13940f398e7ba",
+  "n_patients": 934,
+  "n_visits": 4295,
+  "S_integer": true,
+  "T_integer": true,
+  "S_max_possible": 20,
+  "S_max_observed": 19.0,
+  "share_S_at_upper_bound": 0.0,
+  "T_max_possible": 44,
+  "T_max_observed": 37.0,
+  "rs_lmm_sigma_e": [
+    [
+      0.05795269822093073,
+      0.0038495950478611035
+    ],
+    [
+      0.0038495950478611035,
+      0.05591211252034436
+    ]
+  ],
+  "rs_lmm_converged": true,
+  "git_commit": "60a925b8c235692e3904abad4f774c0007825f31",
+  "python": "3.13.16",
+  "host": "node004",
+  "slurm_job_id": "13365"
+}

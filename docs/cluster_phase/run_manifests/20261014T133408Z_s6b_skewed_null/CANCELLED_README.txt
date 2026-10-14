@@ -1,0 +1,1 @@
+Cancelled by the operator after 29 calibration evaluations: scipy's default Nelder-Mead initial simplex (5% steps) left every parameter within ~0.01 of its start (see calibration_trace.csv). Superseded by a rerun in a new directory with an explicit unit-step initial simplex. No clustering metric was computed in this run.

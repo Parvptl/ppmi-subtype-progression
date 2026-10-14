@@ -1,0 +1,10 @@
+host        node004
+job         13365  partition gpu04
+cpus        64   gpus 0,1
+python      /home/vikaskumar/envs/ppmi/bin/python
+git         60a925b8c235692e3904abad4f774c0007825f31  dirty=5
+config      config/config.yaml
+run_dir     /home/vikaskumar/projects/ppmi-subtype-progression/experiments/20261014T143819Z_pigd_measurement_audit
+started     2026-10-14T20:08:21+05:30
+command     /home/vikaskumar/envs/ppmi/bin/python scripts/30_pigd_measurement_audit.py --out /home/vikaskumar/projects/ppmi-subtype-progression/experiments/20261014T143819Z_pigd_measurement_audit
+finished    2026-10-14T20:08:32+05:30  exit=0

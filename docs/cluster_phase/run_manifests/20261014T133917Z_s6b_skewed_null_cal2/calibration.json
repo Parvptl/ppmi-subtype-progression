@@ -1,0 +1,18 @@
+{
+  "deltas": {
+    "int_tremor": -0.09408180428538958,
+    "int_pigd": 0.9560575149889959,
+    "slope_tremor": 0.8305262963639547,
+    "slope_pigd": 0.9461650677626595
+  },
+  "nu": {
+    "int_tremor": 11.67822314365399,
+    "int_pigd": 5.083086055527492,
+    "slope_tremor": 16.16507942644322,
+    "slope_pigd": 2.915033790732946
+  },
+  "objective": 0.2959128914840239,
+  "n_evals": 293,
+  "optimizer_message": "Optimization terminated successfully.",
+  "fidelity_gate_passed": false
+}

@@ -1,0 +1,2 @@
+quantity,estimate,lo,hi,n_patients_with_variation
+within-patient change in P(zero) per year (patient-demeaned LPM),-0.030150845130580358,-0.03541419183320461,-0.02534996798282502,311

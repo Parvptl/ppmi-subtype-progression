@@ -1,0 +1,28 @@
+current_S,n_pairs,P_next_zero,lo,hi
+0,603,0.4593698175787728,0.410742926143639,0.5045338136184058
+1,1201,0.10907577019150708,0.09059969662474493,0.12928210652624508
+2,840,0.034523809523809526,0.022919179734620022,0.046856673263147554
+3-4,460,0.01956521739130435,0.00852833098942975,0.03326127124907613
+5+,257,0.0,0.0,0.0
+"year 0, current zero",285,0.45614035087719296,,
+"year 0, current positive",874,0.08695652173913043,,
+"year 1, current zero",120,0.475,,
+"year 1, current positive",471,0.08067940552016985,,
+"year 2, current zero",68,0.5735294117647058,,
+"year 2, current positive",333,0.05405405405405406,,
+"year 3, current zero",44,0.45454545454545453,,
+"year 3, current positive",196,0.05102040816326531,,
+"year 4, current zero",37,0.40540540540540543,,
+"year 4, current positive",250,0.048,,
+"year 5, current zero",16,0.25,,
+"year 5, current positive",130,0.046153846153846156,,
+"year 6, current zero",13,0.46153846153846156,,
+"year 6, current positive",139,0.02158273381294964,,
+"year 7, current zero",8,0.25,,
+"year 7, current positive",87,0.034482758620689655,,
+"year 8, current zero",5,0.4,,
+"year 8, current positive",99,0.020202020202020204,,
+"year 9, current zero",4,0.5,,
+"year 9, current positive",82,0.0,,
+"year 10, current zero",3,0.0,,
+"year 10, current positive",97,0.010309278350515464,,

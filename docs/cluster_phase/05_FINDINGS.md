@@ -190,6 +190,10 @@ initiation and informative attrition both act on the same time axis.
    floor and item-grid discreteness — and exceeds the median for planted
    two-group differences of 2 random-slope SDs [Stage 6]. This replaces script
    20's single-replicate comparison. Something non-Gaussian is real.
+   *(Qualified by Stage 6b: part of this non-Gaussian shape is produced by the
+   measurement scale itself — Gaussian latent effects passed through
+   beta-binomial or item-level measurement give PIGD-slope BLUP skewness 1.40
+   and 1.72 against 0.50 for the Gaussian null.)*
 
 3. **C. Assignments are no more stable than in data with no groups.** Drop-one-
    visit ARI is 0.75 on real data, at the 86th percentile of the no-groups null
@@ -202,6 +206,163 @@ initiation and informative attrition both act on the same time axis.
    discrete subgroups, and no grouping is reproducible beyond what noise alone
    produces. No phenotype claim. The planted controls show that even a 1-SD
    group separation would not be detectable at this visit density.
+   *(Qualified by Stage 6b: "is not Gaussian" describes the BLUP features; how
+   much of it belongs to the patients rather than to the measurement could not
+   be resolved — see below.)*
+
+## Stage 6b — a measurement-realistic continuous null (closed: inconclusive)
+
+Run directories (all under `experiments/`), specifications and hashes are
+listed at the end of this section. Every number below is read from those runs'
+saved files; nothing was recomputed for this summary.
+
+### A. Research question
+
+Are the apparent patient trajectory groups more robust than they would be in a
+realistic continuous population with no planted groups? Stage 6 answered this
+against Gaussian random-effect nulls; Stage 6b tried to build a no-groups null
+realistic enough to judge the large real ΔBIC fairly.
+
+### B. What the audits established (descriptive, from existing outputs)
+
+* **Patient slopes depend on which visits were recorded** (script 20,
+  `outputs/clustering_audit/`). Removing any single visit flips the sign of the
+  OLS slope for 369 / 762 patients with ≥ 3 visits for tremor (48.4%) and
+  317 / 762 for PIGD (41.6%); with exactly three visits, 161 / 260 (61.9%) and
+  171 / 260 (65.8%). Median random-slope reliability is 0.270 (tremor) and
+  0.531 (PIGD) over 934 patients; 0.840 and 0.944 for the 145 patients with
+  ≥ 8 visits.
+* **Assignments are unstable when the final visit is removed** (script 20).
+  Adjusted Rand index against the full-data clustering: 0.456 (K = 2) and
+  0.335 (K = 3), against patient-bootstrap means of 0.936 and 0.821.
+* **The measurement-realistic no-groups null** (script 26, 200 replicates per
+  null, 50 per planted control; run `20261014T100107Z_s6_clusterability`).
+  Real ΔBIC 513.09 against a null 95th percentile of 117.31; drop-one-random-
+  visit ARI (K = 2) 0.750 against a null 95th percentile of 0.771 (86th
+  percentile of the null), so the pre-specified rule was not met. A planted
+  1-SD group difference gives a median ΔBIC of 56.01, below the null 95th
+  percentile. *Limitation found later:* this null draws random effects from a
+  Gaussian. In a shape diagnostic (four replicates, shape summaries only) its
+  BLUP PIGD-slope skewness was 0.41–0.58 and excess kurtosis −0.06–0.38 against
+  real 2.17 and 6.90, and it produced 22–24% PIGD = 0 visits against 16.1%.
+* **Exploratory ≥ 8-visit subset** (145 patients; run
+  `20261014T100107Z_s6_clusterability_min8`). ΔBIC 56.22 against a null 95th
+  percentile of 1.49; drop-one-visit ARI 0.836 against 0.945 (56.5th
+  percentile); rule not met. These patients are selected by visit count; the
+  existing record shows that patients with long follow-up (≥ 5 years) had lower
+  baseline severity (GPR-onwards report §G.4), so the subset is unlikely to be
+  representative, and 145 patients are too few to generalise.
+
+### C. The no-groups null investigation (model-dependent)
+
+Each step had a pre-specified fidelity gate; when a gate failed, the next
+step was not started and no clustering null was simulated.
+
+0. **Skewed / heavy-tailed random effects on the existing measurement model**
+   (pre-registration with Amendment 1; run `…133917Z_s6b_skewed_null_cal2`).
+   Calibrating independent skew-t components per latent effect on BLUP
+   skewness and kurtosis only: the gate failed on PIGD-slope skewness (1.734
+   simulated against 2.173; tolerance ±0.30) with the PIGD-slope component at
+   the edge of the family (δ = 0.946, ν = 2.92). PIGD = 0 visits 0.217 against
+   0.161 (not gated). A first calibration run (`…133408Z`) was cancelled
+   because the optimiser's default initial step never left its start; it is
+   kept with a note.
+1–3. **Measurement-model comparison with Gaussian latent effects** (script 31,
+   20 datasets each, diagnostic without a pass/fail gate; run
+   `…144511Z_pigd_measurement_models`), against the PIGD audit (script 30, run
+   `…143819Z_pigd_measurement_audit`):
+
+   | | real | 1 Gaussian | 2 heteroscedastic | 3 beta-binomial (sum) |
+   |---|---|---|---|---|
+   | PIGD = 0 share | 0.161 | 0.233 | 0.238 | 0.240 |
+   | P(next 0 \| S = 1) | 0.109 | 0.248 | 0.187 | 0.260 |
+   | P(next 0 \| S = 0) | 0.459 | 0.467 | 0.573 | 0.371 |
+   | BLUP skew / kurtosis, PIGD slope | 2.173 / 6.898 | 0.502 / 0.182 | 0.736 / 0.788 | 1.399 / 3.038 |
+   | within-SD ratio, top / bottom octile | 6.990 | 6.532 | 20.778 | 7.037 |
+
+   None reproduces the zero frequency. The beta-binomial precision went to
+   φ ≈ 7,554 (effectively binomial), consistent with the audit's finding that
+   the five items differ strongly in how often they are positive — a feature
+   that a model of the item sum cannot represent. The study moved to an
+   item-level model (Amendment 2).
+4. **Item-level graded-response model** (spec
+   `06_AMENDMENT2_PREDICTIVE_CHECK_SPEC.md`, SHA-256 `3ac7255d…`; run
+   `…165801Z_s6b_grm_predictive_check`; 40 datasets; 18 gated targets).
+   **14 / 18 passed.** Failed: BLUP PIGD-slope skewness 1.719 against 2.173
+   (±0.30), its kurtosis 4.163 against 6.898 (±1.5), P(next 0 \| S = 0) 0.396
+   against 0.459 (±0.05), P(next 0 \| S = 1) 0.177 against 0.109 (±0.035).
+   The zero share passed (0.175 against 0.161), as did all item positive rates.
+5. **Item-level model with an Ornstein–Uhlenbeck within-patient deviation**
+   (spec `06_AMENDMENT3_PERSISTENCE_SPEC.md`, SHA-256 `8206340f…`; run
+   `…180533Z_s6b_grm_ou_predictive_check`; 40 datasets). **14 / 18 passed**;
+   the same four targets failed: 1.71, 4.508, 0.391, 0.184 against the same real
+   values and tolerances. The fit converged (52 iterations, no bound hit, final
+   gradient norm 1.23) with correlation length ℓ = 13.1 years, σ_u = 0.78, and
+   the patient intercept SD falling from 0.83 to 0.26 while the
+   intercept–slope correlation reached 0.998. Over the available follow-up the
+   added process is weakly identified: it largely replaces the random
+   intercept and slope instead of adding visit-to-visit persistence. Under its
+   specification, a NO-GO ended this line of model extension.
+
+### D. Conclusion
+
+* **The clustering investigation is inconclusive.**
+* No adequately calibrated no-groups null was obtained: every candidate failed
+  at least one mandatory fidelity target.
+* No clustering-null simulation was run after the predictive-check gates
+  failed, and no clustering metric was computed on any Stage 6b null.
+* The evidence does not establish that discrete trajectory groups exist.
+* The evidence also does not establish that such groups do not exist.
+* Observed heterogeneity and unstable clustering assignments are not, by
+  themselves, evidence of discrete phenotypes.
+
+The five models do not show that clustering is impossible or that the data
+contain no genuine groups; they show that a no-groups comparison of acceptable
+fidelity could not be built within this scope.
+
+### E. Scope and limitations
+
+* **Descriptive (observed directly):** slope sign instability, low slope
+  reliability at typical visit counts, unstable assignments after removing a
+  visit; the PIGD subscore is an integer sum of five items with very different
+  positive rates; zeros fall smoothly with the current score and are not
+  absorbing; variance rises with severity.
+* **Model-dependent:** that measurement nonlinearity accounts for part of the
+  BLUP skew (1.40–1.72 under the item-sum and item-level models with Gaussian
+  latent effects); the OU fit and its weak identification; all predictive-check
+  outcomes, which depend on the two-stage fitting, the Laplace approximation
+  (maximum error 0.019 log-units against adaptive quadrature on 30 patients
+  for the OU model; larger for patients with all items at zero) and the
+  stage-1 working assumption θ ~ N(0, 1).
+* **Unresolved hypotheses, not established mechanisms:** why real patients
+  stay at or leave PIGD = 0 more persistently than any model allows — candidate
+  explanations include patient-specific item behaviour near the floor, item
+  parameters that change with time or treatment (a stage-1 refit by follow-up
+  period showed differences that are confounded with progression), or serial
+  dependence of a kind not tested; and whether the remaining PIGD-slope skew
+  reflects non-Gaussian patient slopes.
+* Visit schedules were copied from the real patients, so informative dropout
+  was not modelled.
+
+**Runs and specifications.** Pre-registration with Amendment 1
+`06_SKEWED_NULL_PREREG.md` (`1b01bb6a…`); Amendment 2 proposal
+`06_SKEWED_NULL_AMENDMENT2.md` (`32f90ac4…`, never put in force as a whole);
+predictive-check specs `06_AMENDMENT2_PREDICTIVE_CHECK_SPEC.md` (`3ac7255d…`)
+and `06_AMENDMENT3_PERSISTENCE_SPEC.md` (`8206340f…`). Runs:
+`20261014T133408Z_s6b_skewed_null` (cancelled),
+`20261014T133917Z_s6b_skewed_null_cal2`,
+`20261014T143819Z_pigd_measurement_audit`,
+`20261014T144511Z_pigd_measurement_models`,
+`20261014T165653Z_s6b_grm_check_smoke`,
+`20261014T165801Z_s6b_grm_predictive_check`,
+`20261014T180440Z_s6b_grm_ou_check_smoke`,
+`20261014T180533Z_s6b_grm_ou_predictive_check`. Each run's configuration,
+job header and aggregate result tables (gates, decisions, fitted parameters,
+simulated features) are copied to `run_manifests/<run>/`; the per-patient
+Laplace-accuracy tables and all other participant-level outputs stay under
+`experiments/` (not committed). Design evidence cited by Amendment 1 (the
+shape and feasibility probes, SHA-256 `e3407161…` for the probe output), the
+cross-node check and the local audit notes are in `stage6b_design/`.
 
 ---
 
@@ -213,7 +374,7 @@ Computational completion is not scientific or reporting completion.
 |---|---|---|---|
 | Direct subscore modelling (LMM, independent/joint GP, K0–K3) | complete, verified (11/11 checks, reproduces historical runs) | supported as stated above; PIGD = 0 misspecification unresolved | `GPR_onwards_explanatory_report.md` not yet updated |
 | Time-varying progression | complete, verified | non-constant rate supported; no identifiable breakpoint; follow-up time not separable from disease duration | existing report not yet updated |
-| Trajectory clustering | complete for Gaussian and measurement-realistic nulls | reproducibility criterion not met; non-Gaussian heterogeneity unexplained — **heavy-tailed / skewed no-groups null outstanding** | existing report not yet updated |
+| Trajectory clustering | complete for Gaussian and measurement-realistic nulls; Stage 6b null construction closed after its predictive-check gates failed | **inconclusive**: reproducibility criterion not met; no adequately calibrated no-groups null obtained (Stage 6b) | existing report not yet updated |
 | HMM stability and failure analysis | complete, verified | 3-state stable; extra states no predictive gain; Indeterminate never chosen by argmax | not yet in any report besides this one |
 
 ## Superseded or corrected claims (to fix in existing reports)
@@ -227,7 +388,7 @@ Computational completion is not scientific or reporting completion.
 | 5-state HMM converged 404/934 | midterm, §I.4 | Budget-limited and multimodal (33 optima) |
 | Rate changes "after about five years" | §F, §I.1 #12 | Gradual curvature; no identifiable knot; not separable from disease duration |
 | Late-period intervals | `period_slopes.csv` (Wald) | 1.7–2.2× too narrow; use bootstrap |
-| Real cluster signal 513 vs null 88 | §G.9 | Null distribution q95 ≈ 117; real is non-Gaussian, but unstable as groups |
+| Real cluster signal 513 vs null 88 | §G.9 | Null distribution q95 ≈ 117; real BLUP features are non-Gaussian (partly a measurement effect, Stage 6b), but unstable as groups; overall inconclusive |
 | `NEXT_RESEARCH_STEPS.md` ✅ "advantage widens with horizon", ✅ "linear kernel redundant given mean" | §1 | Both already corrected in the same file's later sections; §1 rows still stale |
 | 256 / 144 tests | `TEST_RESULTS.md`, README | 403 |
 
@@ -250,8 +411,9 @@ Computational completion is not scientific or reporting completion.
 
 1. Update `GPR_onwards_explanatory_report.md` and `NEXT_RESEARCH_STEPS.md`
    using the table above.
-2. A heavy-tailed / skewed no-groups null for Stage 6 (t or skew-normal random
-   slopes) — the one test that could tell a non-Gaussian continuum from groups.
+2. ~~A heavy-tailed / skewed no-groups null for Stage 6~~ — attempted in
+   Stage 6b and closed as inconclusive; no further clustering-null work is
+   planned.
 3. A zero-inflated or censored likelihood for PIGD (the 12% negative mass and
    mis-calibration at PIGD = 0 recur in every Gaussian model).
 4. Report balanced accuracy and log loss as headline subtype metrics; if a

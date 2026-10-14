@@ -1,0 +1,14 @@
+{
+  "n_gated": 18,
+  "n_pass": 14,
+  "GO": false,
+  "failing": [
+    "blup_skew_slope_pigd",
+    "blup_kurt_slope_pigd",
+    "P_next_zero_given_S0",
+    "P_next_zero_given_S1"
+  ],
+  "stage1_converged": true,
+  "stage2_converged": true,
+  "laplace_agq_max_abs_diff": 0.015454191309225429
+}

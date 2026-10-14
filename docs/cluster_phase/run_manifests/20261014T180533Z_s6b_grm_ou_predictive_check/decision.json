@@ -1,0 +1,15 @@
+{
+  "n_gated": 18,
+  "n_pass": 14,
+  "GO": false,
+  "failing": [
+    "blup_skew_slope_pigd",
+    "blup_kurt_slope_pigd",
+    "P_next_zero_given_S0",
+    "P_next_zero_given_S1"
+  ],
+  "ou_converged": true,
+  "ou_at_bound": [],
+  "laplace_agq_max_abs_diff": 0.01889445238148113,
+  "laplace_agq_max_abs_diff_non_floor": 0.01889445238148113
+}

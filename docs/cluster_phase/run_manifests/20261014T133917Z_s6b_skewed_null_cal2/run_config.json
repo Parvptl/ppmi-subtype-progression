@@ -1,0 +1,100 @@
+{
+  "argv": [
+    "scripts/29_clusterability_skewed_null.py",
+    "--out",
+    "/home/vikaskumar/projects/ppmi-subtype-progression/experiments/20261014T133917Z_s6b_skewed_null_cal2",
+    "--stages",
+    "calibrate",
+    "--cal-reps",
+    "24",
+    "--cal-maxfev",
+    "400",
+    "--reps",
+    "200",
+    "--jobs",
+    "60"
+  ],
+  "seed": 42,
+  "panel_md5": "fb038ddbdc19ab3368e13940f398e7ba",
+  "smoke_test": false,
+  "n_patients": 934,
+  "reps": 200,
+  "cal_reps": 24,
+  "cal_maxfev": 400,
+  "skew_tol": 0.3,
+  "kurt_tol": 1.5,
+  "kurt_weight": 0.25,
+  "streams": {
+    "cal": 7,
+    "null_skewt": 8,
+    "null_tails": 9
+  },
+  "simplex_step": 1.0,
+  "prereg_sha256": "1b01bb6a688afb0a5b8cf53189d140af5dd4ab3689cb53e1f8a55c19dc8bf76b",
+  "real_shape": {
+    "skew_int_tremor": 0.49587273710138957,
+    "kurt_int_tremor": 0.19843891494635457,
+    "skew_int_pigd": 1.7230389392684184,
+    "kurt_int_pigd": 5.5026533439693175,
+    "skew_slope_tremor": 0.7206184522703742,
+    "kurt_slope_tremor": 2.2453519532655815,
+    "skew_slope_pigd": 2.1725894081850132,
+    "kurt_slope_pigd": 6.89760886343581,
+    "share_pigd_zero_visits": 0.16111757857974388,
+    "share_tremor_zero_visits": 0.07171129220023283,
+    "share_patients_all_pigd_zero": 0.04068522483940043,
+    "converged": true
+  },
+  "sigma_b": [
+    [
+      0.09434703651751536,
+      0.0012040460321771473,
+      0.0018205645077773104,
+      0.0009056695843579343
+    ],
+    [
+      0.0012040460321771473,
+      0.03061629423217174,
+      -0.0015633914407248138,
+      0.0033961278276417517
+    ],
+    [
+      0.0018205645077773104,
+      -0.0015633914407248138,
+      0.002224064854894624,
+      -0.0005814122660335218
+    ],
+    [
+      0.0009056695843579343,
+      0.0033961278276417517,
+      -0.0005814122660335218,
+      0.005585274497376518
+    ]
+  ],
+  "sigma_e": [
+    [
+      0.05795269822093073,
+      0.0038495950478611035
+    ],
+    [
+      0.0038495950478611035,
+      0.05591211252034436
+    ]
+  ],
+  "beta": [
+    0.586629308559482,
+    0.022227832080248845,
+    0.21990318192050998,
+    0.07239958622825073
+  ],
+  "fit_converged": true,
+  "git_commit": "60a925b8c235692e3904abad4f774c0007825f31",
+  "git_dirty": "?? docs/cluster_phase/06_SKEWED_NULL_PREREG.md\n?? scripts/29_clusterability_skewed_null.py\n?? src/ppmi_subtype/nongaussian.py\n?? tests/test_nongaussian.py",
+  "python": "3.13.16",
+  "numpy": "2.2.4",
+  "scipy": "1.15.2",
+  "sklearn": "1.6.1",
+  "host": "node004",
+  "slurm_job_id": "13363",
+  "started_utc": "2026-10-14T13:39:29Z"
+}

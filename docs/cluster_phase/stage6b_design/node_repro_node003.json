@@ -1,0 +1,50 @@
+srun: job 13364 queued and waiting for resources
+srun: job 13364 has been allocated resources
+{
+ "host": "node003",
+ "dBIC": {
+  "this_node": 513.0857636502542,
+  "node004_saved": 513.0857636502542,
+  "abs_diff": 0.0
+ },
+ "best_K": {
+  "this_node": 3.0,
+  "node004_saved": 3.0,
+  "abs_diff": 0.0
+ },
+ "drop1_ARI_K2": {
+  "this_node": 0.7496430360004505,
+  "node004_saved": 0.7496430360004505,
+  "abs_diff": 0.0
+ },
+ "drop1_ARI_K3": {
+  "this_node": 0.6988938983731894,
+  "node004_saved": 0.6988938983731894,
+  "abs_diff": 0.0
+ },
+ "drop2_ARI_K2": {
+  "this_node": 0.8443596396177071,
+  "node004_saved": 0.8443596396177071,
+  "abs_diff": 0.0
+ },
+ "trunc3_ARI_K2": {
+  "this_node": 0.5624610905728081,
+  "node004_saved": 0.5624610905728081,
+  "abs_diff": 0.0
+ },
+ "silhouette_K2": {
+  "this_node": 0.4869387296034115,
+  "node004_saved": 0.4869387296034115,
+  "abs_diff": 0.0
+ },
+ "BIC_K1": {
+  "this_node": 5251.486371497285,
+  "node004_saved": 5251.486371497285,
+  "abs_diff": 0.0
+ },
+ "BIC_K3": {
+  "this_node": 4738.400607847031,
+  "node004_saved": 4738.400607847031,
+  "abs_diff": 0.0
+ }
+}

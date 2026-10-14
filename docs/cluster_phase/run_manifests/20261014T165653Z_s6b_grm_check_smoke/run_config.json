@@ -1,0 +1,26 @@
+{
+  "argv": [
+    "scripts/32_grm_predictive_check.py",
+    "--out",
+    "/home/vikaskumar/projects/ppmi-subtype-progression/experiments/20261014T165653Z_s6b_grm_check_smoke",
+    "--reps",
+    "2",
+    "--agq-patients",
+    "3",
+    "--jobs",
+    "4"
+  ],
+  "seed": 42,
+  "reps": 2,
+  "panel_md5": "fb038ddbdc19ab3368e13940f398e7ba",
+  "spec_sha256": "3ac7255db6be58cebdaa4b76a3732dad8e13d2b588b127774c0f76532a9059e8",
+  "n_patients": 934,
+  "n_visits": 4295,
+  "n_missing_items": 0,
+  "git_commit": "60a925b8c235692e3904abad4f774c0007825f31",
+  "git_dirty": "?? docs/cluster_phase/06_AMENDMENT2_PREDICTIVE_CHECK_SPEC.md\n?? docs/cluster_phase/06_SKEWED_NULL_AMENDMENT2.md\n?? docs/cluster_phase/06_SKEWED_NULL_PREREG.md\n?? scripts/29_clusterability_skewed_null.py\n?? scripts/30_pigd_measurement_audit.py\n?? scripts/31_pigd_measurement_models.py\n?? scripts/32_grm_predictive_check.py\n?? src/ppmi_subtype/bbglmm.py\n?? src/ppmi_subtype/grm.py\n?? src/ppmi_subtype/nongaussian.py\n?? tests/test_bbglmm.py\n?? tests/test_grm.py\n?? tests/test_nongaussian.py",
+  "python": "3.13.16",
+  "numpy": "2.2.4",
+  "host": "node004",
+  "slurm_job_id": "13368"
+}

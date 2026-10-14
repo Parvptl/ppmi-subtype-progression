@@ -1,0 +1,9 @@
+group,n_patients,median_visits,median_followup_years,baseline_tremor_score_median,baseline_pigd_score_median,baseline_age_at_visit_median,baseline_updrs3_score_median,baseline_updrs2_score_median,baseline_NHY_median,baseline_duration_yrs_median,baseline_PDTRTMNT_median
+always_zero,38,3.0,2.292950034223135,0.6363636363636364,0.0,64.2958904109589,19.5,3.0,2.0,0.6534246575342466,0.0
+mover,311,4.0,4.082135523613963,0.5454545454545454,0.0,62.25479452054795,17.0,4.0,2.0,0.4904109589041097,0.0
+never_zero,585,3.0,3.0006844626967832,0.5454545454545454,0.2,64.63561643835617,23.0,7.0,2.0,0.5753424657534247,0.0
+always_zero vs mover: baseline tremor_score,349,0.008845321163558753,,,,,,,,,
+always_zero vs mover: baseline age_at_visit,349,0.10007051743143368,,,,,,,,,
+always_zero vs mover: baseline updrs3_score,349,0.11878461472090938,,,,,,,,,
+always_zero vs mover: baseline NHY,349,0.019389637856374042,,,,,,,,,
+always_zero vs mover: baseline duration_yrs,349,0.020532676066175103,,,,,,,,,

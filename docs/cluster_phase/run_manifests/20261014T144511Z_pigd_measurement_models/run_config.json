@@ -1,0 +1,50 @@
+{
+  "argv": [
+    "scripts/31_pigd_measurement_models.py",
+    "--out",
+    "/home/vikaskumar/projects/ppmi-subtype-progression/experiments/20261014T144511Z_pigd_measurement_models",
+    "--reps",
+    "20",
+    "--jobs",
+    "60",
+    "--audit-dir",
+    "experiments/20261014T143819Z_pigd_measurement_audit"
+  ],
+  "panel_md5": "fb038ddbdc19ab3368e13940f398e7ba",
+  "smoke": false,
+  "reps": 20,
+  "seed": 42,
+  "gaussian_sigma_e_pigd": 0.05591211252034436,
+  "M2_sd_fn": {
+    "a": 0.05716898385318166,
+    "b": 0.2972428063928217,
+    "scale": 1.1729196786769498
+  },
+  "M5_fit": {
+    "beta": [
+      -2.9231016313087816,
+      0.17603268415105217
+    ],
+    "D": [
+      [
+        0.48278702720354477,
+        -0.005173824885487835
+      ],
+      [
+        -0.005173824885487835,
+        0.010157693893546522
+      ]
+    ],
+    "phi": 7554.205633074723,
+    "rho": 0.0001323590711578068,
+    "nll": 6890.4396982406615,
+    "converged": true,
+    "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+    "at_bound": [],
+    "seconds": 4088.8003187179565
+  },
+  "git_commit": "60a925b8c235692e3904abad4f774c0007825f31",
+  "python": "3.13.16",
+  "host": "node004",
+  "slurm_job_id": "13366"
+}
