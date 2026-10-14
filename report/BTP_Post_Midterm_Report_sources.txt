@@ -1,0 +1,417 @@
+
+### GPR ratio, unfiltered cohort (held-out LOPO)
+       model  n_patients  n_points  MAE_pooled   CRPS  coverage95  negative_mass  accuracy  balanced_accuracy
+          K0         821      2707      1.0053 0.7472      0.9387         0.1386    0.7141             0.4910
+          K1         821      2707      0.9720 0.7249      0.9409         0.1295    0.7237             0.4994
+          K2         821      2707      0.9720 0.7249      0.9409         0.1295    0.7237             0.4994
+          K3         821      2707      0.9715 0.7247      0.9409         0.1294    0.7270             0.5035
+      hbayes         821      2707      1.0062 0.7480      0.9302         0.1341    0.7115             0.4899
+patient_mean         821      2707      1.0627 0.8003      0.9409         0.1509    0.7100             0.4946
+ patient_ols         821      2707      1.3357 1.0409      0.9387         0.2439    0.7126             0.5164
+ persistence         821      2707      1.0427 0.8182      0.9357         0.1844    0.7329             0.5262
+  population         821      2707      1.3949 0.9836      0.9483         0.1379    0.5755             0.3333
+
+### GPR paired, pooled MAE
+    cohort model_a      model_b  diff_pooled  pooled_lo  pooled_hi
+unfiltered      K1           K0      -0.0333    -0.0467    -0.0205
+unfiltered      K3           K1      -0.0005    -0.0015     0.0005
+unfiltered      K1  persistence      -0.0707    -0.0979    -0.0451
+unfiltered      K1 patient_mean      -0.0908    -0.1200    -0.0631
+        A4      K1           K0      -0.0340    -0.0477    -0.0210
+        A4      K3           K1      -0.0005    -0.0015     0.0004
+        A4      K1  persistence      -0.0758    -0.1029    -0.0493
+        A4      K1 patient_mean      -0.0965    -0.1260    -0.0677
+        D1      K1           K0      -0.0351    -0.0519    -0.0202
+        D1      K3           K1      -0.0010    -0.0020    -0.0000
+        D1      K1  persistence      -0.1297    -0.1594    -0.1003
+        D1      K1 patient_mean      -0.1589    -0.1928    -0.1257
+        E2      K1           K0      -0.0312    -0.0447    -0.0183
+        E2      K3           K1      -0.0003    -0.0013     0.0007
+        E2      K1  persistence      -0.1428    -0.1735    -0.1124
+        E2      K1 patient_mean      -0.1681    -0.2028    -0.1322
+
+### GPR subtype recall
+ model  accuracy  recall_TD  recall_Indeterminate  recall_PIGD
+    K3    0.7270     0.9422                   0.0       0.5682
+    K1    0.7237     0.9448                   0.0       0.5534
+    K2    0.7237     0.9448                   0.0       0.5534
+    K0    0.7141     0.9390                   0.0       0.5341
+hbayes    0.7115     0.9332                   0.0       0.5364
+
+### GPR multistep MAE by horizon (unfiltered)
+    cohort       model  bin metric  value     lo     hi  n_points  n_patients
+unfiltered          K1 0-1y    MAE 0.9210 0.8405 1.0070       385         385
+unfiltered          K1 1-2y    MAE 0.9916 0.8920 1.0949       388         358
+unfiltered          K1 2-3y    MAE 1.0666 0.9461 1.1967       238         215
+unfiltered          K1 3-5y    MAE 1.0001 0.8684 1.1318       220         161
+unfiltered          K1  5y+    MAE 0.9756 0.7998 1.1728       158         100
+unfiltered persistence 0-1y    MAE 0.9411 0.8353 1.0462       385         385
+unfiltered persistence 1-2y    MAE 1.0586 0.9437 1.1844       388         358
+unfiltered persistence 2-3y    MAE 1.1968 1.0402 1.3690       238         215
+unfiltered persistence 3-5y    MAE 1.2490 1.0370 1.4773       220         161
+unfiltered persistence  5y+    MAE 1.6045 1.2801 1.9639       158         100
+
+### GPR mean-function held-out
+      model  n_points  MAE_pooled   CRPS  diff_pooled  diff_pooled_lo  diff_pooled_hi
+         K2      2707      0.9720 0.7249          NaN             NaN             NaN
+K2_zeromean      2707      0.9649 0.7437      -0.0071         -0.0193          0.0056
+
+### Joint LMM (in-sample REML)
+JOINT LINEAR MIXED MODEL  (REML)
+==============================================================================
+
+patients 934   observations 8,590   converged True
+-2 log-likelihood -9708.4055
+
+Tremor_it = alpha_T + beta_T t + b_Ti + eps_Tit
+PIGD_it   = alpha_P + beta_P t + b_Pi + eps_Pit
+  (b_Ti, b_Pi) ~ N(0, Sigma_b),  (eps_Tit, eps_Pit) ~ N(0, Sigma_e)
+  no random slopes; see module docstring
+
+FIXED EFFECTS
+        term  estimate  std_error   ci_low  ci_high
+alpha_tremor  0.584146   0.012645 0.559363 0.608930
+ beta_tremor  0.023348   0.001626 0.020161 0.026534
+  alpha_pigd  0.230106   0.011017 0.208513 0.251698
+   beta_pigd  0.065516   0.001735 0.062116 0.068916
+
+
+
+### Stage 3 checks
+                                                                 check  pass
+                                    every arm x patient task completed  True
+                                          every arm scores 3361 points  True
+                            training set is N-1 patients in every fold  True
+                                      history strictly precedes target  True
+                                    history length equals target index  True
+                  all arms scored on identical points and observations  True
+                                    targets match the panel trajectory  True
+persistence equals the immediately preceding visit (history alignment)  True
+                      every predictive covariance is positive definite  True
+                                            PIGD == 0 targets retained  True
+                                  fit diagnostics saved for every task  True
+
+### Stage 3 continuous (held-out LOPO, 3,361 points, 934 patients)
+           model outcome    n    MAE   CRPS  cov95  mean_negative_mass  pit_ks_stat
+     persistence  tremor 3361 0.2426 0.1797 0.9530              0.1135       0.1217
+     persistence    pigd 3361 0.2040 0.1724 0.9512              0.2188       0.3024
+          lmm_ri  tremor 3361 0.2546 0.1817 0.9354              0.0544       0.0270
+          lmm_ri    pigd 3361 0.2391 0.1809 0.9402              0.1188       0.1565
+     gp_indep_K1  tremor 3361 0.2395 0.1708 0.9363              0.0535       0.0276
+     gp_indep_K1    pigd 3361 0.2175 0.1618 0.9334              0.1066       0.1349
+     gp_indep_K3  tremor 3361 0.2359 0.1690 0.9369              0.0590       0.0312
+     gp_indep_K3    pigd 3361 0.2129 0.1599 0.9387              0.1196       0.1056
+gp_joint_K3_full  tremor 3361 0.2357 0.1688 0.9375              0.0586       0.0322
+gp_joint_K3_full    pigd 3361 0.2127 0.1600 0.9384              0.1205       0.1023
+
+### Stage 3 nested full - diag
+           model outcome    metric  difference      lo      hi  better
+gp_joint_K0_full  tremor        ae     -0.0005 -0.0009 -0.0001   model
+gp_joint_K0_full  tremor      crps     -0.0002 -0.0005 -0.0000   model
+gp_joint_K0_full  tremor log_score      0.0011 -0.0003  0.0025 neither
+gp_joint_K0_full    pigd        ae     -0.0001 -0.0006  0.0004 neither
+gp_joint_K0_full    pigd      crps      0.0001 -0.0002  0.0003 neither
+gp_joint_K0_full    pigd log_score     -0.0005 -0.0022  0.0013 neither
+gp_joint_K0_full   joint log_score      0.0010 -0.0018  0.0037 neither
+gp_joint_K1_full  tremor        ae     -0.0003 -0.0006  0.0000 neither
+gp_joint_K1_full  tremor      crps     -0.0002 -0.0003  0.0000 neither
+gp_joint_K1_full  tremor log_score      0.0006 -0.0004  0.0017 neither
+gp_joint_K1_full    pigd        ae     -0.0001 -0.0005  0.0002 neither
+gp_joint_K1_full    pigd      crps     -0.0000 -0.0002  0.0002 neither
+gp_joint_K1_full    pigd log_score      0.0003 -0.0013  0.0019 neither
+gp_joint_K1_full   joint log_score      0.0017 -0.0011  0.0045 neither
+gp_joint_K2_full  tremor        ae     -0.0004 -0.0009  0.0001 neither
+gp_joint_K2_full  tremor      crps     -0.0002 -0.0005  0.0000 neither
+gp_joint_K2_full  tremor log_score      0.0010 -0.0005  0.0024 neither
+gp_joint_K2_full    pigd        ae     -0.0003 -0.0008  0.0002 neither
+gp_joint_K2_full    pigd      crps     -0.0000 -0.0003  0.0002 neither
+gp_joint_K2_full    pigd log_score     -0.0001 -0.0018  0.0017 neither
+gp_joint_K2_full   joint log_score      0.0017 -0.0014  0.0049 neither
+gp_joint_K3_full  tremor        ae     -0.0004 -0.0008  0.0001 neither
+gp_joint_K3_full  tremor      crps     -0.0002 -0.0005  0.0000 neither
+gp_joint_K3_full  tremor log_score      0.0010 -0.0005  0.0024 neither
+gp_joint_K3_full    pigd        ae     -0.0003 -0.0008  0.0002 neither
+gp_joint_K3_full    pigd      crps     -0.0000 -0.0003  0.0002 neither
+gp_joint_K3_full    pigd log_score     -0.0001 -0.0018  0.0016 neither
+gp_joint_K3_full   joint log_score      0.0016 -0.0015  0.0049 neither
+
+### Stage 3 temporal Kx - K0 (indep)
+      model outcome    metric  difference      lo      hi  better
+gp_indep_K1  tremor        ae      0.0010 -0.0021  0.0041 neither
+gp_indep_K1  tremor      crps     -0.0008 -0.0029  0.0012 neither
+gp_indep_K1  tremor log_score      0.0089 -0.0054  0.0240 neither
+gp_indep_K1    pigd        ae      0.0019 -0.0021  0.0058 neither
+gp_indep_K1    pigd      crps     -0.0016 -0.0044  0.0012 neither
+gp_indep_K1    pigd log_score      0.0200 -0.0069  0.0470 neither
+gp_indep_K1   joint log_score      0.0289 -0.0003  0.0584 neither
+gp_indep_K2  tremor        ae     -0.0027 -0.0046 -0.0009   model
+gp_indep_K2  tremor      crps     -0.0027 -0.0041 -0.0014   model
+gp_indep_K2  tremor log_score      0.0217  0.0122  0.0323   model
+gp_indep_K2    pigd        ae     -0.0024 -0.0050  0.0001 neither
+gp_indep_K2    pigd      crps     -0.0032 -0.0051 -0.0015   model
+gp_indep_K2    pigd log_score      0.0509  0.0315  0.0713   model
+gp_indep_K2   joint log_score      0.0726  0.0511  0.0957   model
+gp_indep_K3  tremor        ae     -0.0026 -0.0045 -0.0007   model
+gp_indep_K3  tremor      crps     -0.0027 -0.0041 -0.0014   model
+gp_indep_K3  tremor log_score      0.0220  0.0123  0.0326   model
+gp_indep_K3    pigd        ae     -0.0027 -0.0052 -0.0003   model
+gp_indep_K3    pigd      crps     -0.0035 -0.0053 -0.0018   model
+gp_indep_K3    pigd log_score      0.0514  0.0327  0.0711   model
+gp_indep_K3   joint log_score      0.0734  0.0523  0.0956   model
+
+### Stage 3 vs persistence / LMM
+      model   reference outcome metric  difference      lo      hi    better
+     lmm_ri persistence  tremor     ae      0.0120  0.0038  0.0206 reference
+     lmm_ri persistence  tremor   crps      0.0020 -0.0035  0.0077   neither
+     lmm_ri persistence    pigd     ae      0.0350  0.0269  0.0436 reference
+     lmm_ri persistence    pigd   crps      0.0085  0.0028  0.0146 reference
+gp_indep_K1 persistence  tremor     ae     -0.0031 -0.0085  0.0024   neither
+gp_indep_K1 persistence  tremor   crps     -0.0089 -0.0119 -0.0059     model
+gp_indep_K1 persistence    pigd     ae      0.0134  0.0084  0.0186 reference
+gp_indep_K1 persistence    pigd   crps     -0.0107 -0.0137 -0.0077     model
+gp_indep_K3 persistence  tremor     ae     -0.0067 -0.0113 -0.0023     model
+gp_indep_K3 persistence  tremor   crps     -0.0107 -0.0133 -0.0082     model
+gp_indep_K3 persistence    pigd     ae      0.0088  0.0047  0.0132 reference
+gp_indep_K3 persistence    pigd   crps     -0.0126 -0.0149 -0.0104     model
+gp_indep_K1      lmm_ri  tremor     ae     -0.0151 -0.0194 -0.0110     model
+gp_indep_K1      lmm_ri  tremor   crps     -0.0108 -0.0140 -0.0078     model
+gp_indep_K1      lmm_ri    pigd     ae     -0.0216 -0.0267 -0.0167     model
+gp_indep_K1      lmm_ri    pigd   crps     -0.0192 -0.0234 -0.0155     model
+gp_indep_K3      lmm_ri  tremor     ae     -0.0187 -0.0240 -0.0138     model
+gp_indep_K3      lmm_ri  tremor   crps     -0.0127 -0.0168 -0.0090     model
+gp_indep_K3      lmm_ri    pigd     ae     -0.0262 -0.0329 -0.0199     model
+gp_indep_K3      lmm_ri    pigd   crps     -0.0211 -0.0264 -0.0163     model
+
+### Stage 3 subtype
+           model                 rule  accuracy  balanced_accuracy  recall_Indeterminate  log_loss
+     persistence                point    0.7227             0.5484                0.1928    0.6706
+     persistence          prob_argmax    0.7465             0.5232                0.0000    0.6706
+     persistence prob_prior_corrected    0.6665             0.5580                0.2289    0.6706
+          lmm_ri                point    0.7087             0.5270                0.1747    0.6903
+          lmm_ri          prob_argmax    0.7504             0.5205                0.0000    0.6903
+          lmm_ri prob_prior_corrected    0.5900             0.5256                0.2380    0.6903
+     gp_indep_K1                point    0.7298             0.5516                0.1717    0.6530
+     gp_indep_K1          prob_argmax    0.7563             0.5321                0.0000    0.6530
+     gp_indep_K1 prob_prior_corrected    0.6501             0.5540                0.2199    0.6530
+gp_joint_K3_full                point    0.7233             0.5363                0.1566    0.6577
+gp_joint_K3_full          prob_argmax    0.7533             0.5237                0.0000    0.6577
+gp_joint_K3_full prob_prior_corrected    0.6677             0.5545                0.2018    0.6577
+      hmm_loo_09          prob_argmax    0.7539             0.5255                0.0000    0.6726
+      hmm_loo_09 prob_prior_corrected    0.7108             0.5675                0.2470    0.6726
+
+### Stage 3 subtype vs HMM
+           model  reference                        metric  difference      lo      hi  excludes_zero
+     persistence hmm_loo_09                      log_loss     -0.0020 -0.0222  0.0219          False
+     persistence hmm_loo_09          accuracy_prob_argmax     -0.0074 -0.0154  0.0003          False
+     persistence hmm_loo_09 accuracy_prob_prior_corrected     -0.0443 -0.0593 -0.0298           True
+     gp_indep_K1 hmm_loo_09                      log_loss     -0.0196 -0.0317 -0.0073           True
+     gp_indep_K1 hmm_loo_09          accuracy_prob_argmax      0.0024 -0.0045  0.0092          False
+     gp_indep_K1 hmm_loo_09 accuracy_prob_prior_corrected     -0.0607 -0.0775 -0.0444           True
+gp_joint_K3_full hmm_loo_09                      log_loss     -0.0149 -0.0281 -0.0016           True
+gp_joint_K3_full hmm_loo_09          accuracy_prob_argmax     -0.0006 -0.0073  0.0063          False
+gp_joint_K3_full hmm_loo_09 accuracy_prob_prior_corrected     -0.0431 -0.0580 -0.0289           True
+
+### Stage 3 subtype vs label persistence
+      model                 rule  accuracy  accuracy_diff  accuracy_diff_lo  accuracy_diff_hi  balanced_accuracy  balanced_diff  balanced_diff_lo  balanced_diff_hi  recall_Indeterminate
+gp_indep_K1                point    0.7298         0.0071           -0.0025            0.0167             0.5516         0.0032           -0.0148            0.0211                0.1717
+gp_indep_K1          prob_argmax    0.7563         0.0336            0.0235            0.0433             0.5321        -0.0163           -0.0331           -0.0003                0.0000
+gp_indep_K1 prob_prior_corrected    0.6501        -0.0726           -0.0916           -0.0542             0.5540         0.0056           -0.0185            0.0298                0.2199
+ hmm_loo_09          prob_argmax    0.7539         0.0312            0.0221            0.0405             0.5255        -0.0229           -0.0389           -0.0079                0.0000
+ hmm_loo_09 prob_prior_corrected    0.7108        -0.0119           -0.0196           -0.0042             0.5675         0.0191            0.0070            0.0309                0.2470
+
+### Stage 4 population (default budget)
+ config  n_starts  best_loglik  share_within_0.01  n_loglik_levels_0.01  max_abs_dE_among_best  share_success_flag  default_start_gap
+ C3_f50        40   -2969.0593              1.000                     1                 0.0003               1.000             0.0000
+ C3_f60        40   -2974.7664              0.975                     2                 0.0002               1.000             0.0000
+ C3_f70        40   -2979.0980              0.975                     2                 0.0000               1.000             0.0000
+C3_free        40   -2955.3202              0.950                     2                 0.9280               1.000             0.0000
+C4_free        40   -2947.3699              0.600                    15                 0.0050               0.775             0.0001
+C5_free        40   -2938.8246              0.025                    36                 0.0000               0.100             7.3664
+
+### Stage 4 population (maxfun 400k)
+ config  n_starts  share_within_0.01  n_loglik_levels_0.01  share_success_flag       AIC  BIC_n_obs
+C3_free        40              0.950                     2                 1.0 5938.6403  6027.7532
+C4_free        40              0.625                    14                 1.0 5940.7397  6087.1395
+C5_free        40              0.025                    33                 1.0 5945.6451  6162.0621
+
+### Stage 4 CV per config
+            config            rule  accuracy  balanced_accuracy  recall_Indeterminate  log_loss  auc_Indeterminate  max_p_Indet
+    C3_f50_audited          argmax    0.7542             0.5259                0.0000    0.6718             0.6200       0.3714
+    C3_f50_audited prior_corrected    0.7123             0.5706                0.2530    0.6718             0.6200       0.3714
+           C3_free          argmax    0.7539             0.5222                0.0000    0.6689             0.6297       0.2485
+           C3_free prior_corrected    0.6897             0.5709                0.3072    0.6689             0.6297       0.2485
+           C5_free          argmax    0.7542             0.5256                0.0000    0.6691             0.6158       0.2987
+           C5_free prior_corrected    0.6807             0.5702                0.3193    0.6691             0.6158       0.2987
+ Markov (discrete)          argmax    0.7474             0.5073                0.0000    0.7062             0.5527       0.1993
+ Markov (discrete) prior_corrected    0.7227             0.5484                0.1928    0.7062             0.5527       0.1993
+Persistence (stay)          argmax    0.7227             0.5484                0.1928    7.6620             0.5518       1.0000
+Persistence (stay) prior_corrected    0.7227             0.5484                0.1928    7.6620             0.5518       1.0000
+
+### Stage 4 selected procedure
+        procedure            rule  accuracy  accuracy_lo  accuracy_hi  balanced_accuracy  log_loss                   selections
+selected_inner_cv          argmax    0.7545       0.7350       0.7736             0.5237    0.6699 {"C3_free": 8, "C5_free": 2}
+selected_inner_cv prior_corrected    0.6906       0.6670       0.7148             0.5720    0.6699 {"C3_free": 8, "C5_free": 2}
+     selected_bic          argmax    0.7539       0.7341       0.7733             0.5222    0.6689              {"C3_free": 10}
+     selected_bic prior_corrected    0.6897       0.6662       0.7139             0.5709    0.6689              {"C3_free": 10}
+
+### Stage 5 period slopes, boot vs Wald
+outcome period  slope  wald_lo  wald_hi  boot_lo  boot_hi  se_ratio_boot_over_wald
+   pigd   0-2y 0.0450   0.0309   0.0592   0.0348   0.0564                   0.7832
+   pigd   2-5y 0.0574   0.0453   0.0695   0.0429   0.0733                   1.2404
+   pigd  5-10y 0.0800   0.0724   0.0875   0.0640   0.0971                   2.2310
+ tremor   0-2y 0.0327   0.0196   0.0458   0.0201   0.0450                   0.9520
+ tremor   2-5y 0.0325   0.0212   0.0439   0.0189   0.0458                   1.2414
+ tremor  5-10y 0.0126   0.0056   0.0197   0.0001   0.0238                   1.7246
+
+### Stage 5 contrasts
+     model outcome     contrast  difference  boot_lo  boot_hi  excludes_zero  boot_share_positive
+primary_RI    pigd  2-5y - 0-2y      0.0124  -0.0079   0.0319          False                0.871
+primary_RI    pigd 5-10y - 0-2y      0.0349   0.0141   0.0559           True                1.000
+primary_RI    pigd 5-10y - 2-5y      0.0226  -0.0027   0.0482          False                0.956
+primary_RI  tremor  2-5y - 0-2y     -0.0002  -0.0225   0.0211          False                0.489
+primary_RI  tremor 5-10y - 0-2y     -0.0201  -0.0374  -0.0022           True                0.016
+primary_RI  tremor 5-10y - 2-5y     -0.0199  -0.0398  -0.0019           True                0.020
+
+### Stage 5 sup-LR
+null  real_sup_lr  real_argmax_knot  n_null  null_median  null_q95  p_value
+  RI      39.1287              4.75     200        3.205    7.6772    0.005
+  RS      39.1287              4.75     200        5.982   20.3905    0.005
+knot argmax q10/q50/q90: [3.0, 5.0, 9.75] n 200
+
+### Stage 5 ML structures
+   model        AIC  dAIC_vs_best  dBIC_patients_vs_best
+  linear -9731.9796       37.8250                28.1461
+   poly2 -9769.8047        0.0000                 0.0000
+   poly3 -9766.2344        3.5703                13.2492
+    pw_3 -9762.5930        7.2117                 7.2117
+  pw_2_5 -9764.0813        5.7233                15.4023
+pw_1.5_4 -9761.4843        8.3203                17.9993
+pw_2.5_6 -9762.7156        7.0891                16.7680
+  ns_df3 -9767.4239        2.3808                 2.3808
+  ns_df4 -9763.8969        5.9078                15.5867
+  ns_df5 -9763.4798        6.3249                25.6828
+
+### Stage 5 CV CRPS vs linear
+ model reference outcome metric  difference      lo      hi  excludes_zero
+ poly2    linear  tremor   crps     -0.0002 -0.0007  0.0002          False
+ poly2    linear    pigd   crps     -0.0010 -0.0017 -0.0002           True
+pw_2_5    linear  tremor   crps     -0.0002 -0.0006  0.0003          False
+pw_2_5    linear    pigd   crps     -0.0009 -0.0016 -0.0002           True
+
+### Stage 5 linear slopes (boot)
+outcome  slope  boot_lo  boot_hi
+   pigd 0.0655   0.0586   0.0733
+ tremor 0.0233   0.0174   0.0299
+
+### Stage 5 time axis
+                           model outcome         term  estimate  wald_se  boot_lo  boot_hi
+                 followup_pw_2_5  tremor change_at_2y   -0.0002   0.0109  -0.0224   0.0194
+                 followup_pw_2_5  tremor change_at_5y   -0.0199   0.0082  -0.0391  -0.0008
+                 followup_pw_2_5    pigd change_at_2y    0.0124   0.0117  -0.0084   0.0326
+                 followup_pw_2_5    pigd change_at_5y    0.0226   0.0089  -0.0023   0.0503
+        followup_pw_2_5+duration  tremor change_at_2y    0.0030   0.0179  -0.0358   0.0391
+        followup_pw_2_5+duration  tremor change_at_5y   -0.0536   0.0209  -0.1145   0.0178
+        followup_pw_2_5+duration    pigd change_at_2y    0.0074   0.0193  -0.0301   0.0410
+        followup_pw_2_5+duration    pigd change_at_5y   -0.0218   0.0223  -0.0981   0.0639
+         followup_pw_2_5+treated  tremor change_at_2y   -0.0167   0.0118  -0.0390   0.0054
+         followup_pw_2_5+treated  tremor change_at_5y   -0.0235   0.0083  -0.0436  -0.0034
+         followup_pw_2_5+treated    pigd change_at_2y    0.0073   0.0127  -0.0134   0.0263
+         followup_pw_2_5+treated    pigd change_at_5y    0.0214   0.0089  -0.0041   0.0487
+followup_pw_2_5+duration+treated  tremor change_at_2y   -0.0106   0.0183  -0.0485   0.0215
+followup_pw_2_5+duration+treated  tremor change_at_5y   -0.0588   0.0209  -0.1217   0.0117
+followup_pw_2_5+duration+treated    pigd change_at_2y    0.0030   0.0197  -0.0333   0.0363
+followup_pw_2_5+duration+treated    pigd change_at_5y   -0.0234   0.0224  -0.0994   0.0640
+
+### Stage 5 treated share
+ year   mean  size
+  0.0 0.0993  1198
+  1.0 0.5386   726
+  2.0 0.7321   616
+  3.0 0.8049   405
+  4.0 0.8934   394
+  5.0 0.9477   172
+  6.0 0.9448   181
+  7.0 0.9922   128
+  8.0 0.9928   138
+  9.0 0.9907   108
+ 10.0 0.9694   229
+
+### Stage 5 loss of follow-up logit
+               term  log_odds  boot_lo  boot_hi
+          intercept   -2.0123  -2.1506  -1.8642
+years_from_baseline    0.1386   0.1221   0.1576
+       tremor_score    0.0024  -0.1535   0.1521
+         pigd_score    0.5206   0.3598   0.7137
+
+### Stage 5 completers
+ completers_min_followup  n_patients outcome                         period   slope  wald_se  boot_lo  boot_hi
+                     6.0         247  tremor late - early (5-6y minus 0-2y) -0.0459      NaN  -0.0725  -0.0199
+                     6.0         247    pigd late - early (5-6y minus 0-2y)  0.0437      NaN   0.0172   0.0723
+                     8.0         185  tremor late - early (5-8y minus 0-2y) -0.0511      NaN  -0.0809  -0.0206
+                     8.0         185    pigd late - early (5-8y minus 0-2y)  0.0515      NaN   0.0242   0.0789
+
+### Stage 6 decision
+                  criterion     real  null_measured_q95  absolute_floor  real_percentile_in_null   met
+        a_dBIC_above_null95 513.0858           117.3112             NaN                     1.00  True
+b_drop1_ARI_K2_above_null95   0.7496             0.7705             0.6                     0.86 False
+       CLUSTERING SUPPORTED      NaN                NaN             NaN                      NaN False
+
+### Stage 6 summary
+      dataset   n  dBIC_median  dBIC_q95  drop1_ARI_K2_median  drop1_ARI_K2_q95
+   null_gauss 200      64.6800  115.8070               0.6377            0.7199
+null_measured 200      47.9716  117.3112               0.6294            0.7705
+  planted_0.5  50      53.0355  109.5577               0.6766            0.7859
+    planted_1  50      56.0057  106.1715               0.6826            0.8020
+    planted_2  50     127.6258  187.7260               0.7332            0.7992
+         real   1     513.0858  513.0858               0.7496            0.7496
+
+### Script 20 sign flips: {'pigd_score': (317, 762), 'tremor_score': (369, 762)}
+
+### Script 20 stability
+ K  bootstrap_ARI_mean  bootstrap_ARI_min  drop_last_visit_ARI
+ 2              0.9361             0.7862               0.4558
+ 3              0.8214             0.5052               0.3349
+reliability median tremor/pigd: 0.27 0.531
+
+### 6b cal2
+                target   real  simulated_mean  mc_se  abs_diff  tolerance within
+       skew_slope_pigd 2.1726          1.7338 0.0853    0.4387        0.3  False
+share_pigd_zero_visits 0.1611          0.2173 0.0016    0.0562        NaN    NaN
+
+### 6b M1-M5
+model                    M1     M2     M5
+feature                                  
+zero_share            0.233  0.238  0.240
+P_next_zero_given_S1  0.248  0.187  0.260
+blup_skew_slope_pigd  0.502  0.736  1.399
+
+### 6b GRM: 14/18 pass
+              target  real  sim_mean  tolerance
+blup_skew_slope_pigd 2.173     1.719      0.300
+blup_kurt_slope_pigd 6.898     4.163      1.500
+P_next_zero_given_S0 0.459     0.396      0.050
+P_next_zero_given_S1 0.109     0.177      0.035
+
+### 6b GRM+OU: 14/18 pass
+              target  real  sim_mean  tolerance
+blup_skew_slope_pigd 2.173     1.710      0.300
+blup_kurt_slope_pigd 6.898     4.508      1.500
+P_next_zero_given_S0 0.459     0.391      0.050
+P_next_zero_given_S1 0.109     0.184      0.035
+OU ell 13.14 corr 0.998
+
+### PIGD audit transitions
+current_S  n_pairs  P_next_zero     lo     hi
+        0      603       0.4594 0.4107 0.5045
+        1     1201       0.1091 0.0906 0.1293
+        2      840       0.0345 0.0229 0.0469
+      3-4      460       0.0196 0.0085 0.0333
+       5+      257       0.0000 0.0000 0.0000
+
+### PIGD audit items
+    item  share_0
+ NP2WALK   0.5017
+ NP2FREZ   0.8617
+ NP3GAIT   0.2517
+NP3FRZGT   0.9411
+NP3PSTBL   0.8400
