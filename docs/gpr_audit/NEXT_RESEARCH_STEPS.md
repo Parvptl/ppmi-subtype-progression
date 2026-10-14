@@ -96,6 +96,53 @@ population trend, which is a better long-range guess than any one measurement.
 matters about twice as much for longer forecasts.** That is the most useful new
 result in this memo, and it was invisible in the one-step analysis.
 
+### ⚠️ Revised 2026-09-30 — horizon versus patient composition
+
+The table above compares *bins*, and the bins contain different patients: the
+5y+ bin has 100 patients against 385 in the 0–1y bin, and only patients with
+long follow-up reach it. A between-bin comparison therefore mixes "predictions
+get harder further out" with "the patients who get that far are different".
+
+`scripts/15_gpr_multistep_audit.py` repeats the analysis **within patients**,
+restricted at each step to patients present in both bins. Change in MAE
+(positive = worse), all four cohorts:
+
+| Transition | K1 | persistence |
+|---|---|---|
+| 0–1y → 1–2y | **+0.21 to +0.23, excludes 0 in 4/4** | **+0.28 to +0.30, excludes 0 in 4/4** |
+| 1–2y → 2–3y | −0.04 to −0.11, includes 0 in 4/4 | −0.05 to −0.11, includes 0 in 4/4 |
+| 2–3y → 3–5y | −0.09 to −0.14, includes 0 in 4/4 | +0.03 to +0.09, includes 0 in 4/4 |
+| 3–5y → 5y+ | −0.20 to −0.38, excludes 0 in 2/4 (D1, E2) | +0.06 to +0.38, excludes 0 in 2/4 (unfiltered, A4) |
+
+Two corrections follow.
+
+**The between-bin view understated K1's early degradation.** It showed K1 nearly
+flat from 0–1y to 1–2y (0.921 → 0.992); within patients the rise is +0.23 and
+excludes zero in every cohort. Longer-horizon bins contain easier patients,
+which flattened the curve.
+
+**Does the advantage actually widen?** Tested directly as a
+difference-in-differences — the K1-minus-persistence gap in a late bin minus the
+same gap in the 0–1y bin, for patients present in both:
+
+| Cohort | 0–1y → 2–3y | 0–1y → 3–5y | 0–1y → 5y+ |
+|---|---|---|---|
+| unfiltered | −0.024 [−0.157, +0.122] | −0.071 [−0.240, +0.096] | **−0.371 [−0.655, −0.104]** |
+| A4 | −0.017 [−0.150, +0.126] | −0.068 [−0.237, +0.102] | **−0.364 [−0.648, −0.096]** |
+| D1 | −0.085 [−0.283, +0.120] | **−0.242 [−0.460, −0.040]** | **−0.452 [−0.850, −0.084]** |
+| E2 | +0.103 [−0.087, +0.323] | −0.189 [−0.380, +0.008] | −0.296 [−0.640, +0.025] |
+
+**The widening is real, but only at long range.** It is not detectable out to
+three years in any cohort. At 5y+ it excludes zero in three of four cohorts
+(E2 fails with n = 34 patients, most likely power). The honest claim is:
+
+> Beyond roughly five years, the GP's advantage over persistence grows, holding
+> patient composition fixed. Within three years the two degrade in step and no
+> widening is detectable.
+
+That is a narrower claim than "the advantage widens with horizon", which is how
+this was first written and which the bin-level view alone would support.
+
 ### Does the model ranking change with horizon?
 
 K1/K2/K3 lead in every bin and K0 is the worst GP in every bin. The ordering
@@ -197,11 +244,11 @@ other comparison, replication is likely but is not evidence until done.
 
 ---
 
-## 4. Modelling the subscores instead of the ratio — Task 3 🔬 proposal
+## 4. Modelling the subscores instead of the ratio — proposal ✅ **now tested**
 
-**Nothing was implemented.** This section documents target, likelihood,
-validation design and comparison, as required, and quantifies the gain against
-the actual data.
+The design below was documented first and then run as the smallest defensible
+baseline. **Results are in §4.7; they do not support the proposal in the form
+originally argued.**
 
 ### 4.1 How the ratio is currently built
 
@@ -360,7 +407,8 @@ the quantity directly comparable with the HMM's 75.4%.
 
 | # | Step | Why now | Cost | Risk |
 |---|---|---|---|---|
-| **1** | **Subscore model, option A** (√ or log transform, two independent GPs) | Addresses the deepest limitation, recovers 692 visits and 113 patients, removes a selection bias, and makes the work comparable with the HMM for the first time | ~5 h compute + ~1 day implementation | low — reuses the audited GP |
+| ~~1~~ | ~~Subscore model, option A~~ | **Done (§4.7).** Recovers the data and removes the bias as predicted, but the GP loses its edge over persistence on the subscores, and the derived subtype is indistinguishable from the HMM. Adopt the target for representation, not accuracy. | — | — |
+| **1** | **Multi-output GP on the two subscores** | §4.7 used two independent GPs; within-patient correlation is +0.157. A shared-input multi-output GP is the obvious next test and is the cheapest remaining idea with a plausible mechanism | ~1 day | moderate |
 | **2** | **Zero-inflated / bounded likelihood** (option B) | The 12–13% impossible mass and the 16.1% zero point mass are the same problem | ~2 days | moderate — non-Gaussian GP likelihood is new machinery |
 | **3** | **Multi-step for `hbayes` and the baselines** | The multi-step finding (GP advantage widens with horizon) currently rests on a narrower comparison than the one-step one | ~2 h | very low |
 | **3b** | **Mean-function holdout on A4 / D1 / E2** | §3 ran on the unfiltered cohort only; replication is likely but unproven | ~2.5 h | very low |
@@ -370,3 +418,90 @@ the quantity directly comparable with the HMM's 75.4%.
 **The single recommendation:** do step 1. It is the only available change that
 simultaneously fixes a bias, adds data, reduces the noise being modelled, and
 makes the GPR work comparable with the project's existing HMM results.
+
+
+---
+
+## 4.7 Subscore baseline experiment — RESULT 🆕
+
+**Command:** `python scripts/16_gpr_subscore_baseline.py --jobs 12`
+**Runtime:** 9.0 + 9.8 min. **Outputs:** `subscore_predictions_{tremor,pigd}.csv`,
+`subscore_fits_{tremor,pigd}.csv`, `subscore_summary.csv`
+
+Option A without a transform — the same K1 kernel, the same LOPO protocol, the
+same leakage battery, on the **raw** subscore scale. Raw scale is deliberate: it
+isolates the effect of changing the *target* from changing the *likelihood*.
+934 folds per subscore, **converged 934/934 in both**, all 10 checks passed.
+
+### The target really is better behaved
+
+| | ratio model | tremor | PIGD |
+|---|---:|---:|---:|
+| points scored | 2,707 | **3,361** | **3,361** |
+| patients | 821 | **934** | **934** |
+| K1 predictive mass below zero | **0.130** | **0.054** | 0.107 |
+
+The coverage gain is exactly as predicted (+654 points, +113 patients), and the
+Gaussian misspecification more than halves on tremor.
+
+### But the GP's advantage over persistence does not survive
+
+| Target | K1 MAE | persistence MAE | K1 − persistence | Verdict |
+|---|---:|---:|---|---|
+| ratio (for reference) | 0.9720 | 1.0427 | −0.0707 [−0.0979, −0.0451] | GP better |
+| tremor score | 0.2395 | 0.2426 | −0.0031 [−0.0084, +0.0022] | **no difference** |
+| PIGD score | 0.2175 | 0.2040 | **+0.0134 [+0.0083, +0.0187]** | **GP worse** |
+
+On the PIGD subscore the trivial "next = last" rule **beats** the GP, and the
+interval excludes zero. The likely reason is visible in the earlier variability
+table: the subscores move by 0.14–0.19 per visit against the ratio's 0.76, so
+persistence is already close to optimal and the GP's shrinkage toward the
+population mean costs more than its smoothing gains.
+
+**This is a negative result for the proposal as argued.** Modelling the
+subscores does not inherit the ratio model's advantage over baselines.
+
+### The comparison the subscore target was supposed to unlock
+
+Deriving the ratio from the two marginal predictive Gaussians by Monte Carlo
+(4,000 draws, scores clipped at zero, the existing degenerate rules applied)
+gives a subtype prediction on **all 3,361 points of the 934-patient cohort —
+exactly the HMM's scoring set.** Joined to the HMM's own leave-one-out
+predictions on `(patient, n_history)`; the join is complete (3,361/3,361) and
+validated on target times and observed subtypes.
+
+| Model | Subtype accuracy |
+|---|---:|
+| GPR on subscores → derived subtype | **0.7566** |
+| Hidden Markov model | **0.7539** |
+| persistence (subscore-derived) | 0.7465 |
+| patient mean (subscore-derived) | 0.7382 |
+
+**Paired difference, GPR − HMM, identical points: +0.0027 [−0.0042, +0.0098] —
+includes zero.** They disagree on 141 of 3,361 points, almost symmetrically
+(75 GPR-only correct, 66 HMM-only).
+
+**This is the first like-for-like comparison between the GPR line of work and
+the project's HMM, and the answer is that they are indistinguishable.** That is
+a genuine result, and it is not an improvement: no held-out evidence supports
+claiming the GPR is better.
+
+### What this changes
+
+The subscore target should be adopted **for its representational properties,
+not for accuracy**: it recovers 654 points and 113 patients, removes the
+selection bias against tremor-dominant visits, halves the Gaussian
+misspecification on tremor, and makes the work comparable with the HMM. It does
+not make predictions better.
+
+### Caveats
+
+- Raw scale, Gaussian likelihood, two **independent** GPs. The measured
+  within-patient correlation is +0.157, so independence is an approximation;
+  a multi-output GP is untested.
+- The derived subtype uses Monte Carlo through a ratio of two Gaussians with
+  clipping at zero — a reasonable but not exact treatment of the degenerate cases.
+- The subscore models train on 934 patients and the ratio model on 821, so the
+  subscore-vs-ratio MAE numbers are not directly comparable (different targets,
+  different units, different training sets). Only the derived-subtype
+  comparison is like-for-like.

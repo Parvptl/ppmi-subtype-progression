@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mid-term · A probabilistic model of motor subtype progression in Parkinson's disease</title>
+<style>
+:root{
+  --ink:#16212c; --ink-soft:#2b3945; --paper:#f9f8f4; --paper2:#ebe8e0;
+  --teal:#2a6b5f; --teal-lite:#7fb3a6; --brick:#b5452a; --gold:#b8912f;
+  --muted:#5f6b76; --muted-lite:#8f9aa4; --rule:#d8d4ca;
+  --serif:"Iowan Old Style","Palatino Linotype","Book Antiqua",Palatino,Georgia,serif;
+  --sans:"Segoe UI",Inter,-apple-system,"Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#3a4149;font-family:var(--sans);-webkit-font-smoothing:antialiased}
+
+/* ---- deck mechanics -------------------------------------------------- */
+#deck{position:relative}
+.slide{
+  width:1280px;height:720px;position:relative;overflow:hidden;
+  background:var(--paper);color:var(--ink);
+  padding:62px 72px 54px;display:none;flex-direction:column;
+}
+.slide.on{display:flex}
+.slide.dark{background:var(--ink);color:#eef1f3}
+.slide.deep{background:var(--teal);color:#f2f7f5}
+.slide.warm{background:var(--paper2)}
+
+/* ---- type ------------------------------------------------------------ */
+h1{font-family:var(--serif);font-weight:600;font-size:60px;line-height:1.08;letter-spacing:-.4px}
+h2{font-family:var(--serif);font-weight:600;font-size:40px;line-height:1.14;letter-spacing:-.2px;margin-bottom:6px}
+.kicker{font-size:12.5px;letter-spacing:.20em;text-transform:uppercase;color:var(--teal);font-weight:600}
+.dark .kicker,.deep .kicker{color:var(--teal-lite)}
+.sub{font-size:17.5px;line-height:1.5;color:var(--muted);max-width:1000px;margin-top:10px}
+.dark .sub{color:#b3bec7}
+.foot{position:absolute;left:72px;right:72px;bottom:24px;display:flex;justify-content:space-between;
+  font-size:12.5px;color:var(--muted-lite)}
+.dark .foot{color:#6d7a85}
+.deep .foot{color:#9dc2b8}
+.body{flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px;margin-top:14px}
+.slide .notes{display:none}   /* carried in the markup, shown only in the notes panel */
+b,strong{font-weight:650;color:var(--ink)}
+.dark b,.dark strong{color:#fff}
+em{font-style:normal;color:var(--brick);font-weight:600}
+
+/* ---- components ------------------------------------------------------ */
+.row{display:flex;gap:16px}
+.card{background:var(--paper2);border-radius:9px;padding:19px 21px;flex:1}
+.slide.warm .card{background:#f6f4ef}
+.dark .card{background:#22303d}
+/* Specificity has to beat `.slide.warm .card`, or an ink card on a warm slide
+   keeps its light background and turns its own white text invisible. */
+.slide .card.ink,.slide.warm .card.ink,.slide.dark .card.ink{background:var(--ink);color:#eef1f3}
+.card.ink .ct{color:#fff}
+.slide .card.ink th{background:#2b3a48;color:#dde4ea}
+.slide .card.ink td{border-top-color:#31404e}
+/* An ink card can sit on a light slide, where the global `b{color:ink}` rule
+   would render its emphasis dark-on-dark. Must come after that rule. */
+.slide .card.ink b,.slide .card.ink strong{color:#fff}
+.card.line{background:#fbfaf7;border-top:3px solid var(--teal)}
+.card.line.b{border-top-color:var(--brick)}
+.ct{font-size:16px;font-weight:650;margin-bottom:7px}
+.cb{font-size:14.2px;line-height:1.5;color:var(--muted)}
+.dark .cb,.card.ink .cb{color:#aebac4}
+.stat{font-family:var(--serif);font-size:50px;line-height:1;color:var(--teal)}
+.stat.b{color:var(--brick)} .stat.g{color:var(--gold)}
+.dark .stat{color:var(--teal-lite)}
+.sl{font-size:13.4px;color:var(--muted);margin-top:9px;line-height:1.45}
+.dark .sl{color:#a9b5be}
+
+table{border-collapse:collapse;width:100%;font-size:14.6px}
+th{background:var(--paper2);text-align:left;padding:9px 13px;font-weight:650;font-size:13.6px}
+.dark th{background:#2b3a48}
+td{padding:8px 13px;border-top:1px solid var(--rule)}
+.dark td{border-top-color:#31404e}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+tr.hi td{background:rgba(42,107,95,.09);font-weight:650}
+.dark tr.hi td{background:rgba(127,179,166,.13)}
+
+.note{border-left:3px solid var(--teal);background:var(--paper2);padding:14px 18px;
+  font-size:14.8px;line-height:1.52;color:var(--ink-soft)}
+.dark .note{background:#22303d;color:#c6d0d8;border-left-color:var(--teal-lite)}
+.note.b{border-left-color:var(--brick)}
+.banner{background:var(--teal);color:#fff;border-radius:9px;padding:17px 22px;font-size:16px;line-height:1.5}
+
+ul{list-style:none} li{font-size:15px;line-height:1.55;color:var(--muted);
+  padding-left:17px;position:relative;margin-bottom:7px}
+li:before{content:"";position:absolute;left:0;top:9px;width:5px;height:5px;border-radius:50%;background:var(--teal)}
+
+/* ratio scale */
+.scale{display:flex;height:60px;border-radius:7px;overflow:hidden;font-size:14.5px;color:#fff}
+.scale div{display:flex;align-items:center;justify-content:center;font-weight:600}
+.tick{display:flex;font-size:12.5px;color:var(--muted);margin-top:7px}
+
+/* markov bars */
+.bar{height:44px;border-radius:5px;display:flex;align-items:center;padding-left:15px;
+  color:#fff;font-size:15px;font-weight:600}
+
+/* hmm diagram */
+.chain{display:flex;gap:13px;align-items:center}
+.node{flex:1;height:54px;border-radius:7px;display:flex;align-items:center;justify-content:center;
+  font-size:15.5px;font-weight:600}
+.node.lat{background:var(--teal);color:#fff}
+.node.obs{background:#fbfaf7;border:1.5px solid var(--rule);color:var(--ink)}
+.node.obs.err{border-color:var(--brick);color:var(--brick)}
+.drop{display:flex;gap:13px}
+.drop span{flex:1;text-align:center;color:var(--muted-lite);font-size:20px;line-height:1}
+.dark .node.obs{background:#22303d;border-color:#3a4a58;color:#dde4ea}
+
+/* future work */
+.fw{display:flex;gap:15px;align-items:flex-start;background:var(--paper2);border-radius:9px;padding:15px 18px}
+.slide.warm .fw{background:#f6f4ef}
+.fwn{font-family:var(--serif);font-size:26px;color:var(--teal);width:26px;flex:none;line-height:1}
+.fwt{font-size:15.4px;font-weight:650;width:270px;flex:none}
+.fwb{font-size:14px;line-height:1.48;color:var(--muted)}
+
+/* ---- viewer chrome --------------------------------------------------- */
+#stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+#hud{position:fixed;bottom:12px;right:16px;color:#aab3bb;font-size:12px;font-family:var(--sans);
+  background:rgba(0,0,0,.35);padding:5px 11px;border-radius:20px;z-index:9}
+#notes{position:fixed;left:0;right:0;bottom:0;max-height:34vh;overflow:auto;background:#10181f;
+  color:#cdd6dd;font-size:14px;line-height:1.55;padding:16px 22px;display:none;z-index:8;
+  border-top:2px solid var(--teal)}
+#notes.on{display:block}
+#notes h4{color:var(--teal-lite);font-size:12px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:7px}
+.who{color:var(--gold);font-weight:700}
+
+/* ---- print (PDF export) ---------------------------------------------- */
+/* 13.333in x 7.5in is exactly 1280x720 at the CSS reference of 96dpi, and is
+   the standard 16:9 slide size. Chrome ignores a page size given in px, so it
+   has to be stated in physical units or every slide is letterboxed on a
+   default-sized sheet. */
+@page{size:13.333in 7.5in;margin:0}
+@media print{
+  html,body{background:#fff;width:1280px;height:720px;overflow:visible}
+  #hud,#notes{display:none!important}
+  #stage{position:static;display:block;width:1280px}
+  #deck{display:block;transform:none!important}
+  .slide{display:flex!important;transform:none!important;
+    width:1280px;height:720px;margin:0;break-after:page;page-break-after:always}
+  .slide:last-child{break-after:auto;page-break-after:auto}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+<div id="stage"><div id="deck">
+
+<!-- 1 ================================================================= -->
+<section class="slide dark on">
+  <div class="kicker">B.Tech Mid-term Evaluation · Department of Data Science · IIT Palakkad</div>
+  <div class="body" style="justify-content:center">
+    <h1 style="max-width:1010px">A probabilistic model of<br>motor subtype progression<br>in Parkinson's disease</h1>
+    <div class="sub" style="max-width:780px;font-size:19px">
+      The clinical rule tells us a patient's subtype <em>today</em>. We ask a different question:
+      when the recorded subtype changes, how much of that is the disease progressing — and how
+      much is the measurement?
+    </div>
+  </div>
+  <div class="foot">
+    <div style="color:#c9d3da;font-size:15px">Parv Patel &nbsp;·&nbsp; Mayank Tewatia
+      <span style="color:#6d7a85;font-size:13px"> &nbsp;— Supervisor: Prof. K. R. Sahasranand</span></div>
+    <div>Parkinson's Progression Markers Initiative (PPMI)</div>
+  </div>
+  <aside class="notes" data-who="Parv">
+    Good morning. Our project is on motor subtype progression in Parkinson's disease, using the PPMI dataset.
+    The one-line version: there's a standard clinical rule that labels a patient as tremor-dominant or PIGD at
+    a given visit. That rule works on one visit at a time. What we wanted to understand is what happens across
+    visits — because when a patient's label changes, that could be the disease progressing, or it could just be
+    the examination coming out differently that day. Separating those two is the whole project.
+  </aside>
+</section>
+
+<!-- 2 ================================================================= -->
+<section class="slide">
+  <h2>One number, cut into three</h2>
+  <div class="sub">In the MDS-UPDRS examination, eleven items measure tremor and five measure gait and postural
+    difficulty. The Stebbins (2013) rule compares their averages, and two fixed thresholds turn that comparison
+    into a label. We use this definition unchanged.</div>
+  <div class="body">
+    <div class="card" style="display:flex;align-items:center;gap:34px">
+      <div style="font-size:19px;font-weight:600">R &nbsp;=&nbsp; mean of 11 tremor items &nbsp;÷&nbsp; mean of 5 gait / postural items</div>
+      <div class="cb" style="flex:1">R ≥ 1.15 → TD &nbsp;·&nbsp; 0.90 &lt; R &lt; 1.15 → Indeterminate &nbsp;·&nbsp; R ≤ 0.90 → PIGD</div>
+    </div>
+    <div>
+      <div class="scale">
+        <div style="background:var(--brick);width:28%">PIGD</div>
+        <div style="background:var(--gold);width:5%"></div>
+        <div style="background:var(--teal);width:67%">TD — tremor dominant</div>
+      </div>
+      <div class="tick"><span style="width:28%">0</span><span style="width:5%;text-align:center">0.90–1.15</span>
+        <span style="flex:1;text-align:right">observed maximum 11.36</span></div>
+      <div class="sl">Drawn to scale. The <b>Indeterminate</b> band is only <b>0.25 units wide</b> on a
+        quantity that runs from 0 to 11.36 — this turns out to matter a great deal.</div>
+    </div>
+    <div class="row">
+      <div class="card"><div class="ct">What the rule answers</div>
+        <div class="cb">“What subtype does this patient appear to have today?”</div></div>
+      <div class="card ink"><div class="ct">What it cannot answer</div>
+        <div class="cb">“Has this patient's subtype actually changed — or did the examination just
+          come out differently?”</div></div>
+    </div>
+  </div>
+  <div class="foot"><div>Stebbins et al., Movement Disorders 2013</div><div>02</div></div>
+  <aside class="notes" data-who="Parv">
+    The subtype comes from a single number. Eleven tremor items, five gait and postural items, take the two
+    averages, divide. Above 1.15 you're tremor-dominant, below 0.90 you're PIGD, and in between you're
+    Indeterminate.
+    The thing to notice is the picture at the bottom. That middle band is 0.25 units wide, but the ratio itself
+    runs from zero to about eleven. So the band is very narrow relative to the scale — remember that, because
+    it comes back twice.
+    And the rule is a snapshot. It tells you where a patient is today. It has nothing to say about whether a
+    change between two visits is real.
+  </aside>
+</section>
+
+<!-- 3 ================================================================= -->
+<section class="slide dark">
+  <h2>The dataset we built</h2>
+  <div class="sub">Recomputed from the 16 raw MDS-UPDRS items rather than taken off the shelf —
+    sporadic PD only, OFF-medication exams — then checked back against PPMI's own labels.</div>
+  <div class="body">
+    <div class="row">
+      <div class="card"><div class="stat">1,080</div><div class="sl">sporadic PD patients</div></div>
+      <div class="card"><div class="stat">5,774</div><div class="sl">patient visits</div></div>
+      <div class="card"><div class="stat">4,441</div><div class="sl">visits with a subtype label</div></div>
+      <div class="card"><div class="stat">934</div><div class="sl">patients with ≥2 labelled visits<br>— the analysis cohort</div></div>
+    </div>
+    <div class="row">
+      <div style="flex:1.05">
+        <div class="kicker" style="margin-bottom:9px">Labels validated against PPMI's own</div>
+        <table>
+          <tr><th>Reference</th><th>Classes</th><th class="n">Agreement</th></tr>
+          <tr><td>Curated cut <code>td_pigd</code></td><td>2</td><td class="n">4,431 / 4,431 = 100%</td></tr>
+          <tr><td>Archived <code>td_pigd_old</code></td><td>3</td><td class="n">1,595 / 1,597 = 99.87%</td></tr>
+        </table>
+      </div>
+      <div style="flex:1">
+        <div class="kicker" style="margin-bottom:9px">A trap that had to be found first</div>
+        <div class="cb"><b>“Unable to Rate” is coded 101</b>, in the same field as a real 0–4 score. Averaged
+          as a score, one such entry lifts the five-item PIGD mean to roughly 20, drives the ratio to zero,
+          and relabels a tremor-dominant visit as PIGD. Postural stability alone carries <b>3,206</b> of them.</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><div>Weeks 1–2 deliverable</div><div>03</div></div>
+  <aside class="notes" data-who="Parv">
+    We didn't take the subtype column off the shelf — we rebuilt it from the raw item scores, so that we
+    controlled every decision. Sporadic Parkinson's only, and only OFF-medication examinations, because that's
+    what the standard definition uses.
+    That gives about a thousand patients and four and a half thousand labelled visits. For anything longitudinal
+    we need at least two labelled visits, and that's 934 patients — that number is the cohort for everything
+    that follows.
+    Two things worth mentioning. First, we validated: our labels agree with PPMI's own two-class column on every
+    single visit, and with an archived three-class column on 99.87%. So the labels are trustworthy.
+    Second, the trap on the right. "Unable to Rate" is recorded as the number 101, sitting in the same column as
+    a real score of 0 to 4. If you average that in, one entry pushes the PIGD score to about 20 and the patient
+    gets labelled PIGD when they're actually tremor-dominant. There are over three thousand of those on the
+    postural stability item alone. Finding that early is why we trust the rest.
+  </aside>
+</section>
+
+<!-- 4 ================================================================= -->
+<section class="slide">
+  <h2>What the records actually show</h2>
+  <div class="sub">3,361 consecutive labelled pairs from 934 patients, median interval 1.0 year.
+    Rows are the current visit, columns the next.</div>
+  <div class="body">
+    <table>
+      <tr><th>Subtype at this visit</th><th class="n">→ TD</th><th class="n">→ Indeterminate</th><th class="n">→ PIGD</th></tr>
+      <tr><td>TD &nbsp;<span style="color:var(--muted-lite)">(n = 2,261)</span></td><td class="n">0.808</td><td class="n">0.080</td><td class="n">0.112</td></tr>
+      <tr class="hi"><td>Indeterminate &nbsp;<span style="color:var(--muted-lite)">(n = 334)</span></td><td class="n">0.440</td><td class="n">0.192</td><td class="n">0.368</td></tr>
+      <tr><td>PIGD &nbsp;<span style="color:var(--muted-lite)">(n = 766)</span></td><td class="n">0.184</td><td class="n">0.114</td><td class="n">0.702</td></tr>
+    </table>
+    <div class="row">
+      <div class="card"><div class="ct">Indeterminate barely persists</div>
+        <div class="cb">Only <b>19.2%</b> of Indeterminate visits are followed by another. It behaves like a
+          crossing rather than a category a patient belongs to.</div></div>
+      <div class="card"><div class="ct">PIGD is not a destination</div>
+        <div class="cb"><b>29.8%</b> of PIGD visits are followed by a non-PIGD assessment, <b>18.4%</b>
+          straight back to TD. Treating TD → PIGD as one-way is contradicted by the data.</div></div>
+      <div class="card line"><div class="ct">But the drift is real</div>
+        <div class="cb"><b>253</b> changes run TD → PIGD against <b>141</b> the other way
+          (p = 1.8×10⁻⁸). Something genuine is moving underneath.</div></div>
+    </div>
+  </div>
+  <div class="foot"><div>Weeks 3–4 · observed counts, no model involved</div><div>04</div></div>
+  <aside class="notes" data-who="Parv">
+    This is just counting — no model yet. Take every pair of consecutive labelled visits and ask where the
+    patient went.
+    Two things jump out. The middle row: if a patient is Indeterminate today, there's only a 19% chance they're
+    Indeterminate at the next visit. They're much more likely to be somewhere else. So Indeterminate is not
+    really behaving like a category — it looks more like a region patients pass through.
+    And PIGD isn't a one-way door either. Almost 30% of PIGD visits are followed by something that isn't PIGD,
+    and 18% go straight back to tremor-dominant. Clinically people often think of PIGD as the endpoint; the
+    record doesn't support that.
+    But — and this matters — there is still real drift. Changes towards PIGD outnumber the other direction 253
+    to 141, and that's highly significant. So something genuine is going on; it's just buried in a lot of movement.
+  </aside>
+</section>
+
+<!-- 5 ================================================================= -->
+<section class="slide warm">
+  <h2>A single recorded change is weak evidence</h2>
+  <div class="body">
+    <div class="row">
+      <div class="card ink"><div class="stat" style="color:var(--teal-lite)">35.2%</div>
+        <div class="sl" style="color:#aebac4">of all observed subtype changes <b style="color:#fff">reverse at
+          the very next visit</b>. For changes into the Indeterminate band, 50–56%.</div></div>
+      <div class="card"><div class="stat b">51.7%</div>
+        <div class="sl">of apparent PIGD conversions disappear if we simply require the new subtype to hold for
+          two consecutive visits — <b>263 drops to 127</b>.</div></div>
+      <div class="card"><div class="stat g">73%</div>
+        <div class="sl">of consecutive visit pairs move a patient's own ratio by <b>more than the entire
+          width</b> of the Indeterminate band.</div></div>
+    </div>
+    <div class="row">
+      <div class="note" style="flex:1">Within a single patient the ratio has a standard deviation of
+        <b>1.22</b> against a band <b>0.25</b> wide, and a median visit-to-visit move of <b>0.68</b>.</div>
+      <div class="note b" style="flex:1">So a patient sitting near a threshold will cross it from time to time
+        <b>for reasons unrelated to progression</b>. Band membership was always going to be noise-dominated.</div>
+    </div>
+    <div class="banner">The label is a noisy reading. Counting recorded changes therefore over-counts
+      progression — which is what pushed us towards a model that treats the label as a measurement rather
+      than as the truth.</div>
+  </div>
+  <div class="foot"><div>Reversion analysis and exploratory analysis of the ratio</div><div>05</div></div>
+  <aside class="notes" data-who="Parv">
+    This slide is the heart of the motivation, so I'll spend a moment on it.
+    A third of all the subtype changes we observe reverse immediately — the very next visit the patient is back
+    where they were. That's not what progression looks like.
+    Second number: if we take apparent conversions to PIGD and just add one requirement — the new subtype has to
+    still be there at the next visit — half of them vanish. 263 becomes 127.
+    And the reason is the third number. Within one patient, the ratio bounces around with a standard deviation
+    of 1.22, and the band we're asking it to sit inside is 0.25 wide. It's about five times too noisy for the
+    question we're asking it. In 73% of consecutive visits, a patient's ratio moves further than the whole width
+    of the middle band.
+    So if you happen to sit near a threshold, you will cross it now and then for reasons that have nothing to do
+    with your disease. That's the problem we needed a model for.
+  </aside>
+</section>
+
+<!-- 6 ================================================================= -->
+<section class="slide dark">
+  <h2>We tested the simple model first — and it failed</h2>
+  <div class="sub">A Markov chain on the observed label assumes the current label is all you need: where the
+    patient came from should not matter. Take only the visits currently labelled <b>TD</b>, and ask how likely
+    PIGD is next.</div>
+  <div class="body">
+    <div style="display:flex;flex-direction:column;gap:13px">
+      <div style="display:flex;align-items:center;gap:17px">
+        <div style="width:250px;text-align:right;font-size:15px;color:#b3bec7">Arrived at TD <b style="color:#fff">from TD</b></div>
+        <div class="bar" style="background:var(--teal);width:120px">8.6%</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:17px">
+        <div style="width:250px;text-align:right;font-size:15px;color:#b3bec7">Arrived at TD <b style="color:#fff">from PIGD</b></div>
+        <div class="bar" style="background:var(--brick);width:548px">39.3%</div>
+      </div>
+    </div>
+    <div class="note">Same label today, four and a half times the risk tomorrow. χ² = <b>156.6</b> on 4 df —
+      and the test rejects independence for <b>all three</b> current labels, not just TD
+      (Indeterminate p = 0.004, PIGD p &lt; 10⁻⁵).</div>
+    <div class="banner" style="background:#22303d;border-left:3px solid var(--teal-lite)">
+      The current label is <b style="color:#fff">not a sufficient summary of the patient's past</b>.
+      That is exactly the signature of an underlying state being read through a noisy measurement —
+      which is what motivated the hidden Markov model.</div>
+  </div>
+  <div class="foot"><div>χ² test on labelled triples, training patients only</div><div>06</div></div>
+  <aside class="notes" data-who="Parv">
+    We didn't jump to a complicated model. We started with the simplest thing: a Markov chain on the observed
+    label. That model says the current label is all you need — history shouldn't matter.
+    So we tested that directly. Take every visit where the patient is currently labelled TD, and split them by
+    where they came from. If they arrived at TD from TD, there's an 8.6% chance they're PIGD next visit. If they
+    arrived at TD from PIGD, it's 39.3%. Same label today, four and a half times the risk tomorrow.
+    Chi-squared is 156, and it's not just TD — the test rejects for all three labels.
+    So the observed label is not a complete description of the patient. Something is being remembered that the
+    label doesn't capture. And that is precisely the pattern you get when there's a real underlying state and
+    you're only seeing a noisy reading of it. That's what took us to the hidden Markov model — not because it
+    was the next model in a textbook, but because the data told us the simpler one was wrong.
+    I'll hand over to Mayank.
+  </aside>
+</section>
+
+<!-- 7 ================================================================= -->
+<section class="slide">
+  <h2>Separating the state from the label</h2>
+  <div class="body">
+    <div>
+      <div style="display:flex;gap:13px;align-items:center;margin-bottom:9px">
+        <div style="width:168px;text-align:right;font-size:13.5px;color:var(--muted);line-height:1.35">
+          underlying motor state<br><em style="color:var(--muted-lite);font-weight:400">never observed</em></div>
+        <div class="chain" style="flex:1">
+          <div class="node lat">TD</div><div class="node lat">TD</div>
+          <div class="node lat">Indeterminate</div><div class="node lat">PIGD</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:13px;margin-bottom:9px">
+        <div style="width:168px"></div>
+        <div class="drop" style="flex:1"><span>↓</span><span>↓</span><span>↓</span><span>↓</span></div>
+      </div>
+      <div style="display:flex;gap:13px;align-items:center">
+        <div style="width:168px;text-align:right;font-size:13.5px;color:var(--muted);line-height:1.35">
+          recorded subtype<br><em style="color:var(--muted-lite);font-weight:400">what we actually see</em></div>
+        <div class="chain" style="flex:1">
+          <div class="node obs">TD</div><div class="node obs">TD</div>
+          <div class="node obs err">PIGD</div><div class="node obs">PIGD</div>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="card"><div class="ct">Two things estimated at once</div>
+        <div class="cb">How fast the underlying state changes, <b>and</b> how reliably each state gets recorded.
+          The top row moves smoothly; the bottom row — all we see — appears to jump.</div></div>
+      <div class="card"><div class="ct">Time enters directly</div>
+        <div class="cb">Visits are irregular, so the latent chain runs in <b>continuous time</b> and the elapsed
+          gap is an input. Compared against a discrete chain, an interval-aware chain, and a null model.</div></div>
+      <div class="card line b"><div class="ct">One input we choose</div>
+        <div class="cb">A minimum recording reliability (<b>0.5</b>) is imposed, or the fit degenerates.
+          Conclusions hold across a range of values, but it is an assumption, not an estimate.</div></div>
+    </div>
+  </div>
+  <div class="foot"><div>Weeks 5–7 · hidden Markov model with a misclassification layer</div><div>07</div></div>
+  <aside class="notes" data-who="Mayank">
+    So here's the idea. We assume there is an underlying motor state — the top row — that moves gradually and in
+    one direction. We never see it. What we see is the bottom row: the subtype that the examination records,
+    which is a noisy reading of the state above it.
+    Look at the third column. The underlying state is Indeterminate, but the examination recorded PIGD. That's
+    the kind of thing we think is happening in the data.
+    The model estimates two things simultaneously: how quickly the underlying state actually changes, and how
+    reliably each state gets written down. That second part is what the earlier models had no way to express.
+    Two practical points. Visits don't happen on a schedule, so we run the latent chain in continuous time and
+    feed the actual gap in as an input. And one honest caveat — we impose a minimum reliability of 0.5 on the
+    recording process, because without it the fit collapses to a degenerate solution. That's a choice we make,
+    not something the data told us, and we checked the conclusions hold over a range of values.
+  </aside>
+</section>
+
+<!-- 8 ================================================================= -->
+<section class="slide warm">
+  <h2>What the model estimates once noise is accounted for</h2>
+  <div class="body">
+    <div class="row">
+      <div class="card"><div class="kicker">Finding 1</div><div class="ct">Progression is sequential</div>
+        <div class="cb">TD → Indeterminate runs at <b>0.094</b> per year; TD → PIGD <em>directly</em> at
+          <b>0.006</b> — sixteen times rarer. PIGD → TD directly is zero. The model recovered an ordering it
+          was never given.</div></div>
+      <div class="card"><div class="kicker">Finding 2</div><div class="ct">One label is far less reliable</div>
+        <table style="margin-top:6px;font-size:14px">
+          <tr><th>Underlying state</th><th class="n">Recorded right</th></tr>
+          <tr><td>TD</td><td class="n">94.1%</td></tr>
+          <tr><td>PIGD</td><td class="n">84.2%</td></tr>
+          <tr class="hi"><td>Indeterminate</td><td class="n">50.0%</td></tr>
+        </table></div>
+      <div class="card ink"><div class="kicker">Finding 3</div><div class="ct">States outlast their labels</div>
+        <table style="margin-top:6px;font-size:14px">
+          <tr><th>State</th><th class="n">Label</th><th class="n">Underlying</th></tr>
+          <tr><td>TD</td><td class="n">3.4 y</td><td class="n" style="color:var(--teal-lite)">10.1 y</td></tr>
+          <tr><td>Indet.</td><td class="n">0.4 y</td><td class="n" style="color:var(--teal-lite)">2.1 y</td></tr>
+          <tr><td>PIGD</td><td class="n">2.3 y</td><td class="n" style="color:var(--teal-lite)">16.5 y</td></tr>
+        </table></div>
+    </div>
+    <div class="note">The underlying state appears <b>three to seven times more persistent</b> than the recorded
+      subtype suggests — so on this model's reading, most of the apparent instability is variability in the
+      examination rather than change in the patient. <em>These are model estimates, not measurements.</em></div>
+  </div>
+  <div class="foot"><div>The model's interpretation of the data, not a directly observed quantity</div><div>08</div></div>
+  <aside class="notes" data-who="Mayank">
+    Three results, and I want to be careful about what kind of statements these are — they're the model's
+    estimates, not things we measured directly.
+    First, the model recovers an ordering we never told it about. Going from TD to Indeterminate happens at
+    0.094 per year; jumping straight from TD to PIGD is sixteen times rarer. And going directly from PIGD back
+    to TD is estimated at zero. So progression looks sequential — you pass through the middle, you don't jump.
+    That's reassuring, because it matches clinical intuition and it was not built into the model.
+    Second, the reliabilities. When a patient is genuinely tremor-dominant, the exam records that 94% of the
+    time. For PIGD, 84%. For Indeterminate — 50%. Which is another way of saying what we saw in the raw data:
+    Indeterminate is barely a measurable category.
+    Third, and this is the one that ties it together. If you look at the recorded labels, a TD patient seems to
+    stay TD for about three and a half years. The model says the underlying state lasts about ten. So the state
+    is somewhere between three and seven times more persistent than the record makes it look. Most of the
+    churning we see is the measurement, not the patient.
+  </aside>
+</section>
+
+<!-- 9 ================================================================= -->
+<section class="slide dark">
+  <h2>Validation: leave one patient out</h2>
+  <div class="sub">Each of the 934 patients is withheld in turn; the model is refitted from scratch on the other
+    933 and then predicts that patient's visits one at a time, using only the history available before each
+    prediction. Nothing about the held-out patient touches the fit.</div>
+  <div class="body">
+    <div class="row">
+      <div class="card"><div class="stat">75.4%</div>
+        <div class="sl">2,534 of <b style="color:#fff">3,361</b> predictions correct<br>
+          95% CI (patient bootstrap) <b style="color:#fff">73.5 – 77.3%</b></div></div>
+      <div style="flex:2.1">
+        <table style="font-size:14px">
+          <tr><th>Model, identical predictions</th><th class="n">Accuracy</th><th class="n">Log-lik / pred</th><th class="n">Brier</th></tr>
+          <tr class="hi"><td>Hidden Markov model</td><td class="n">75.4%</td><td class="n">−0.673</td><td class="n">0.369</td></tr>
+          <tr><td>Markov chain on observed labels</td><td class="n">74.7%</td><td class="n">−0.707</td><td class="n">0.390</td></tr>
+          <tr><td>Interval-aware (continuous-time) chain</td><td class="n">74.5%</td><td class="n">−0.711</td><td class="n">0.393</td></tr>
+          <tr><td>Persistence — “stay where you are”</td><td class="n">72.3%</td><td class="n">—</td><td class="n">0.555</td></tr>
+          <tr><td>Null — ignores the current state</td><td class="n">62.9%</td><td class="n">−0.876</td><td class="n">0.521</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="row">
+      <div class="note" style="flex:1.25">What this measures is agreement with <b>the next label our own
+        classification rule produces</b> — not an independently verified diagnosis. It is not clinical
+        validation, and the gain over simply saying “nothing changes” is real but modest: <b>3.1 points</b>.</div>
+      <div class="note b" style="flex:1">Patient-level splitting is essential: visits from one patient are
+        correlated, so splitting visits rather than patients would leak a patient's own future into their
+        training data. <b>All ten leakage and consistency checks passed.</b></div>
+    </div>
+  </div>
+  <div class="foot"><div>Every fold refits from the same seed; the run is fully reproducible</div><div>09</div></div>
+  <aside class="notes" data-who="Mayank">
+    This is the strictest validation we can do on this dataset. We hold out one patient completely, refit the
+    whole model on the other 933, and then predict that patient's visits one at a time — and to predict visit k
+    we only let the model see visits before k. Nothing about the held-out patient is in the fit, not even
+    indirectly.
+    That gives 3,361 predictions and 75.4% accuracy, with a confidence interval from 73.5 to 77.3. We use a
+    patient bootstrap for that interval, because predictions within a patient are correlated and treating them
+    as independent would make the interval look narrower than it is.
+    Now the honest reading of the table. The HMM is the best model, but the margin over a plain Markov chain is
+    less than a point, and over just saying "nothing changes" it's about three points. The bigger separation is
+    in the Brier score and log-likelihood, because those judge the whole predicted distribution rather than only
+    the top choice — and that's what we actually care about here.
+    And the most important caveat: what we're predicting is the next label that our own rule produces. That's a
+    noisy record, not a verified diagnosis. So this is agreement with a record, not accuracy about disease
+    progression. Saying that clearly is part of the result.
+  </aside>
+</section>
+
+<!-- 10 ================================================================ -->
+<section class="slide warm">
+  <h2>Is 75.4% robust? Two stress tests</h2>
+  <div class="sub">Having a number, we tried to break it. We changed the thing being
+    predicted, and we changed the size of the model. Both came back negative — and both
+    were informative.</div>
+  <div class="body">
+    <div class="row">
+      <div style="flex:1.15">
+        <div class="kicker" style="margin-bottom:8px">Test 1 · narrow the Indeterminate band to 0.91–1.13</div>
+        <table style="font-size:14px">
+          <tr><th>On the same 3,361 predictions</th><th class="n">Original band</th><th class="n">Narrow band</th></tr>
+          <tr><td>Visits labelled Indeterminate</td><td class="n">441</td><td class="n">143</td></tr>
+          <tr><td>HMM accuracy</td><td class="n">75.4%</td><td class="n">78.0%</td></tr>
+          <tr><td>Persistence baseline</td><td class="n">72.3%</td><td class="n">76.9%</td></tr>
+          <tr class="hi"><td><b>HMM − persistence</b></td><td class="n"><b>+3.1</b></td><td class="n"><b>+1.2</b></td></tr>
+        </table>
+        <div class="sl">Accuracy went <b>up</b> by 2.6 points while the model's advantage over
+          “nothing changes” was <b>cut in half</b>. Shrinking the hardest class simply removes
+          the cases everything got wrong.</div>
+      </div>
+      <div class="card ink" style="flex:1">
+        <div class="kicker">Test 2 · five latent states instead of three</div>
+        <div class="ct" style="margin-top:6px">More capacity did not help</div>
+        <div class="cb">Accuracy <b>75.1%</b> — no better than three states, on identical
+          predictions.<br><br>
+          Only <b>404 of 934</b> folds converged (43%).<br><br>
+          Six deliberately dispersed starting points produced <b>six different solutions</b>.
+          The extra states are not identified by the data.</div>
+      </div>
+    </div>
+    <div class="banner">A higher accuracy number is not automatically a better model.
+      Both tests moved the number without improving the science — which is why we quote the
+      <b>margin over the baseline</b> rather than accuracy on its own.</div>
+  </div>
+  <div class="foot"><div>Threshold sensitivity and latent-state count · every comparison refitted end to end</div><div>10</div></div>
+  <aside class="notes" data-who="Mayank">
+    Once we had 75.4%, the obvious next question is whether that number means anything, so we
+    tried to break it in two ways.
+    First we narrowed the Indeterminate band — from 0.90-to-1.15 down to 0.91-to-1.13. Accuracy
+    went up, to 78%. But look at the row underneath: the persistence baseline went up too, and
+    by more. So the model's advantage over just saying "nothing changes" actually got smaller —
+    from three points to about one. All we did was shrink the hardest class, from 441 visits to
+    143, and remove the cases everything was getting wrong. The number improved; the model
+    didn't.
+    Second, we gave the latent chain five states instead of three, to check whether three was
+    the right choice. Accuracy was 75.1% — no better. And more importantly, only 404 of the 934
+    folds converged at all, and when we started the optimiser from six deliberately different
+    places we got six different answers. So that model isn't identified by this data.
+    The reason we're showing you two negative results is that they taught us something the
+    positive one didn't: accuracy on its own is a misleading way to compare these models. That's
+    why we report the gap to the baseline instead.
+  </aside>
+</section>
+
+<!-- 11 ================================================================ -->
+<section class="slide">
+  <h2>A second view: the continuous ratio</h2>
+  <div class="sub">The proposal also specified a hierarchical Bayesian growth model on the ratio itself.
+    We implemented it as written — not to replace the HMM, but because it answers a question the HMM cannot.</div>
+  <div class="body">
+    <div class="row">
+      <div class="card line"><div class="ct">What only this model gives</div>
+        <div class="cb">A progression rate on the clinical scale, with uncertainty: the population ratio declines
+          <b>0.093 per year</b> (95% CI 0.068–0.116). From a mean baseline of 2.29 the average patient reaches the
+          TD threshold after about <b>12.3 years</b>. It also gives each patient their own slope.</div></div>
+      <div class="card line b"><div class="ct">Where it breaks</div>
+        <div class="cb">Its residual SD is <b>1.138 — 4.6× the entire Indeterminate band</b>, so band membership
+          was never recoverable from it. It loses to the HMM on next-visit classification in <b>6 of 6</b>
+          splits, and a Normal distribution is wrong for a quantity that is non-negative and exactly zero at
+          7% of visits.</div></div>
+    </div>
+    <div class="note">Per-patient reliability is 0.805 for where a patient starts, but only <b>0.050 for their
+      slope</b> — with a median of three visits per patient, an individual's rate of progression is essentially
+      unrecoverable. We keep both models because they answer different questions.</div>
+    <div class="banner">Our current reading: <b>the noise and the signal coexist at comparable size.</b>
+      Not that subtype progression is an artefact, and not that every recorded change is real — but that a
+      single recorded change cannot be read as either.</div>
+  </div>
+  <div class="foot"><div>Proposal pp. 13–15, implemented as specified · Gibbs sampler</div><div>11</div></div>
+  <aside class="notes" data-who="Mayank">
+    We also built the model the original proposal specified — a hierarchical Bayesian growth model on the
+    continuous ratio. It's worth saying why we kept it even though it loses on prediction.
+    It gives us something the HMM simply cannot: a progression rate in units a clinician can read. The ratio
+    falls about 0.093 per year, and from the average starting point that's roughly twelve years to cross the TD
+    threshold. The HMM gives transition rates between categories; it can't give you that.
+    Where it breaks is the same problem as before. Its residual spread is 1.14 against a band of 0.25 — nearly
+    five times too wide. So it was never going to get band membership right, and indeed it loses to the HMM on
+    every split.
+    One number we found sobering: the reliability of an individual patient's slope is 0.05. With a median of
+    three visits per patient, we essentially cannot estimate how fast one person is progressing. That's a
+    limitation of the data, not of the method.
+    So the bottom line of the mid-term is the box at the bottom. It isn't that progression is fake, and it isn't
+    that the labels are fine. Both are true at once, at comparable size — which is exactly why you can't read a
+    single recorded change as progression.
+  </aside>
+</section>
+
+<!-- 12 ================================================================ -->
+<section class="slide warm">
+  <h2>Where this goes next</h2>
+  <div class="sub">Four directions, coming from the limitations above and from our discussion with the
+    domain researcher.</div>
+  <div class="body" style="gap:12px">
+    <div class="fw"><div class="fwn">1</div><div class="fwt">Model the two subscores separately,<br>not their ratio</div>
+      <div class="fwb">The ratio compresses two quantities into one and loses severity: <b>2/4 and 10/20 are both
+        0.5</b>, but they are not the same patient. Modelling tremor and gait jointly should retain that, and it
+        also recovers the <b>725 visits</b> where the ratio is undefined because the PIGD score is zero.</div></div>
+    <div class="fw"><div class="fwn">2</div><div class="fwt">Let progression rate vary<br>with time</div>
+      <div class="fwb">Every model here assumes the rate is constant over follow-up. We want to compare early,
+        middle and late follow-up directly. <em>This is a hypothesis to test</em> — we have not established it.</div></div>
+    <div class="fw"><div class="fwn">3</div><div class="fwt">Cluster longitudinal patterns</div>
+      <div class="fwb">If per-patient trajectory information can be extracted reliably, do patients fall into
+        distinct progression patterns that might correspond to meaningful phenotypes? Not “run clustering” —
+        the question is whether such groups exist at all.</div></div>
+    <div class="fw"><div class="fwn">4</div><div class="fwt">Why and when does<br>the HMM fail?</div>
+      <div class="fwb">Vary initialisation, restarts, the emission floor and the number of latent states, and
+        compare fitted rates, emission matrices, likelihoods and held-out predictions. The five-state result on
+        the previous slide is the reason this matters: we need to know <em>when</em> a fit is trustworthy,
+        not only whether it converged.</div></div>
+  </div>
+  <div class="foot"><div>Future work, in the order we would do it</div><div>12</div></div>
+  <aside class="notes" data-who="Mayank">
+    Four directions.
+    First, and this is the clearest one — the ratio throws information away. Two over four and ten over twenty
+    are both 0.5, but those are very different patients. One is mildly affected, one is severely affected, and
+    the ratio can't tell them apart. So we want to model the tremor score and the gait score separately. As a
+    bonus, that recovers 725 visits where the ratio doesn't even exist, because the PIGD score is zero and
+    you'd be dividing by zero.
+    Second, every model we have assumes progression happens at the same rate throughout. That's almost certainly
+    too simple. We want to look at early, middle and late follow-up separately. I want to be clear this is a
+    hypothesis — we haven't shown it.
+    Third, if we can get reliable per-patient trajectory information, the question is whether patients group
+    into distinct progression patterns. The interesting question isn't running a clustering algorithm, it's
+    whether such groups exist at all.
+    Fourth, and this is the one we're most keen on: understanding when the model fails rather than just
+    reporting that it works. We already have a reason to care — we tried a version with five latent states
+    instead of three, and only 404 of 934 folds actually converged. That tells us the solution may be less
+    stable than a single accuracy number suggests, and we want to characterise that properly.
+  </aside>
+</section>
+
+<!-- 13 ================================================================ -->
+<section class="slide deep">
+  <div class="kicker">In one sentence</div>
+  <div class="body" style="justify-content:center">
+    <h1 style="max-width:1050px;font-size:52px">Motor subtype progression is a gradual underlying process,
+      observed through an imperfect clinical measurement.</h1>
+    <div class="sub" style="color:#cfe3dd;max-width:900px;font-size:18px">A single observed subtype change is
+      weak evidence that a patient has changed. A sustained one is considerably stronger. Where a result depends
+      on counting subtype changes, it is worth checking how sensitive it is to that distinction — including
+      our own.</div>
+  </div>
+  <div class="foot"><div style="color:#bcd8d0;font-size:14px">Parv Patel &nbsp;·&nbsp; Mayank Tewatia
+    &nbsp;·&nbsp; Prof. K. R. Sahasranand &nbsp;·&nbsp; IIT Palakkad</div><div>Data from PPMI</div></div>
+  <aside class="notes" data-who="Mayank">
+    To close. Our reading of the mid-term work is one sentence: subtype progression is a gradual underlying
+    process that we only see through an imperfect measurement.
+    The practical consequence is that a single recorded change is weak evidence on its own, and a sustained one
+    is much stronger. And that applies to our own results too — anywhere a conclusion depends on counting
+    subtype changes, including in the literature, it's worth checking how much it moves if you require the
+    change to persist. Thank you — happy to take questions.
+  </aside>
+</section>
+
+</div></div>
+
+<div id="hud">← → slides · <b>N</b> notes · <b>P</b> print</div>
+<div id="notes"><h4 id="nh">Speaker notes</h4><div id="nb"></div></div>
+
+<script>
+const slides=[...document.querySelectorAll('.slide')];
+let i=0;
+function fit(){
+  const s=Math.min(innerWidth/1280,(innerHeight-(document.getElementById('notes').classList.contains('on')?innerHeight*0.34:0))/720);
+  document.getElementById('deck').style.transform='scale('+s+')';
+  document.getElementById('deck').style.transformOrigin='center center';
+}
+function show(n){
+  i=Math.max(0,Math.min(slides.length-1,n));
+  slides.forEach((s,k)=>s.classList.toggle('on',k===i));
+  const a=slides[i].querySelector('.notes');
+  document.getElementById('nb').innerHTML=a?a.innerHTML:'';
+  document.getElementById('nh').innerHTML='Speaker notes — <span class="who">'+
+    (a?a.dataset.who:'')+'</span> &nbsp;·&nbsp; slide '+(i+1)+' of '+slides.length;
+  document.getElementById('hud').innerHTML=(i+1)+' / '+slides.length+
+    ' &nbsp;· ← → slides · <b>N</b> notes · <b>P</b> print';
+  fit();
+}
+addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown')show(i+1);
+  else if(e.key==='ArrowLeft'||e.key==='PageUp')show(i-1);
+  else if(e.key.toLowerCase()==='n'){document.getElementById('notes').classList.toggle('on');fit();}
+  else if(e.key.toLowerCase()==='p'){slides.forEach(s=>s.classList.add('on'));print();
+    setTimeout(()=>show(i),400);}
+  else if(e.key==='Home')show(0); else if(e.key==='End')show(slides.length-1);
+});
+addEventListener('resize',fit);
+addEventListener('click',e=>{if(!e.target.closest('#notes'))show(i+1)});
+show(0);
+</script>
+</body>
+</html>

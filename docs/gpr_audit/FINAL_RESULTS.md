@@ -238,11 +238,42 @@ natural next step and was explicitly out of scope for Step 3.
 
 ---
 
-## 9. Outstanding
+## 9. Outstanding — ⚠️ updated 2026-09-30
 
-| Item | Why it matters |
+Three items below were closed after this report was first written. See
+`NEXT_RESEARCH_STEPS.md` for the full results; the corrections to §4.3 and §4.1
+of this document are recorded here.
+
+### Correction to §4.3 (mean function)
+
+The +473 in-sample log-likelihood gap was presented here as strong evidence for
+the fitted mean. The held-out test (821 folds, both arms fitted in the same
+fold) shows it **does not transfer to held-out MAE**: −0.0071 [−0.0193,
++0.0056], including zero. The fitted mean is nonetheless better on **MSE**
+(+0.0969 [+0.0634, +0.1307]) and **CRPS** (+0.0188 [+0.0130, +0.0250]), both
+excluding zero. Keep the fitted mean — for calibration and large-error control,
+not because of the likelihood gap.
+
+### Correction to §4.1 (`var_linear`)
+
+This report said the linear kernel term is redundant *given* a fitted linear
+mean. That is wrong: in the zero-mean arm `var_linear` pins to its bound in
+**821 of 821 folds as well**. The data rejects a patient-specific random slope
+with or without a mean function; the zero-mean arm absorbs the population trend
+by inflating `var_const` 0.882 → 4.671 and lengthening the RBF 3.71 → 4.10 y.
+
+### Correction to the multi-step framing
+
+"The GP's advantage widens with horizon" was read off between-bin means, whose
+bins contain different patients. Within patients, holding composition fixed, the
+widening is **not detectable within three years** and excludes zero at 5y+ in
+three of four cohorts only.
+
+| Item | Status |
 |---|---|
-| Held-out zero-mean LOPO | The 473 gap is in-sample; generalisation untested |
+| Held-out zero-mean LOPO | **closed** — see above; unfiltered cohort only |
+| Multi-step horizon analysis | **closed** — four cohorts, with composition controls |
+| Subscore baseline experiment | **closed** — recovers 654 points and 113 patients, but the GP loses its edge over persistence on the subscores; derived subtype is indistinguishable from the HMM (+0.0027 [−0.0042, +0.0098]) |
 | Transformed / censored likelihood | 12–13% impossible predictive mass |
 | Undefined-ratio visits (692/4,295, 634 of them TD) | Excluded non-randomly; the evaluation under-represents tremor-dominant visits |
 | Multi-step forecast analysis | `trajectory_predictions_*.csv` and `trajectory_metrics.csv` exist but were not analysed in depth here |

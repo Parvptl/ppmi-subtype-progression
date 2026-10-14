@@ -129,16 +129,40 @@ structure, but it is not a held-out predictive comparison, and a
 marginal-likelihood gap is not automatically a generalisation gap. A held-out
 zero-mean LOPO run is listed as outstanding work.
 
-### Why `var_linear` pins to its bound — reconciled
+### Why `var_linear` pins to its bound — ⚠️ revised 2026-09-30
 
 `var_linear` sits at the lower bound (1e-6) in **821 of 821** folds for K2 and
-for K3. The earlier reading — "the data rejects linear structure" — is wrong.
+for K3.
 
-The article puts the linear trend in the *kernel*; this implementation puts it
-in the *mean*. It cannot be in both. The pinning is the optimiser correctly
-reporting that the linear kernel term is redundant **given** a fitted linear
-mean, not that linear structure is absent. The `β₁ = −0.082/yr` in the mean
-function is that structure.
+**The explanation given here originally was wrong**, and the held-out
+mean-function experiment disproved it. It said the linear kernel term is
+"redundant *given* a fitted linear mean" — implying that without a mean the
+kernel would take the trend up.
+
+It does not. In the zero-mean arm of that experiment, `var_linear` is pinned at
+1e-6 in **821 of 821 folds as well** — exactly as in the fitted-mean arm. With
+no mean function at all, the model still refuses a linear kernel term.
+
+What it does instead:
+
+| | β₁ | `var_const` | `var_rbf` | lengthscale |
+|---|---:|---:|---:|---:|
+| fitted mean | −0.0816/yr | 0.882 | 1.189 | 3.712 y |
+| zero mean | 0 (fixed) | **4.671** | **1.628** | **4.101 y** |
+
+The zero-mean arm absorbs the population level and trend by inflating the
+**constant** term five-fold and lengthening the RBF, not by introducing a random
+slope.
+
+**The correct statement:** the linear kernel term represents a *patient-specific
+random slope*, and this data does not support one — with or without a mean
+function. The population-level trend is real (β₁ ≈ −0.082/yr, consistent with
+the growth model's −0.093/yr) and is carried by the mean when one is available;
+when it is not, a larger constant plus a longer-lengthscale RBF absorbs it.
+
+This also explains why K0 (const + linear) is the *worst* GP: its only route to
+patient-specific structure beyond an offset is the random slope the data
+rejects.
 
 **Consequence for K1 vs K2.** They are not identical, as an earlier summary
 said. Their predictions differ by at most **1.4e-04** in mean and 4.5e-05 in

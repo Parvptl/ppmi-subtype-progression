@@ -20,6 +20,7 @@ experiments/
 # we generate ourselves are the progress reports.
 *.pdf
 !report/*.pdf
+!reports/*.pdf
 !extra/old_ood_project/*.pdf
 
 __pycache__/

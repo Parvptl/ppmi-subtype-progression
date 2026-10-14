@@ -1,0 +1,112 @@
+% CARE Conference 2026, IIT Roorkee -- 1-page extended abstract
+% Poster track submission. Compile: pdflatex CARE_AI2026_Abstract.tex
+\documentclass[10pt,a4paper]{article}
+\usepackage[margin=0.7in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{times}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+\usepackage{parskip}
+\pagestyle{empty}
+\setlength{\parskip}{0.32em}
+\linespread{0.97}
+
+\newcommand{\sect}[1]{\vspace{0.25em}\noindent\textbf{#1}\par\nobreak\vspace{-0.15em}}
+
+\begin{document}
+
+\begin{center}
+{\large\bfseries Label Reliability, Not Model Capacity, Limits Longitudinal\\
+Prediction of Parkinson's Disease Motor Subtypes}\\[0.6em]
+Parv Patel, Mayank Tewatia, and Dr.\ Sahasranand K.~R.\\[0.2em]
+\emph{Indian Institute of Technology Palakkad, India}
+\end{center}
+\vspace{0.3em}
+
+\sect{1. Motivation}
+Parkinson's disease is commonly divided into tremor-dominant (TD) and postural
+instability and gait difficulty (PIGD) motor subtypes, with an Indeterminate band
+between them. The subtype is obtained by thresholding the ratio of two averages of
+MDS-UPDRS items [1], and a change of subtype over time is widely treated as a marker
+of motor progression. Much modelling work therefore aims to predict this label, but
+the reliability of the label itself is rarely measured first. This study asks whether
+longitudinal prediction of motor subtype is limited by the choice of model family, or
+by the label being predicted.
+
+\sect{2. Data and evaluation protocol}
+We used the Parkinson's Progression Markers Initiative (PPMI) observational cohort:
+1,080 patients and 4,441 labelled visits, of which 934 patients with two or more
+labelled visits contribute 3,361 consecutive visit-to-visit transitions.
+
+We applied one protocol to four model families: (i) discrete-time and continuous-time
+Markov chains on the observed label; (ii) a hidden Markov model (HMM) with a latent
+state and a fitted misclassification matrix; (iii) a hierarchical Bayesian growth
+model on the ratio; and (iv) Gaussian process (GP) regression on the ratio and on the
+tremor and PIGD subscores.
+
+Every model was evaluated by leave-one-patient-out validation. No visit of the
+held-out patient enters the fit, and each prediction uses only that patient's own
+earlier visits. All intervals are patient-clustered bootstrap intervals, since
+predictions are correlated within patients. A ten-check battery verified fold
+construction, history ordering and prediction counts on every saved prediction row.
+
+\sect{3. Results}
+\emph{Label stability.} 35.2\% of all observed subtype changes reverted at the very
+next visit. Requiring two consecutive assessments before accepting a conversion
+removed 51.7\% of apparent PIGD conversions (263 to 127). The Markov assumption on the
+observed label was rejected in all three current states ($p \le 0.004$), which
+motivates a latent-state formulation.
+
+\emph{Discrete-state models.} Held-out accuracy over the same 3,361 transitions: HMM
+0.7539 [0.7348, 0.7731]; discrete Markov chain 0.7474 [0.7272, 0.7670]; continuous-time
+chain 0.7453 [0.7250, 0.7646]; persistence, meaning no change, 0.7227 [0.7009, 0.7437];
+marginal null 0.6293 [0.6011, 0.6565]. The HMM is the best model, but its paired gain
+over the rule that simply repeats the current subtype is only $+3.1$ points (95\% CI
+$+2.2$ to $+4.1$), and it assigns the Indeterminate class once in 3,361 opportunities.
+Increasing the latent state space from three to five did not improve accuracy (0.7513).
+
+\emph{Why the ceiling is where it is.} The hierarchical Bayesian model estimates a
+population trend of $-0.093$ per year in the ratio (95\% credible interval $-0.116$ to
+$-0.068$) but a total residual spread of 1.14, against an Indeterminate band only 0.25
+wide, a factor of about 4.6. The middle class is therefore almost unreachable for any
+model predicting the band from a continuous quantity.
+
+\emph{Continuous-trajectory models.} On the ratio, a GP with a flexible kernel improves
+on a linear-trend GP ($-0.033$ MAE, 95\% CI $-0.047$ to $-0.021$) and on persistence.
+But when the two subscores were modelled separately, the GP did not beat persistence on
+tremor ($-0.0031$, 95\% CI $-0.0084$ to $+0.0022$) and was worse on PIGD ($+0.0134$,
+95\% CI $+0.0083$ to $+0.0187$).
+
+\emph{Matched comparison.} Converting the subscore GP predictions back to a subtype
+allows a like-for-like comparison with the HMM on exactly the same 934 patients and
+3,361 points. GP-derived accuracy was 75.66\% against the HMM's 75.39\%, a paired
+difference of $+0.27$ points (95\% CI $-0.42$ to $+0.98$).
+
+\sect{4. Discussion and limitations}
+Four model families with substantially different assumptions converge on the same
+held-out performance, only a few points above a trivial rule, and none recovers the
+Indeterminate class. With frequent label reversion and a residual spread several times
+the band width, this indicates that the representation of motor symptoms, rather than
+model capacity, is the binding constraint.
+
+The target is our own rule's next recorded label, not an independent clinical
+diagnosis. The ratio is undefined when the PIGD subscore is zero, excluding 692 visits
+that are overwhelmingly TD, so the ratio-based analyses are not a random subset. The
+matched comparison is a failure to detect a difference and does not establish
+equivalence. No external cohort was used and no clinical utility is claimed. Ongoing
+work models the two subscores jointly under a bounded likelihood, which addresses both
+the undefined-ratio exclusion and predictive mass below zero.
+
+{\footnotesize
+\vspace{0.3em}
+\noindent\textbf{Reference.} [1] Stebbins GT, Goetz CG, Burn DJ, Jankovic J, Khoo TK,
+Tilley BC. How to identify tremor dominant and postural instability/gait difficulty
+groups with the Movement Disorder Society Unified Parkinson's Disease Rating Scale.
+\emph{Movement Disorders} 2013;28(5):668--70.
+
+\vspace{0.2em}
+\noindent\textbf{Data.} Parkinson's Progression Markers Initiative (PPMI),
+\url{ppmi-info.org}. % TODO: insert the current PPMI acknowledgement wording here.
+}
+
+\end{document}

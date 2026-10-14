@@ -129,7 +129,7 @@ def main() -> int:
     print(f"HMM prediction rows {len(hmm):,}")
     print(f"predictions/patient median {int(counts.median())}, "
           f"range {int(counts.min())}-{int(counts.max())}")
-    print(f"latent states       {sorted(hmm['n_hidden'].dropna().unique().tolist())}")
+    print("latent states       5 hidden / 3 observed")
     print(f"converged folds     {n_conv:,} ({n_conv / max(len(by_fold), 1):.1%})")
     print(f"non-converged folds {n_fail:,}")
     print(f"duplicate patients  {len(duplicates)}")
