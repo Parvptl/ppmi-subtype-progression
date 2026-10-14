@@ -1,0 +1,50 @@
+{
+  "stage": "3 - subscore held-out comparison",
+  "script": "scripts/21_subscore_heldout_comparison.py",
+  "argv": [
+    "scripts/21_subscore_heldout_comparison.py",
+    "--out",
+    "/home/vikaskumar/projects/ppmi-subtype-progression/experiments/20261014T094751Z_s3_subscore_heldout",
+    "--jobs",
+    "60"
+  ],
+  "arms": [
+    "persistence",
+    "patient_mean",
+    "lmm_ri",
+    "gp_indep_K0",
+    "gp_indep_K1",
+    "gp_indep_K2",
+    "gp_indep_K3",
+    "gp_joint_K0_diag",
+    "gp_joint_K0_full",
+    "gp_joint_K1_diag",
+    "gp_joint_K1_full",
+    "gp_joint_K2_diag",
+    "gp_joint_K2_full",
+    "gp_joint_K3_diag",
+    "gp_joint_K3_full"
+  ],
+  "seed": 42,
+  "jitter": 1e-08,
+  "fold_restarts": 1,
+  "max_iter": 300,
+  "panel_md5": "fb038ddbdc19ab3368e13940f398e7ba",
+  "expected_panel_md5": "fb038ddbdc19ab3368e13940f398e7ba",
+  "smoke_test": false,
+  "n_patients_cohort": 934,
+  "n_patients_scored": 934,
+  "n_points_per_arm": 3361,
+  "config_file": "config/config.yaml",
+  "subtype_thresholds": [
+    0.9,
+    1.15
+  ],
+  "git_commit": "bd368248984ff7acec5bd1407258701877187c83",
+  "git_dirty_files": "M src/ppmi_subtype/gpr.py\n M src/ppmi_subtype/mogp.py\n?? docs/cluster_phase/\n?? scripts/21_subscore_heldout_comparison.py\n?? scripts/22_analyse_subscore_heldout.py\n?? scripts/23_hmm_stability.py\n?? scripts/24_analyse_hmm_stability.py\n?? scripts/25_temporal_audit.py\n?? scripts/26_clusterability_extended.py\n?? scripts/cluster/\n?? src/ppmi_subtype/heldout.py\n?? src/ppmi_subtype/hmm_stability.py\n?? src/ppmi_subtype/timevarying_ext.py\n?? tests/test_heldout.py\n?? tests/test_hmm_stability.py\n?? tests/test_timevarying_ext.py",
+  "python": "3.13.16",
+  "numpy": "2.2.4",
+  "host": "node003",
+  "slurm_job_id": "13313",
+  "started_utc": "2026-10-14T09:48:00Z"
+}

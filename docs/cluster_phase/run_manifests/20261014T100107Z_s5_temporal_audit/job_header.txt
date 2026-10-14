@@ -1,0 +1,10 @@
+host        node003
+job         13317  partition gpu03
+cpus        64   gpus 0,1
+python      /home/vikaskumar/envs/ppmi/bin/python
+git         bd368248984ff7acec5bd1407258701877187c83  dirty=18
+config      config/config.yaml
+run_dir     /home/vikaskumar/projects/ppmi-subtype-progression/experiments/20261014T100107Z_s5_temporal_audit
+started     2026-10-14T16:06:52+05:30
+command     /home/vikaskumar/envs/ppmi/bin/python scripts/25_temporal_audit.py --out /home/vikaskumar/projects/ppmi-subtype-progression/experiments/20261014T100107Z_s5_temporal_audit --boot 1000 --knot-boot 200 --struct-boot 300 --jobs 60
+finished    2026-10-14T16:35:20+05:30  exit=0

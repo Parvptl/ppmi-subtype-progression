@@ -1,0 +1,41 @@
+{
+  "argv": [
+    "scripts/26_clusterability_extended.py",
+    "--out",
+    "/home/vikaskumar/projects/ppmi-subtype-progression/experiments/20261014T100107Z_s6_clusterability_min8",
+    "--min-visits",
+    "8",
+    "--null-reps",
+    "200",
+    "--planted",
+    "0.5,1,2",
+    "--planted-reps",
+    "50",
+    "--jobs",
+    "60"
+  ],
+  "seed": 42,
+  "panel_md5": "fb038ddbdc19ab3368e13940f398e7ba",
+  "smoke_test": false,
+  "n_patients": 145,
+  "null_reps": 200,
+  "planted_deltas_sd": [
+    0.5,
+    1.0,
+    2.0
+  ],
+  "planted_reps": 50,
+  "min_visits": 8,
+  "perturbations": [
+    "drop1",
+    "drop2",
+    "trunc2",
+    "trunc3",
+    "trunc5"
+  ],
+  "decision_rule": "dBIC > null_measured q95 AND drop1 ARI(K=2) > null_measured q95 AND >= 0.6",
+  "git_commit": "bd368248984ff7acec5bd1407258701877187c83",
+  "python": "3.13.16",
+  "host": "node004",
+  "slurm_job_id": "13319"
+}

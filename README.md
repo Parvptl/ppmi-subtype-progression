@@ -16,6 +16,8 @@ transitioning to another over future follow-up.
 | Weeks 3–4 | Transition matrices and progression visualisations | **Complete** |
 | Weeks 5–7 | Baseline probabilistic model, validated on held-out patients | **Complete** |
 | Proposal Stages 1–7 | Data prep → exploration → HB model → posterior inference → prediction → validation → output | **All complete** |
+| Step 3 / Directions 1–3 | GPR, subscore LMM/MOGP, time-varying rate, clusterability audit (scripts 11–20) | Complete; see `docs/GPR_onwards_explanatory_report.md` |
+| Cluster phase | Held-out multi-output GP comparison, HMM stability, temporal audit, extended clusterability (scripts 21–27) | See `docs/cluster_phase/` |
 | Later | σᵢ-as-phenotype analysis (needs a restricted subcohort) | Not started |
 
 The panel covers **1,080 sporadic PD patients, 5,774 visits, 4,441 with a
@@ -42,7 +44,7 @@ BTP/
 │                                the 16 MDS-UPDRS items, the 1.15/0.90 thresholds,
 │                                cohort rules, medication state, interval bins.
 │
-├── src/ppmi_subtype/          ← THE CODE. All logic lives here (~1,550 lines).
+├── src/ppmi_subtype/          ← THE CODE. All logic lives here.
 │   ├── config.py                 loads config.yaml, validates it on startup
 │   ├── loaders.py                one reader per source file
 │   ├── subtype.py                TD/PIGD subscores, ratio, 3-class decision rule
@@ -64,9 +66,13 @@ BTP/
 │   ├── 04_hierarchical_bayes.py
 │   ├── 05_new_patient_model.py
 │   ├── 06_ratio_exploration.py   proposal Stage 2
-│   └── 07_longitudinal_cv.py     proposal Stages 4 and 6
+│   ├── 07_longitudinal_cv.py     proposal Stages 4 and 6
+│   ├── 08–20_*.py                LOO, GPR, subscore models, time-varying rate,
+│   │                             clusterability audit (see docs/gpr_audit/)
+│   ├── 21–27_*.py                cluster-phase experiments (docs/cluster_phase/)
+│   └── cluster/                  SLURM wrapper, job script, benchmarks
 │
-├── tests/                     ← 144 tests, all exercising src/
+├── tests/                     ← 403 tests (2026-10-14), all exercising src/
 │   ├── test_subtype.py           classification rule and its edge cases
 │   ├── test_transitions.py       pairing, matrices, reversion, survival
 │   ├── test_ctmc.py              generator recovery from simulated data
@@ -98,7 +104,8 @@ BTP/
 │   └── Pipeline_Walkthrough.*    how every number was generated (23 pp),
 │                                 traced to the exact function that produced it
 ├── references/                ← The proposal and the source papers
-├── docs/                      ← DATA_REQUIREMENTS.md: what to download and why
+├── docs/                      ← DATA_REQUIREMENTS.md: what to download and why;
+│                                gpr_audit/ and cluster_phase/ audits and results
 └── extra/                     ← Parked material, read by nothing. See its README.
 ```
 

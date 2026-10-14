@@ -1,0 +1,10 @@
+host        node004
+job         13319  partition gpu04
+cpus        64   gpus 0,1
+python      /home/vikaskumar/envs/ppmi/bin/python
+git         bd368248984ff7acec5bd1407258701877187c83  dirty=18
+config      config/config.yaml
+run_dir     /home/vikaskumar/projects/ppmi-subtype-progression/experiments/20261014T100107Z_s6_clusterability_min8
+started     2026-10-14T15:59:56+05:30
+command     /home/vikaskumar/envs/ppmi/bin/python scripts/26_clusterability_extended.py --out /home/vikaskumar/projects/ppmi-subtype-progression/experiments/20261014T100107Z_s6_clusterability_min8 --min-visits 8 --null-reps 200 --planted 0.5,1,2 --planted-reps 50 --jobs 60
+finished    2026-10-14T16:03:32+05:30  exit=0

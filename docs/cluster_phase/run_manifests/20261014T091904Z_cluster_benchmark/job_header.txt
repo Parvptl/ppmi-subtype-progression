@@ -1,0 +1,10 @@
+host        node003
+job         13301  partition gpu03
+cpus        64   gpus 0,1
+python      /home/vikaskumar/envs/ppmi/bin/python
+git         bd368248984ff7acec5bd1407258701877187c83  dirty=1
+config      config/config.yaml
+run_dir     /home/vikaskumar/projects/ppmi-subtype-progression/experiments/20261014T091904Z_cluster_benchmark
+started     2026-10-14T14:49:06+05:30
+command     /home/vikaskumar/envs/ppmi/bin/python scripts/cluster/benchmark_workloads.py --out /home/vikaskumar/projects/ppmi-subtype-progression/experiments/20261014T091904Z_cluster_benchmark/results
+finished    2026-10-14T14:53:20+05:30  exit=0

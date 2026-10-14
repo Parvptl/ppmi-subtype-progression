@@ -1,0 +1,10 @@
+host        node004
+job         13310  partition gpu04
+cpus        64   gpus 0,1
+python      /home/vikaskumar/envs/ppmi/bin/python
+git         bd368248984ff7acec5bd1407258701877187c83  dirty=16
+config      /home/vikaskumar/projects/ppmi-subtype-progression/experiments/20261014T094524Z_panel_rebuild/config_rebuild.yaml
+run_dir     /home/vikaskumar/projects/ppmi-subtype-progression/experiments/20261014T094524Z_panel_rebuild
+started     2026-10-14T15:15:26+05:30
+command     /home/vikaskumar/envs/ppmi/bin/python scripts/01_build_panel.py
+finished    2026-10-14T15:15:38+05:30  exit=0

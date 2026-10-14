@@ -1,0 +1,85 @@
+{
+  "stage": "cv",
+  "argv": [
+    "scripts/23_hmm_stability.py",
+    "--out",
+    "/home/vikaskumar/projects/ppmi-subtype-progression/experiments/20261014T100057Z_s4_hmm_cv",
+    "--stage",
+    "cv",
+    "--starts",
+    "20",
+    "--outer",
+    "10",
+    "--inner",
+    "5",
+    "--maxfun",
+    "400000",
+    "--jobs",
+    "60"
+  ],
+  "seed": 42,
+  "configs": [
+    "C3_free",
+    "C3_f50",
+    "C3_f60",
+    "C3_f70",
+    "C4_free",
+    "C5_free",
+    "C3_f50_audited"
+  ],
+  "config_defs": {
+    "C3_free": [
+      3,
+      null
+    ],
+    "C3_f50": [
+      3,
+      0.5
+    ],
+    "C3_f60": [
+      3,
+      0.6
+    ],
+    "C3_f70": [
+      3,
+      0.7
+    ],
+    "C4_free": [
+      4,
+      null
+    ],
+    "C5_free": [
+      5,
+      null
+    ],
+    "C3_f50_audited": [
+      3,
+      0.5
+    ]
+  },
+  "state_codes": [
+    1,
+    2,
+    3
+  ],
+  "pop_starts": 40,
+  "starts": 20,
+  "smoke_test": false,
+  "limit_patients": null,
+  "outer": 10,
+  "inner": 5,
+  "panel_md5": "fb038ddbdc19ab3368e13940f398e7ba",
+  "n_patients": 934,
+  "n_transitions": 3361,
+  "optimizer_options": {
+    "maxiter": 3000,
+    "ftol": 1e-11,
+    "gtol": 1e-09
+  },
+  "maxfun": 400000,
+  "git_commit": "bd368248984ff7acec5bd1407258701877187c83",
+  "python": "3.13.16",
+  "host": "node004",
+  "slurm_job_id": "13316",
+  "started_utc": "2026-10-14T10:01:03Z"
+}
