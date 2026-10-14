@@ -393,6 +393,11 @@ class MOGPFit:
     at_bound: list
     n_patients: int
     n_obs: int
+    #: Why the winning restart stopped, and how much work it took.
+    message: str = ""
+    n_iter: int = -1
+    n_fev: int = -1
+    grad_norm: float = float("nan")
 
     @property
     def components(self):
@@ -510,6 +515,8 @@ def fit_mogp(packed: Packed, kernel: str = "K1", coregion: str = "full",
         n_restarts=max(1, n_restarts), best_restart=int(np.argmin(nlls)),
         restart_nlls=nlls, at_bound=at_bound,
         n_patients=packed.n_patients, n_obs=packed.n_obs,
+        message=str(best.message), n_iter=int(best.nit), n_fev=int(best.nfev),
+        grad_norm=float(np.linalg.norm(best.jac)) if best.jac is not None else float("nan"),
     )
 
 

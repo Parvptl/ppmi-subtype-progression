@@ -323,6 +323,13 @@ class GPRFit:
     converged: bool
     n_restarts: int
     at_boundary: list[str] = field(default_factory=list)
+    #: Optimiser diagnostics for the winning restart, and every restart's
+    #: objective, so a fit can be audited for multimodality and for *why* it
+    #: stopped rather than only whether scipy reported success.
+    message: str = ""
+    n_iter: int = -1
+    n_fev: int = -1
+    restart_objectives: list = field(default_factory=list)
 
     @property
     def params(self) -> dict[str, float]:
@@ -546,6 +553,7 @@ def fit_gpr(
 
     rng = np.random.default_rng(seed)
     best = None
+    objectives = []
     for restart in range(max(1, n_restarts)):
         start = np.log(base)
         if restart > 0:
@@ -561,6 +569,7 @@ def fit_gpr(
             bounds=[_LOG_BOUNDS] * len(start),
             options={"maxiter": max_iter},
         )
+        objectives.append(float(result.fun))
         if not np.isfinite(result.fun):
             continue
         if best is None or result.fun < best.fun:
@@ -590,6 +599,10 @@ def fit_gpr(
         converged=bool(best.success),
         n_restarts=max(1, n_restarts),
         at_boundary=at_boundary,
+        message=str(best.message),
+        n_iter=int(best.nit),
+        n_fev=int(best.nfev),
+        restart_objectives=objectives,
     )
 
 
