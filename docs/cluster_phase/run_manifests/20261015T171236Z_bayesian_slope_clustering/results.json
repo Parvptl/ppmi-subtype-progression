@@ -1,0 +1,125 @@
+{
+  "script": "scripts/34_bayesian_slope_clustering.py",
+  "quick": false,
+  "git_head": "1cb3ef1292b75733b76bdad534ff15384cb96cc8",
+  "panel_md5": "fb038ddbdc19ab3368e13940f398e7ba",
+  "seed": 42,
+  "fit": {
+    "n_draws": 4000,
+    "burn_in": 1000,
+    "thin": 2
+  },
+  "n_init": 20,
+  "size_floor": 17,
+  "replicates": {
+    "posterior_draws": 500,
+    "gauss": 500,
+    "jsu": 500,
+    "hierarchical": 200,
+    "silverman_boot": 500
+  },
+  "counts": {
+    "panel_rows": 5774,
+    "labelled_visits": 4441,
+    "labelled_patients": 1080,
+    "finite_ratio_visits": 3716,
+    "finite_ratio_patients": 1009,
+    "labelled_visits_undefined_ratio": 725,
+    "undefined_ratio_by_subtype": {
+      "TD": 665,
+      "Indeterminate": 60
+    },
+    "eligible_patients": 821,
+    "eligible_observations": 3528,
+    "patients_excluded_one_finite": 188,
+    "patients_excluded_zero_finite": 71,
+    "visit_distribution": {
+      "2": 191,
+      "3": 233,
+      "4-7": 287,
+      ">=8": 110
+    }
+  },
+  "posterior": {
+    "beta0": 2.326453758272116,
+    "beta1": -0.0901850859768326,
+    "beta1_ci": [
+      -0.1093639560063908,
+      -0.07138032657630684
+    ],
+    "tau1": 0.10157371048558894,
+    "tau1_ci": [
+      0.08047293779744583,
+      0.12565864167420307
+    ],
+    "sigma": 1.1463222190946822,
+    "tau0": 1.3614640167774765
+  },
+  "slopes": {
+    "mean_of_means": -0.09020329199113325,
+    "sd_of_means": 0.0383772537923547,
+    "median_posterior_sd": 0.09972696970350083,
+    "frac_CrI_excluding_zero": 0.03532277710109622,
+    "skew": 0.6383956645696123,
+    "excess_kurtosis": 7.501760409328796
+  },
+  "primary": {
+    "selected_K": 3,
+    "unrestricted_K": 3,
+    "delta_bic": 316.45560792103515,
+    "delta_bic_unrestricted": 316.45560792103515
+  },
+  "johnson_su_params": [
+    -0.16007853247448592,
+    0.8468564613087298,
+    -0.09574672865713993,
+    0.01604420710042799
+  ],
+  "silverman": {
+    "h_crit": 0.026440882766048314,
+    "n_boot": 500,
+    "n_exceed": 118,
+    "p_value": 0.2375249500998004,
+    "h_crit_over_sd": 0.689392745147705
+  },
+  "stability": {
+    "n_draws_used": 500,
+    "selected_K_frequency": {
+      "1": 500
+    },
+    "unrestricted_K_frequency": {
+      "1": 499,
+      "2": 1
+    },
+    "draws_with_nonconverged_fit": 22,
+    "K2_within_component_coassign_mean": 0.5975967613671122,
+    "K2_between_component_coassign_mean": 0.5782586219697815,
+    "K2_ARI_draw_vs_primary_median": 0.012066049485576142,
+    "K2_ARI_draw_vs_primary_q05_q95": [
+      -0.008435177951237206,
+      0.064845365223539
+    ],
+    "patients_K2_coassign_below_0.7": 821,
+    "draw_delta_bic_median": -18.44771296379156,
+    "draw_delta_bic_q05_q95": [
+      -20.203051316056225,
+      -11.78848213094971
+    ]
+  },
+  "hier_null_theta": {
+    "beta0": 2.326453758272116,
+    "beta1": -0.0901850859768326,
+    "tau0_2": 1.85544585301826,
+    "tau1_2": 0.010451618416388524,
+    "sigma2": 1.3143295241465984
+  },
+  "versions": {
+    "python": "3.13.16",
+    "numpy": "2.2.4",
+    "pandas": "2.2.3",
+    "sklearn": "1.6.1",
+    "scipy": "1.15.2"
+  },
+  "host": "master",
+  "runtime_s": 1283.4
+}

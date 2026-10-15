@@ -1,0 +1,10 @@
+x,y,test,stat,p,median_comp0,median_comp1,table
+n_ratio_obs,slope_mean,spearman,-0.09164028628754023,0.008606350796225173,,,
+n_ratio_obs,slope_sd,spearman,-0.7887366308984538,3.028129214454235e-175,,,
+n_ratio_obs,|slope_mean - beta1|,spearman,0.528448735764468,3.031322922287626e-60,,,
+n_ratio_obs,K2 label,mann-whitney,25810.5,4.9269256884366557e-26,3.0,5.0,
+followup_years,slope_mean,spearman,-0.09026060428551809,0.009665026176055126,,,
+followup_years,slope_sd,spearman,-0.8792512021005175,5.3542812623946376e-266,,,
+followup_years,|slope_mean - beta1|,spearman,0.5621057797705137,1.443202633126204e-69,,,
+followup_years,K2 label,mann-whitney,23327.0,2.382451835235729e-29,2.915811088295688,6.997946611909651,
+visit_bucket,K2 label,chi2,123.08217060925175,1.673286630186005e-26,,,"{0: {'2': 181, '3': 213, '4-7': 210, '>=8': 53}, 1: {'2': 10, '3': 20, '4-7': 77, '>=8': 57}}"
