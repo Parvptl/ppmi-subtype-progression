@@ -1,0 +1,279 @@
+{
+  "stage": "full",
+  "frozen": {
+    "spec": "docs/cluster_phase/08_STUDENT_T_RESIDUAL_SPEC.md (section 7)",
+    "sha256": {
+      "docs/cluster_phase/08_STUDENT_T_RESIDUAL_SPEC.md": "ddbbb0a068e90b0e687d1646d23e0eb30800ef9dacd6cd7d718f2535fb577da7",
+      "src/ppmi_subtype/hbayes_tt.py": "8a390c64d0de5c44772f1ba36c6e85078cecf55f6fb3b3602a001044102a3661",
+      "src/ppmi_subtype/hbayes_t.py": "f0156085bf6f7d632061a937d3d1ec7fb23c2941bc273994414ccad4ba0afe7e",
+      "src/ppmi_subtype/hbayes.py": "3e00e06ee4dbe87c03305332281bbf3a2675bf16c814bc07f461d919a0cb1f57",
+      "scripts/36_student_t_residual_variants.py": "1d974f3c2a9d875395593dd3fba391fa9c69e7217f23fc0495788144ee221004"
+    },
+    "split_seeds": [
+      42,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "split_fit": {
+      "n_draws": 4000,
+      "burn_in": 2000,
+      "thin": 5
+    },
+    "full_fit": {
+      "n_draws": 4000,
+      "burn_in": 2000,
+      "thin": 10
+    },
+    "chain_seeds": [
+      42,
+      43,
+      44,
+      45
+    ],
+    "priors": [
+      "gamma",
+      "loguniform"
+    ],
+    "nu_grid": "400 log-spaced points on [1, 300]",
+    "eval": {
+      "max_draws": 400,
+      "n_inner": 20,
+      "n_omega": 8,
+      "rng_seed": "split seed"
+    },
+    "bootstrap": {
+      "n": 2000,
+      "seed": [
+        42,
+        36,
+        7
+      ]
+    },
+    "calibration": {
+      "scenarios": [
+        "C1",
+        "C2",
+        "C3",
+        "P"
+      ],
+      "reps": 20,
+      "rng": "[42, 36, scenario index, rep]",
+      "fit_seeds": "1000 + 10*rep + chain"
+    },
+    "thresholds": {
+      "nu_slope_q97.5_lt": 10.0,
+      "rhat_lt": 1.01,
+      "ess_ge": 400,
+      "splits_needed": "5/7",
+      "cal_fp_max": "1/20"
+    },
+    "quick": false
+  },
+  "calibration_theta": {
+    "beta0": 2.1244095230603044,
+    "beta1": -0.07997229147574449,
+    "tau0": 1.3488343355256351,
+    "tau1": 0.1054207022252361,
+    "sigma": 0.5889744102262106,
+    "nu_e": 2.10296887630793,
+    "tau1_TT": 0.0721180431614871
+  },
+  "c2_visit_counts_with_single_patient": 1,
+  "hbayes_evaluate_reference_primary_GG": {
+    "model": "Hierarchical Bayesian growth",
+    "n_pairs": 854,
+    "loglik": -579.7536604551783,
+    "loglik_per_pair": -0.6788684548655484,
+    "accuracy": 0.734192037470726,
+    "brier": 0.3768412303770474
+  },
+  "Q1_residual_tails": {
+    "verdict": "SUPPORTED",
+    "GT-GG": {
+      "lpd_mean": 0.11150514841013072,
+      "lpd_ci": [
+        0.060572394014375516,
+        0.16761296861351413
+      ],
+      "lpd_splits_positive": "7/7",
+      "cls_mean": 0.03822379822399169,
+      "cls_ci": [
+        0.02048490489895293,
+        0.054948873332068826
+      ],
+      "pass": true
+    },
+    "TT-TG": {
+      "lpd_mean": 0.10597451023528057,
+      "lpd_ci": [
+        0.05774616780443806,
+        0.1575401337155395
+      ],
+      "lpd_splits_positive": "7/7",
+      "cls_mean": 0.03789028031251082,
+      "cls_ci": [
+        0.021177423624737332,
+        0.054579292831844275
+      ],
+      "pass": true
+    }
+  },
+  "Q2_slope_tails": {
+    "verdict": "INCONCLUSIVE (convergence)",
+    "convergence": {
+      "gamma": {
+        "rhat": 1.0183163619671785,
+        "ess": 248.06279733607806,
+        "pass": false
+      },
+      "loguniform": {
+        "rhat": 1.0076535455643165,
+        "ess": 422.2063943045599,
+        "pass": true
+      }
+    },
+    "a_full_cohort": {
+      "gamma": {
+        "q50": 1.9860928568786416,
+        "q97.5": 3.4683601151876147,
+        "pass": true
+      },
+      "loguniform": {
+        "q50": 1.930113736318173,
+        "q97.5": 3.006359719237049,
+        "pass": true
+      }
+    },
+    "b_splits_q97.5_lt_10": "6/7",
+    "c_calibration": {
+      "C1": {
+        "flags": 0,
+        "n": 20,
+        "rate": 0.0,
+        "cp95": [
+          0.0,
+          0.1684334709830853
+        ],
+        "pass": true
+      },
+      "C2": {
+        "flags": 0,
+        "n": 20,
+        "rate": 0.0,
+        "cp95": [
+          0.0,
+          0.1684334709830853
+        ],
+        "pass": true
+      },
+      "C3": {
+        "flags": 0,
+        "n": 20,
+        "rate": 0.0,
+        "cp95": [
+          0.0,
+          0.1684334709830853
+        ],
+        "pass": true
+      },
+      "P": {
+        "flags": 19,
+        "n": 20,
+        "rate": 0.95,
+        "cp95": [
+          0.7512672372279722,
+          0.9987349105020502
+        ],
+        "pass": null
+      }
+    }
+  },
+  "Q3_predictive_value": {
+    "TG": {
+      "cls_mean": 0.003355789867863276,
+      "cls_ci": [
+        0.0007447151339735647,
+        0.006309567989339141
+      ],
+      "splits_positive": "6/7",
+      "better_than_GG": true
+    },
+    "GT": {
+      "cls_mean": 0.03822379822399169,
+      "cls_ci": [
+        0.02048490489895293,
+        0.054948873332068826
+      ],
+      "splits_positive": "7/7",
+      "better_than_GG": true
+    },
+    "TT": {
+      "cls_mean": 0.04124607018037409,
+      "cls_ci": [
+        0.022905626237011832,
+        0.05861159653452596
+      ],
+      "splits_positive": "7/7",
+      "better_than_GG": true
+    }
+  },
+  "script": "scripts/36_student_t_residual_variants.py",
+  "seed": 42,
+  "quick": false,
+  "panel_md5": "fb038ddbdc19ab3368e13940f398e7ba",
+  "nu_prior": "Gamma(2, rate 0.1) on log grid [1, 300], 400 pts",
+  "scenarios": {
+    "GG": [
+      "inf",
+      "inf",
+      "False"
+    ],
+    "T2G": [
+      "2.0",
+      "inf",
+      "False"
+    ],
+    "T3G": [
+      "3.0",
+      "inf",
+      "False"
+    ],
+    "GT4": [
+      "inf",
+      "4.0",
+      "False"
+    ],
+    "T3T4": [
+      "3.0",
+      "4.0",
+      "False"
+    ],
+    "G_patnoise": [
+      "inf",
+      "inf",
+      "True"
+    ],
+    "GT2.2": [
+      "inf",
+      "2.2",
+      "False"
+    ],
+    "T2T2.2": [
+      "2.0",
+      "2.2",
+      "False"
+    ]
+  },
+  "git_head": "7a59dba4930fffd7942daf4b92ba7eabad38cd4a",
+  "versions": {
+    "python": "3.13.16",
+    "numpy": "2.2.4",
+    "pandas": "2.2.3"
+  },
+  "host": "master",
+  "runtime_s": 1621.9
+}

@@ -1,0 +1,81 @@
+{
+  "spec": "docs/cluster_phase/09_Q2_REASSESSMENT_SPEC.md",
+  "sha256": {
+    "docs/cluster_phase/09_Q2_REASSESSMENT_SPEC.md": "e3e6c918080305593da375345fe028857b392729f3df1949aed98a0737f30c9c",
+    "docs/cluster_phase/_frozen/08_STUDENT_T_RESIDUAL_SPEC.as_frozen_20261016.md": "ddbbb0a068e90b0e687d1646d23e0eb30800ef9dacd6cd7d718f2535fb577da7",
+    "src/ppmi_subtype/hbayes_tt_nu.py": "23ae1f97066792350cfd525eeb3438f3ef8f46194ce6e6df1d394ab94ffbce49",
+    "src/ppmi_subtype/hbayes_tt.py": "8a390c64d0de5c44772f1ba36c6e85078cecf55f6fb3b3602a001044102a3661",
+    "src/ppmi_subtype/hbayes_t.py": "f0156085bf6f7d632061a937d3d1ec7fb23c2941bc273994414ccad4ba0afe7e",
+    "src/ppmi_subtype/hbayes.py": "3e00e06ee4dbe87c03305332281bbf3a2675bf16c814bc07f461d919a0cb1f57",
+    "src/ppmi_subtype/slope_clustering.py": "7fa8bbe45519f089fa23463e203de38af9e5b7b75e3f2d6d5084fd3c5bcd37a0",
+    "scripts/38_q2_reassessment.py": "4601717f272a27bb917a749a7c111a314f7a92f06555f191e93c7ca2aac9a084"
+  },
+  "original_run_results_sha256": "b0e0768127de8e6707221ac2ccae0c32fa7db588db0341b641941995a46616fe",
+  "sampler": {
+    "nu_update": "collapsed_slice",
+    "nu_init": 10.0
+  },
+  "priors": [
+    "gamma2_true",
+    "loguniform",
+    "exp_like_continuity"
+  ],
+  "required_priors": [
+    "gamma2_true",
+    "loguniform"
+  ],
+  "primary_prior": "gamma2_true",
+  "cohort_fit": {
+    "n_draws": 4000,
+    "burn_in": 2000,
+    "thin": 10
+  },
+  "split_fit": {
+    "n_draws": 4000,
+    "burn_in": 2000,
+    "thin": 5
+  },
+  "chain_seeds": [
+    42,
+    43,
+    44,
+    45
+  ],
+  "split_seeds": [
+    42,
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "calibration": {
+    "scenarios": [
+      "C1",
+      "C2",
+      "C3",
+      "P"
+    ],
+    "reps": 60,
+    "data_rng": "[42, 36, scenario index, rep]",
+    "fit_seeds": "1000 + 10*rep + chain",
+    "theta": {
+      "beta0": 2.1244095230603044,
+      "beta1": -0.07997229147574449,
+      "tau0": 1.3488343355256351,
+      "tau1": 0.1054207022252361,
+      "sigma": 0.5889744102262106,
+      "nu_e": 2.10296887630793,
+      "tau1_TT": 0.0721180431614871
+    }
+  },
+  "thresholds": {
+    "nu_q97.5_lt": 10.0,
+    "rhat_lt": 1.01,
+    "ess_ge": 400,
+    "splits_needed": "5/7",
+    "cal_fp_max": "3/60"
+  },
+  "smoke": false
+}
