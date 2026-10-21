@@ -38,3 +38,7 @@ venv/
 *.toc
 *.synctex.gz
 .backup_step3/
+
+# Generated manuscript render. It embeds the committed figures as base64, so
+# committing it would duplicate them; regenerate with manuscript/render.py.
+manuscript/MANUSCRIPT.html

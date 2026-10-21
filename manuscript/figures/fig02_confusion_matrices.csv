@@ -1,0 +1,9 @@
+method,predicted,actual,n,row_share
+CT-HMM (subtype history),TD,TD,1925,0.863615971287573
+CT-HMM (subtype history),TD,PIGD,304,0.1363840287124271
+CT-HMM (subtype history),PIGD,TD,190,0.2375
+CT-HMM (subtype history),PIGD,PIGD,610,0.7625
+Rich profile (level+rate+med),TD,TD,1918,0.8686594202898551
+Rich profile (level+rate+med),TD,PIGD,290,0.13134057971014493
+Rich profile (level+rate+med),PIGD,TD,192,0.23616236162361623
+Rich profile (level+rate+med),PIGD,PIGD,621,0.7638376383763837

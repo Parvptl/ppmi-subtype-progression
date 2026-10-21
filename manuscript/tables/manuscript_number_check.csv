@@ -1,0 +1,21 @@
+quantity,manuscript,source_value,matches
+paired CT-HMM accuracy,0.8371,0.8371,True
+paired CT-HMM ci_low,0.8202,0.8202,True
+paired CT-HMM ci_high,0.854,0.854,True
+paired profile accuracy,0.8404,0.8404,True
+paired profile ci_low,0.8248,0.8248,True
+paired profile ci_high,0.8566,0.8566,True
+paired persistence accuracy,0.8338,0.8338,True
+CT-HMM own LOPO accuracy,0.8369,0.8369,True
+profile loglik,-1.0453,-1.0453,True
+locf loglik,-1.1187,-1.1187,True
+popmean loglik,-1.4342,-1.4342,True
+delta vs locf,0.0733,0.0733,True
+delta vs popmean,0.3889,0.3889,True
+delta rate,0.004,0.004,True
+delta medication,0.0058,0.0058,True
+paired label delta,0.0033,0.0033,True
+level pc1,0.422,0.4224373583671932,True
+rate pc1,0.372,0.3722821979035013,True
+hy level delta,0.105,0.1052,True
+mci level delta,0.161,0.1605,True

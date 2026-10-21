@@ -1,0 +1,40 @@
+PATNO,selection_rule,visit_index,current_event,target_event,target_years,actual_next_label,eligible,ct_hmm_predicted
+3001,stable TD throughout,0,BL,V04,1.0869267624914445,TD,True,TD
+3001,stable TD throughout,1,V04,V06,2.1683778234086244,TD,True,TD
+3001,stable TD throughout,2,V06,V10,4.084873374401095,TD,True,TD
+3001,stable TD throughout,3,V10,V12,5.253935660506502,TD,True,TD
+3001,stable TD throughout,4,V12,V14,7.000684462696783,TD,True,TD
+3001,stable TD throughout,5,V14,V15,8.0,TD,True,TD
+3001,stable TD throughout,6,V15,V17,10.505133470225871,TD,True,TD
+3024,stable PIGD throughout,0,BL,V04,1.1663244353182751,PIGD,True,PIGD
+3024,stable PIGD throughout,1,V04,V08,2.9979466119096507,PIGD,True,PIGD
+3024,stable PIGD throughout,2,V08,V14,6.997946611909651,PIGD,True,PIGD
+3024,stable PIGD throughout,3,V14,V16,9.25119780971937,PIGD,True,PIGD
+3002,recorded change from TD to PIGD,0,BL,V04,1.0869267624914445,TD,True,PIGD
+3002,recorded change from TD to PIGD,1,V04,V08,3.0006844626967832,TD,True,TD
+3002,recorded change from TD to PIGD,2,V08,V14,7.085557837097878,PIGD,True,TD
+3002,recorded change from TD to PIGD,3,V14,V15,8.0,PIGD,True,PIGD
+3002,recorded change from TD to PIGD,4,V15,V17,10.505133470225871,PIGD,True,PIGD
+3010,recorded change from PIGD to TD,0,BL,V04,1.002053388090349,TD,True,TD
+3010,recorded change from PIGD to TD,1,V04,V06,2.083504449007529,TD,True,TD
+3010,recorded change from PIGD to TD,2,V06,V10,4.0,TD,True,TD
+3010,recorded change from PIGD to TD,3,V10,V14,7.167693360711842,PIGD,True,TD
+3010,recorded change from PIGD to TD,4,V14,V15,8.082135523613964,TD,True,PIGD
+3003,passes through Indeterminate,0,BL,V04,1.002053388090349,TD,True,TD
+3003,passes through Indeterminate,1,V04,V06,2.1683778234086244,TD,True,TD
+3003,passes through Indeterminate,2,V06,V08,3.0006844626967832,TD,True,TD
+3003,passes through Indeterminate,3,V08,V10,4.0,Indeterminate,False,TD
+3003,passes through Indeterminate,4,V10,V15,7.915126625598905,PIGD,True,TD
+3435,most recorded label changes (10),0,BL,V04,1.002053388090349,Indeterminate,False,TD
+3435,most recorded label changes (10),1,V04,V06,2.086242299794661,TD,True,TD
+3435,most recorded label changes (10),2,V06,V08,3.0006844626967832,Indeterminate,False,TD
+3435,most recorded label changes (10),3,V08,V10,4.084873374401095,TD,True,TD
+3435,most recorded label changes (10),4,V10,V12,5.002053388090349,TD,True,TD
+3435,most recorded label changes (10),5,V12,V13,5.919233401779603,TD,True,TD
+3435,most recorded label changes (10),6,V13,V14,7.000684462696783,TD,True,TD
+3435,most recorded label changes (10),7,V14,V15,8.0,Indeterminate,False,TD
+3435,most recorded label changes (10),8,V15,V16,9.086926762491444,TD,True,TD
+3435,most recorded label changes (10),9,V16,V17,10.001368925393566,Indeterminate,False,TD
+3435,most recorded label changes (10),10,V17,V18,11.000684462696784,PIGD,True,TD
+3435,most recorded label changes (10),11,V18,V19,12.0,TD,True,PIGD
+3435,most recorded label changes (10),12,V19,V20,12.919917864476384,PIGD,True,TD

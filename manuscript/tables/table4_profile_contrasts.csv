@@ -1,0 +1,5 @@
+contrast,model_a,model_b,n_paired,n_patients,loglik_delta,delta_ci_low,delta_ci_high,share_a_better
+rich profile against assume-no-change,Profile: level + rate + medication,Last observation carried forward,3353,934,0.0733,0.0657,0.0813,0.7513
+rich profile against the population average,Profile: level + rate + medication,Population mean trajectory,3353,934,0.3889,0.3628,0.4167,0.8655
+modelling the rate of change,Profile: level + rate + medication,Profile: level only (random walk),3353,934,0.004,0.0019,0.0062,0.6523
+medication as an input,Profile: level + rate + medication,"Profile: level + rate, no medication",3353,934,0.0058,0.0041,0.0075,0.6242
