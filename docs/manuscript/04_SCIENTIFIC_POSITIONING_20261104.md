@@ -175,7 +175,34 @@ families.
 five-point band around trivial baselines, which is the finding. What it
 threatens is the table that demonstrates it.
 
-### E-8 — harmonise the multi-family comparison *(essential, cheap, not yet run)*
+### E-8 — harmonise the multi-family comparison ✅ **DONE 2026-11-04**
+
+> **Outcome, in `05_HARMONISED_FAMILY_COMPARISON_20261104.md` (11/11 checks,
+> run `experiments/20261103T202632Z_e8_harmonised_family_comparison`).** The spread across the
+> nine fitted specifications is **1.2 accuracy points**, not the ~5 the
+> committed figures implied — most of the apparent difference between families
+> was the decision rule. Every model already on a 3-class vector reproduced its
+> committed accuracy exactly, which validates the pipeline; only the subscore
+> models moved.
+>
+> **It corrects a claim made below.** This document states that two families
+> fall below persistence. Under the harmonised rule **neither does** — the
+> joint subscore LMM goes 0.7087 → 0.7495 and the time-varying LMM
+> 0.7093 → 0.7462, and all nine beat the trivial rule with intervals excluding
+> zero (+0.023 to +0.035). The deficit was the derivation rule, worth 3.3–3.7
+> points to those families.
+>
+> **And it sharpens the thesis rather than weakening it.** 94.3% of the
+> CT-HMM's entire margin over persistence comes from the 9.9% of cases where
+> the current label is Indeterminate; on current-PIGD cases the two are exactly
+> tied and agree on 96.9% of predictions, and the discrete Markov chain is
+> identical to persistence on 100% of current-TD and current-PIGD cases. The
+> models do not predict progression better — they decline to repeat an
+> unreliable class. The trivial rule also has the **best macro-F1 of all
+> fourteen specifications**, being the only one that ever predicts
+> Indeterminate.
+
+The original brief follows.
 
 Re-score the saved predictions onto one 3-class probability vector per case per
 model, then apply one decision rule, one baseline set and one metric suite.
@@ -269,7 +296,7 @@ at that point and not before.
 | R1 | Our reconstruction of the label is sound | 100% / 99.87% internal agreement **and** agreement with Simuni's independent baseline distribution to within 1 point | Verified |
 | R2 | Much of the observed change is immediate reversion, not progression | 35.2% (CI 31.8–38.8); sustained definition removes 51.7% of conversions | Verified (E-2) |
 | R2 | The label is fragile to perturbations smaller than its own resolution | 0.02 threshold shift reclassifies 67.6% of Indeterminate; half of Indeterminate visits sit one hundredth from a boundary | Recomputed; **formal run outstanding (O-4)** |
-| R3 | Model family does not matter much | Five families within ~5 points, around persistence | **Blocked by E-8** |
+| R3 | Model family does not matter much | Nine specifications across five families within **1.2 points**; all +0.023 to +0.035 above the trivial rule | ✅ **Unblocked (E-8)** |
 | R3 | No family recovers Indeterminate | HMM recall 0.000 (1 prediction in 3,361); profile 0.000 | Verified |
 | R4 | A latent state helps a little, exactly where theory predicts | +0.0092 overall; +6.3 pp where the current label is Indeterminate | Verified |
 | R5 | Restricting to two classes changes the task, not the model | 2,534/3,361 = 0.7539 → 2,534/3,029 = 0.8366 | Verified |
@@ -280,8 +307,8 @@ at that point and not before.
 
 ## 10. Recommended order of work
 
-1. **E-8** — harmonise the multi-family comparison. Unblocks the primary
-   analysis. Cheap: re-scoring, no refitting.
+1. ~~**E-8** — harmonise the multi-family comparison.~~ ✅ **Done 2026-11-04.**
+   The primary analysis is unblocked; Figure 3 and Table 3 now exist.
 2. **E-4** — the regulatory block (ethics, funding, COI, CRediT, PPMI
    acknowledgement). Needs you; nothing else is blocked by it but submission.
 3. **E-3** — multi-chain refit of the growth model, or demote it to descriptive
