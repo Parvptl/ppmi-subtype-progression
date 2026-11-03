@@ -3,14 +3,15 @@
   "python": "3.13.16",
   "numpy": "2.2.4",
   "pandas": "2.2.3",
-  "elapsed_seconds": 0.8,
-  "git_commit": "7632d5ae67bf595f82be2f93ba514dea0b0da4f2",
+  "elapsed_seconds": 0.9,
+  "git_commit": "bac2e8bde9833f1e76c412bbab26cf795d37de3f",
   "panel_md5": "fb038ddbdc19ab3368e13940f398e7ba",
   "models_fitted": 0
  },
  "sources": {
   "figure_2": "experiments/20261103T193205Z_e2_transition_patient_bootstrap",
   "figure_4": "experiments/20261103T202632Z_e8_harmonised_family_comparison",
+  "figure_5a": "experiments/20261103T220147Z_a2p_outcome_table_fullprec/representation_dimensionality.csv",
   "figure_5b": "experiments/20261103T220147Z_a2p_outcome_table_fullprec/h3_component_vs_subtype.csv",
   "table_1": "outputs/visit_panel.csv"
  },
@@ -22,6 +23,10 @@
   "figure 2's reversion panel has all six change types": true,
   "figure 4's per-stratum gains sum to each model's total": true,
   "figure 4 covers all 3,361 cases per model": true,
+  "figure 5a's level PC1 share matches R7's 42.2%": true,
+  "figure 5a's rate PC1 share matches R7's 37.2%": true,
+  "figure 5a: seven components reach 90% for levels and rates": true,
+  "figure 5a's variance shares sum to one": true,
   "every rate coordinate's interval includes zero": true,
   "three of four level coordinates exclude zero": true,
   "table 1's full cohort is 1,080 patients": true,
@@ -29,19 +34,21 @@
   "table 1's labelled visit count is 4,441": true
  },
  "files": {
-  "MANUSCRIPT_FULL_20261104.md": "c684ffab49236617a5c4299e4b5b9b7cbfa3d98b957139d2792a2ff84ffba6f3",
-  "asset_manifest.json": "4fa3da850571e3523e4976338c29c3295c56beb3ba8570e37736614edabfbf01",
+  "MANUSCRIPT_FULL_20261104.md": "0ecfed4cbab354bd7fbaf1c753081abaef81bd2b2042cb685cc9808b713c22fd",
+  "asset_manifest.json": "831dba3e024deed35ecfe30dffdd2dfc7413dc01ca35ae4c7ae5fe1b7c1fdc98",
   "fig2_label_instability.csv": "45b468d2c66f871f740ce771f6c17bb035fd09da4c381bebc4f72b3d5046d07f",
   "fig2_label_instability.png": "f56f177a6c325fb37ce7b1152cc1cb71036d3faec21388cd45b59d9e5683d3cd",
   "fig4_margin_decomposition.csv": "a0f7fd4960f519bc2b8aeaa628a911efd030879d2b01f62be6a2d2c5011b0c32",
   "fig4_margin_decomposition.png": "9524452c6abd98f36a0660b0983cb78ca7c05cbf10a03047aa36f8ec009c14e1",
+  "fig5a_representation_dimensionality.csv": "7bb0c87d4399d43c01b4bd8c493908b13b72025e20d5caf89f26a6d3493ecd9b",
+  "fig5a_representation_dimensionality.png": "ff13c4d3f1675e27dfbc001c281fced4618c662a2fabfba49b2a81673aea3312",
   "fig5b_outcome_discrimination.csv": "c36ee92ab0fe18b7025ee0fd76a3b3d26b1649ef0a4cec35ef0d3a89f05294bd",
   "fig5b_outcome_discrimination.png": "7f1208fd8e1475ec50727aa6e7f709a43fd5be054e0ffea0b367347d9cbf0723",
-  "report.txt": "ef87f85f273a29c40df743e16f0c4c1b92bff5636dc15f4e7c7595290d3162e8",
+  "report.txt": "fdec736ca7676a8ad29402b71d60d383e233c992f991ed4be3ed314e132c6d0f",
   "table1_cohort_characteristics.csv": "1f8eb5cd0ca16b6dd1315b5a8d7452233e23fe0737917dc41c2913ac6c32b1b2",
-  "validation_checks.csv": "a07686b1521723c9c0e9eb99feb0ccd11a9a6b7a4d259e0ec6d4edadf59da4f5"
+  "validation_checks.csv": "c1d2a4d55ad9e44849abdf2347398855bc6966d885eee077b6c3c38c3323e8a4"
  },
  "code_sha256": {
-  "scripts/80_manuscript_assets.py": "6fa7159f22df2ce606cfa6101d1835739ae3930cba805eaa75ca7c9ed126cb1f"
+  "scripts/80_manuscript_assets.py": "cd514b72ead19684c698fc1f5357681c44657dadb12b4e73e65a80bc58f1cfc5"
  }
 }

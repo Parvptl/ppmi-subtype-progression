@@ -315,6 +315,32 @@ no R̂ or ESS). **No growth-model result is quoted anywhere in the manuscript**,
 so there is no current exposure. If it appears in supplementary material it
 must be labelled descriptive and the gap disclosed.
 
+**D6. ✅ FIXED 2026-11-04 — and this audit had missed it.** The five-state
+hidden Markov model's accuracy of 0.7513 was quoted in R3 beside the
+three-state model's 0.7539 with no caveat, and Methods said only that it "was
+fitted identically as a sensitivity analysis". Measured from `train_converged`
+in `outputs/loo_5hidden/loo_predictions_all_models.csv`, that model **reported
+convergence in 404 of 934 folds (43.3%)**, against **934 of 934** for the
+three-state model and for every chain and reference rule in the same run, and
+**1,990 of its 3,361 predictions (59.2%) come from folds that did not
+converge** — they were retained, not discarded. A reader would have taken the
+two scores as comparable.
+
+Both Methods and R3 now disclose it. R3 also states what a reviewer will ask
+next: the five-state accuracy is **interior** to the range, sixth of the nine,
+so dropping it leaves the 1.22-point spread unchanged and the convergence
+finding does not rest on it.
+
+Two things worth recording about how this was found. First, **this audit did
+not flag it** — §2 verified that 0.7513 matched its source, which it does, but
+never asked whether the figure was comparable. Checking a number against its
+run is not the same as checking that it means what the sentence implies.
+Second, the 404/934 figure also appears in `docs/cluster_phase/`, where it is
+marked "Superseded: budget-limited, multimodal". That folder is excluded from
+the manuscript's evidence, so the figure was **re-measured from the current
+run** rather than taken from there, and the current run independently gives the
+same 404/934 with the additional 59.2% share.
+
 ### E — Clarity
 
 **E1. "9.9%" denotes two different quantities.** 334 transitions whose
@@ -388,7 +414,9 @@ not established, in the conservative direction.
 
 **Two of this audit's own findings were wrong** (A2 and B2), and both were
 wrong the same way: a claim about the repository or its artifacts that was
-carried forward rather than re-derived. The numeric claims, which were all
+carried forward rather than re-derived. A third issue (D6) it missed entirely,
+because it checked whether each number matched its run and not whether the
+sentence around the number was fair. The numeric claims, which were all
 re-run from source, held up. Any future audit here should treat "the repository
 contains / does not contain X" as a claim needing a command, exactly as it
 treats a confidence interval.

@@ -215,7 +215,13 @@ predicts.
 
 A five-state variant was fitted identically as a sensitivity analysis; with
 more latent states than observed labels, the emission floor is undefined and
-was not applied.
+was not applied. **That variant largely failed to fit.** Its optimiser reported
+convergence in 404 of 934 leave-one-participant-out folds (43.3%), against 934
+of 934 for the three-state model and for every chain and reference rule in the
+same run. Predictions from non-converged folds were retained rather than
+discarded, so 1,990 of its 3,361 predictions (59.2%) come from fits that did
+not converge. Its accuracy is reported for completeness and is not a
+like-for-like comparison with the other specifications.
 
 ---
 
@@ -233,6 +239,14 @@ prior with standard deviation 100 on the population coefficients, and
 inverse-gamma(0.01, 0.01) on each variance component. The reported posterior
 uses 4,000 sweeps after 1,000 discarded as burn-in, thinned by two, giving
 2,000 retained draws.
+
+**No result from this model is reported anywhere in this manuscript.** It was
+fitted as the specification the study's original proposal named, and it is
+described here so that the modelling actually performed is on the record. It
+is excluded from the results because it was run as a single chain, with no
+R̂ and no effective sample size, which is not an adequate basis for any
+inferential claim. It supports none of the findings reported here, and the
+convergence comparison in the Results does not include it.
 
 > **Editorial — this is the C3 blocker.** The implementation runs **a single
 > chain**, and the only convergence evidence produced is a comparison of
@@ -252,7 +266,7 @@ uses 4,000 sweeps after 1,000 discarded as burn-in, thinned by two, giving
 
 ---
 
-## M9. Subscore models *(supplementary)*
+## M9. Subscore models
 
 Three families were fitted to the two subscores directly rather than to their
 ratio, which avoids the undefined-ratio exclusion.
@@ -273,7 +287,7 @@ introduced anywhere.
 
 ---
 
-## M10. Continuous multi-domain clinical representation *(supplementary)*
+## M10. Continuous multi-domain clinical representation
 
 Nine clinical domains were tracked per visit: a bradykinesia/rigidity subscore
 built from the twenty Part III items that are neither tremor nor PIGD
@@ -313,7 +327,7 @@ contributes no term. Nothing is imputed.
 
 ---
 
-## M11. History-window and retraining analyses *(supplementary)*
+## M11. History-window and retraining analyses
 
 Two questions about history were addressed separately, because conflating them
 confounds the estimator with the input.

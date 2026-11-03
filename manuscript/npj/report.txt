@@ -18,6 +18,11 @@ FIGURE 4 -- WHERE THE MARGIN COMES FROM
   fig4_margin_decomposition.png
 
 ==============================================================================
+FIGURE 5a -- REPRESENTATION DIMENSIONALITY
+==============================================================================
+  fig5a_representation_dimensionality.png
+
+==============================================================================
 FIGURE 5b -- CLINICAL OUTCOME DISCRIMINATION
 ==============================================================================
   fig5b_outcome_discrimination.png
@@ -63,10 +68,14 @@ CHECKS
                      figure 2's reversion panel has all six change types    True
                   figure 4's per-stratum gains sum to each model's total    True
                                figure 4 covers all 3,361 cases per model    True
+                          figure 5a's level PC1 share matches R7's 42.2%    True
+                           figure 5a's rate PC1 share matches R7's 37.2%    True
+              figure 5a: seven components reach 90% for levels and rates    True
+                                  figure 5a's variance shares sum to one    True
                           every rate coordinate's interval includes zero    True
                             three of four level coordinates exclude zero    True
                                  table 1's full cohort is 1,080 patients    True
                                table 1's analysed cohort is 934 patients    True
                                  table 1's labelled visit count is 4,441    True
 
-  12 of 12 checks passed
+  16 of 16 checks passed

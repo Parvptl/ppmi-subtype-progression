@@ -25,6 +25,7 @@ These go to a separate directory and overwrite nothing.
 from __future__ import annotations
 
 import argparse
+import ast
 import hashlib
 import json
 import platform
@@ -56,6 +57,10 @@ E8 = "experiments/20261103T202632Z_e8_harmonised_family_comparison"
 # full-precision table, so small-magnitude rate columns shift (see the
 # Stage 12 audit, A2).
 T5 = "experiments/20261103T220147Z_a2p_outcome_table_fullprec/h3_component_vs_subtype.csv"
+# Same definitive rerun; the dimensionality table is identical in the
+# October run, verified by scripts/83.
+DIM = ("experiments/20261103T220147Z_a2p_outcome_table_fullprec/"
+       "representation_dimensionality.csv")
 
 CLASSES = ["TD", "Indeterminate", "PIGD"]
 ACCENT = "#1f4e79"
@@ -281,6 +286,97 @@ def figure_4(out: Path, checks: dict) -> pd.DataFrame:
 
 
 # ---------------------------------------------------------------------------
+#  Figure 5a -- representation dimensionality
+# ---------------------------------------------------------------------------
+def figure_5a(out: Path, checks: dict) -> pd.DataFrame:
+    """Per-component and cumulative variance share, levels against rates.
+
+    The scientific point R7 makes from this figure is that the representation
+    is not a severity score in disguise: no single component dominates, and
+    seven are needed for 90% of the across-participant variance. The figure
+    therefore has to carry both the per-component profile and where the
+    cumulative curve crosses 90%.
+    """
+    d = pd.read_csv(ROOT / DIM).set_index("which")
+    shares = {w: np.asarray(ast.literal_eval(d.loc[w, "variance_shares"]), float)
+              for w in ("level", "rate")}
+    n = len(shares["level"])
+    xx = np.arange(1, n + 1)
+
+    fig, ax = plt.subplots(figsize=(8.8, 3.9))
+    w = 0.38
+    for which, off, col in (("level", -w / 2, ACCENT), ("rate", w / 2, MUTED)):
+        ax.bar(xx + off, shares[which] * 100, width=w, color=col,
+               edgecolor="none", label=f"{which} coordinates", zorder=3)
+    ax.set_xticks(xx)
+    ax.set_xlabel("Principal component", fontsize=9.4)
+    ax.set_ylabel("Variance explained (%)", fontsize=9.4)
+    ax.set_title("No component dominates; seven are needed for 90%",
+                 fontsize=10.6, loc="left")
+    ax.grid(axis="y", color=GRID, lw=0.8)
+    ax.set_axisbelow(True)
+    _style(ax)
+
+    # Cumulative curves on a second scale, with the 90% crossing marked.
+    ax2 = ax.twinx()
+    for which, col in (("level", ACCENT), ("rate", MUTED)):
+        ax2.plot(xx, np.cumsum(shares[which]) * 100, color=col, lw=1.5,
+                 ls="--", marker="o", ms=3.4, zorder=4)
+    ax2.axhline(90.0, color=WARM, lw=1.3, ls=":", zorder=2)
+    n90 = int(d.loc["level", "n_components_for_90pct"])
+    ax2.axvline(n90, color=WARM, lw=1.3, ls=":", zorder=2)
+    ax2.set_ylabel("Cumulative (%)", fontsize=9.4, color=INK_MUTED)
+    ax2.set_ylim(0, 104)
+    ax2.tick_params(colors=INK_MUTED, labelsize=9, length=3, width=1.0)
+    for side in ("top", "left"):
+        ax2.spines[side].set_visible(False)
+    ax2.spines["right"].set_color(GRID)
+    ax2.spines["bottom"].set_color(GRID)
+    #  Clear of the 90% line and both cumulative curves: at this x the bars
+    #  are short and the curves are near the top, so mid-height is empty.
+    ax2.text(0.985, 0.42, f"{n90} components\nreach 90%",
+             transform=ax2.transAxes, ha="right", va="center",
+             fontsize=8.2, color=WARM, linespacing=1.35)
+
+    # The two values R7 quotes, named on the figure so the text and the
+    # picture cannot drift apart.
+    for which, off, col in (("level", -w / 2, ACCENT), ("rate", w / 2, MUTED)):
+        ax.annotate(f"{shares[which][0] * 100:.1f}%", (1 + off, shares[which][0] * 100),
+                    textcoords="offset points", xytext=(0, 3), ha="center",
+                    fontsize=8.0, color=col)
+
+    ax.set_ylim(0, max(shares["level"][0], shares["rate"][0]) * 100 * 1.22)
+    #  Proxy for the dashed curves, which live on the twin axis; the legend is
+    #  built last so every entry it needs already exists.
+    ax.plot([], [], color=INK_MUTED, lw=1.5, ls="--", marker="o", ms=3.4,
+            label="cumulative (right axis)")
+    ax.legend(frameon=False, fontsize=8.5, loc="upper center", ncol=3,
+              columnspacing=1.4, handlelength=1.9)
+    p = _finish(fig, out / "fig5a_representation_dimensionality.png")
+    say(f"  {p.name}")
+
+    tidy = pd.DataFrame({
+        "component": np.tile(xx, 2),
+        "which": np.repeat(["level", "rate"], n),
+        "variance_share": np.concatenate([shares["level"], shares["rate"]]),
+        "cumulative": np.concatenate([np.cumsum(shares["level"]),
+                                      np.cumsum(shares["rate"])]),
+    })
+    tidy.to_csv(out / "fig5a_representation_dimensionality.csv", index=False)
+
+    checks["figure 5a's level PC1 share matches R7's 42.2%"] = bool(
+        abs(shares["level"][0] - 0.4224) < 5e-4)
+    checks["figure 5a's rate PC1 share matches R7's 37.2%"] = bool(
+        abs(shares["rate"][0] - 0.3723) < 5e-4)
+    checks["figure 5a: seven components reach 90% for levels and rates"] = bool(
+        int(d.loc["level", "n_components_for_90pct"]) == 7
+        and int(d.loc["rate", "n_components_for_90pct"]) == 7)
+    checks["figure 5a's variance shares sum to one"] = bool(
+        all(abs(shares[w].sum() - 1.0) < 1e-6 for w in ("level", "rate")))
+    return tidy
+
+
+# ---------------------------------------------------------------------------
 #  Figure 5b -- clinical outcome discrimination
 # ---------------------------------------------------------------------------
 def figure_5b(out: Path, checks: dict) -> pd.DataFrame:
@@ -453,6 +549,9 @@ def main() -> int:
     section("FIGURE 4 -- WHERE THE MARGIN COMES FROM")
     figure_4(out, checks)
 
+    section("FIGURE 5a -- REPRESENTATION DIMENSIONALITY")
+    figure_5a(out, checks)
+
     section("FIGURE 5b -- CLINICAL OUTCOME DISCRIMINATION")
     figure_5b(out, checks)
 
@@ -477,7 +576,7 @@ def main() -> int:
                         "elapsed_seconds": round(time.time() - started, 1),
                         "git_commit": commit, "panel_md5": md5,
                         "models_fitted": 0},
-        "sources": {"figure_2": E2, "figure_4": E8, "figure_5b": T5,
+        "sources": {"figure_2": E2, "figure_4": E8, "figure_5a": DIM, "figure_5b": T5,
                     "table_1": "outputs/visit_panel.csv"},
         "checks": {k: bool(v) for k, v in checks.items()},
         "files": {p.name: sha(p) for p in sorted(out.iterdir()) if p.is_file()},

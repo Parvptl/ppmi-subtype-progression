@@ -130,7 +130,7 @@ ASSETS = [
     ("Fig. 2", "manuscript/npj/fig2_label_instability.png", "submission-ready"),
     ("Fig. 3", "experiments/20261103T202632Z_e8_harmonised_family_comparison/fig1_harmonised_family_comparison.png", "run figure"),
     ("Fig. 4", "manuscript/npj/fig4_margin_decomposition.png", "submission-ready"),
-    ("Fig. 5a", "experiments/20261020T180515Z_clinical_profile_cv/representation_dimensionality.csv", "NOT DRAWN — source data only"),
+    ("Fig. 5a", "manuscript/npj/fig5a_representation_dimensionality.png", "submission-ready"),
     ("Fig. 5b", "manuscript/npj/fig5b_outcome_discrimination.png", "submission-ready"),
     ("Table 1", "manuscript/npj/table1_cohort_characteristics.csv", "submission-ready"),
     ("Table 2", "experiments/20261103T193205Z_e2_transition_patient_bootstrap/", "source CSVs, not formatted"),

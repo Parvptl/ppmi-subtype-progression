@@ -52,9 +52,9 @@ but by declining to repeat a class that is rarely repeated. Its fragility is
 arithmetic as much as clinical. Because the tremor score averages eleven
 integer ratings and the PIGD score five, few ratio values fall inside a band
 0.25 wide; half of indeterminate visits sat at a single value one hundredth
-from a threshold, and moving the thresholds by about 0.02 — less than the
-spacing between attainable values — reclassified 6.7% of all labelled visits,
-every one of them out of the indeterminate class. The constraint our
+from a threshold, and in a post-hoc calculation moving the thresholds by about
+0.02 — less than the spacing between attainable values — reclassified 6.7% of
+all labelled visits, every one of them out of the indeterminate class. The constraint our
 specification placed on the emission matrix was binding for this state alone,
 which is the same fact expressed in the model's parameters. Whether the
 construct identifies a distinct phenotype has been questioned on clinical

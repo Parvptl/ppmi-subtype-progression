@@ -161,10 +161,12 @@ measurement's own resolution. Because the tremor score is a mean of eleven
 integer ratings and the PIGD score a mean of five, few ratio values are
 reachable inside a band 0.25 wide: half of indeterminate visits sat at a ratio
 of 0.9091 and a further quarter at 1.1364, each about one hundredth from a
-threshold. Moving each threshold by approximately 0.02 reclassified 298 of
-4,441 labelled visits (6.7%), **all of them from the indeterminate class**,
-which shrank by 67.6%, and reduced agreement with PPMI's two-class label from
-100.00% to 97.74%.
+threshold. In a post-hoc calculation on the frozen panel, moving each
+threshold by approximately 0.02 reclassified 298 of 4,441 labelled visits
+(6.7%), **all of them from the indeterminate class**, which shrank by 67.6%,
+and reduced agreement with PPMI's two-class label from 100.00% to 97.74%. The
+perturbation was not pre-specified and these figures are reported as
+exploratory.
 
 ### Nine model specifications across five families converge
 
@@ -181,7 +183,14 @@ All nine exceeded persistence, by between 0.0226 (0.0135–0.0316) and 0.0348
 raising the number of latent states nor modelling elapsed time changed this
 picture materially: a five-state hidden Markov model scored 0.7513 against the
 three-state model's 0.7539, and the interval-aware chain scored 0.7453 against
-the discrete chain's 0.7474.
+the discrete chain's 0.7474. **The five-state figure is not a like-for-like
+comparison.** That model reported convergence in only 404 of 934 folds (43.3%),
+against 934 of 934 for every other specification, and 59.2% of its predictions
+come from folds whose fit did not converge (Methods). It is reported because
+raising the latent-state count neither helped nor fitted, which is itself the
+result. It does not carry the convergence finding above: its accuracy is
+interior to the range, sixth of the nine, and dropping it leaves the spread at
+1.22 points unchanged.
 
 **No fitted model recovered the indeterminate class.** Of fourteen
 specifications, five ever predicted indeterminate at all, and four of those did
@@ -373,9 +382,9 @@ but by declining to repeat a class that is rarely repeated. Its fragility is
 arithmetic as much as clinical. Because the tremor score averages eleven
 integer ratings and the PIGD score five, few ratio values fall inside a band
 0.25 wide; half of indeterminate visits sat at a single value one hundredth
-from a threshold, and moving the thresholds by about 0.02 — less than the
-spacing between attainable values — reclassified 6.7% of all labelled visits,
-every one of them out of the indeterminate class. The constraint our
+from a threshold, and in a post-hoc calculation moving the thresholds by about
+0.02 — less than the spacing between attainable values — reclassified 6.7% of
+all labelled visits, every one of them out of the indeterminate class. The constraint our
 specification placed on the emission matrix was binding for this state alone,
 which is the same fact expressed in the model's parameters. Whether the
 construct identifies a distinct phenotype has been questioned on clinical
@@ -659,7 +668,13 @@ predicts.
 
 A five-state variant was fitted identically as a sensitivity analysis; with
 more latent states than observed labels, the emission floor is undefined and
-was not applied.
+was not applied. **That variant largely failed to fit.** Its optimiser reported
+convergence in 404 of 934 leave-one-participant-out folds (43.3%), against 934
+of 934 for the three-state model and for every chain and reference rule in the
+same run. Predictions from non-converged folds were retained rather than
+discarded, so 1,990 of its 3,361 predictions (59.2%) come from fits that did
+not converge. Its accuracy is reported for completeness and is not a
+like-for-like comparison with the other specifications.
 
 ### Hierarchical Bayesian growth model *(supplementary)*
 
@@ -676,7 +691,15 @@ inverse-gamma(0.01, 0.01) on each variance component. The reported posterior
 uses 4,000 sweeps after 1,000 discarded as burn-in, thinned by two, giving
 2,000 retained draws.
 
-### Subscore models *(supplementary)*
+**No result from this model is reported anywhere in this manuscript.** It was
+fitted as the specification the study's original proposal named, and it is
+described here so that the modelling actually performed is on the record. It
+is excluded from the results because it was run as a single chain, with no
+R̂ and no effective sample size, which is not an adequate basis for any
+inferential claim. It supports none of the findings reported here, and the
+convergence comparison in the Results does not include it.
+
+### Subscore models
 
 Three families were fitted to the two subscores directly rather than to their
 ratio, which avoids the undefined-ratio exclusion.
@@ -695,7 +718,7 @@ distribution over the two subscores through the project's unmodified
 classification rule (M12), so no new classifier and no new threshold is
 introduced anywhere.
 
-### Continuous multi-domain clinical representation *(supplementary)*
+### Continuous multi-domain clinical representation
 
 Nine clinical domains were tracked per visit: a bradykinesia/rigidity subscore
 built from the twenty Part III items that are neither tremor nor PIGD
@@ -729,7 +752,7 @@ measurements are marginalised exactly — with a diagonal observation covariance
 the emission log-density is a sum over domains, so an unrecorded domain simply
 contributes no term. Nothing is imputed.
 
-### History-window and retraining analyses *(supplementary)*
+### History-window and retraining analyses
 
 Two questions about history were addressed separately, because conflating them
 confounds the estimator with the input.
@@ -969,7 +992,7 @@ Where each display item currently stands. "Run figure" means a figure exists fro
 | Fig. 2 | `manuscript/npj/fig2_label_instability.png` | submission-ready |
 | Fig. 3 | `experiments/20261103T202632Z_e8_harmonised_family_comparison/fig1_harmonised_family_comparison.png` | run figure |
 | Fig. 4 | `manuscript/npj/fig4_margin_decomposition.png` | submission-ready |
-| Fig. 5a | `experiments/20261020T180515Z_clinical_profile_cv/representation_dimensionality.csv` | NOT DRAWN — source data only |
+| Fig. 5a | `manuscript/npj/fig5a_representation_dimensionality.png` | submission-ready |
 | Fig. 5b | `manuscript/npj/fig5b_outcome_discrimination.png` | submission-ready |
 | Table 1 | `manuscript/npj/table1_cohort_characteristics.csv` | submission-ready |
 | Table 2 | `experiments/20261103T193205Z_e2_transition_patient_bootstrap/` | source CSVs, not formatted |

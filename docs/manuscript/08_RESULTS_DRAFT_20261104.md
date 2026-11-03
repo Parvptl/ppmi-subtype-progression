@@ -81,10 +81,12 @@ measurement's own resolution. Because the tremor score is a mean of eleven
 integer ratings and the PIGD score a mean of five, few ratio values are
 reachable inside a band 0.25 wide: half of indeterminate visits sat at a ratio
 of 0.9091 and a further quarter at 1.1364, each about one hundredth from a
-threshold. Moving each threshold by approximately 0.02 reclassified 298 of
-4,441 labelled visits (6.7%), **all of them from the indeterminate class**,
-which shrank by 67.6%, and reduced agreement with PPMI's two-class label from
-100.00% to 97.74%.
+threshold. In a post-hoc calculation on the frozen panel, moving each
+threshold by approximately 0.02 reclassified 298 of 4,441 labelled visits
+(6.7%), **all of them from the indeterminate class**, which shrank by 67.6%,
+and reduced agreement with PPMI's two-class label from 100.00% to 97.74%. The
+perturbation was not pre-specified and these figures are reported as
+exploratory.
 
 > **Editorial.** The threshold result is currently a recomputation from the
 > frozen panel rather than a saved run (O-4). Either run it or mark it as a
@@ -107,7 +109,14 @@ All nine exceeded persistence, by between 0.0226 (0.0135–0.0316) and 0.0348
 raising the number of latent states nor modelling elapsed time changed this
 picture materially: a five-state hidden Markov model scored 0.7513 against the
 three-state model's 0.7539, and the interval-aware chain scored 0.7453 against
-the discrete chain's 0.7474.
+the discrete chain's 0.7474. **The five-state figure is not a like-for-like
+comparison.** That model reported convergence in only 404 of 934 folds (43.3%),
+against 934 of 934 for every other specification, and 59.2% of its predictions
+come from folds whose fit did not converge (Methods). It is reported because
+raising the latent-state count neither helped nor fitted, which is itself the
+result. It does not carry the convergence finding above: its accuracy is
+interior to the range, sixth of the nine, and dropping it leaves the spread at
+1.22 points unchanged.
 
 **No fitted model recovered the indeterminate class.** Of fourteen
 specifications, five ever predicted indeterminate at all, and four of those did
