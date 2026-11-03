@@ -1,0 +1,72 @@
+
+==============================================================================
+MANUSCRIPT ASSETS
+==============================================================================
+  panel md5 fb038ddbdc19ab3368e13940f398e7ba
+  writing to manuscript/npj
+  source run present: True  experiments/20261103T193205Z_e2_transition_patient_bootstrap
+  source run present: True  experiments/20261103T202632Z_e8_harmonised_family_comparison
+
+==============================================================================
+FIGURE 2 -- LABEL INSTABILITY
+==============================================================================
+  fig2_label_instability.png
+
+==============================================================================
+FIGURE 4 -- WHERE THE MARGIN COMES FROM
+==============================================================================
+  fig4_margin_decomposition.png
+
+==============================================================================
+FIGURE 5b -- CLINICAL OUTCOME DISCRIMINATION
+==============================================================================
+  fig5b_outcome_discrimination.png
+
+==============================================================================
+TABLE 1 -- COHORT CHARACTERISTICS
+==============================================================================
+                                     variable      Full cohort  Analysed cohort Full cohort missing Analysed cohort missing
+                                  Patients, n            1,080              934                                            
+                  Baseline subtype: TD, n (%)      772 (71.7%)      676 (72.5%)                                            
+       Baseline subtype: Indeterminate, n (%)      109 (10.1%)       99 (10.6%)                                            
+                Baseline subtype: PIGD, n (%)      195 (18.1%)      157 (16.8%)                                            
+                           Labelled visits, n            4,441            4,295                                            
+    Labelled visits per patient, median (IQR)    3.0 (2.0-5.0)    4.0 (3.0-5.8)                                            
+               Follow-up, years, median (IQR)    3.0 (1.4-5.1)    3.1 (2.1-6.9)                                            
+                       Age at baseline, years 64.1 (57.1-70.1) 63.8 (56.8-69.7)                0.0%                    0.0%
+                                  Male, n (%)      709 (65.6%)      615 (65.8%)                0.0%                    0.0%
+                             Education, years 16.0 (14.0-18.0) 16.0 (14.0-18.0)                0.1%                    0.0%
+          Disease duration at baseline, years    0.5 (0.3-1.0)    0.5 (0.3-1.0)                0.1%                    0.0%
+                  Age at symptom onset, years 61.9 (55.0-68.0) 61.5 (54.6-67.6)                0.8%                    0.7%
+                           Hoehn & Yahr stage    2.0 (1.0-2.0)    2.0 (1.0-2.0)                0.3%                    0.2%
+                             MDS-UPDRS Part I    5.0 (3.0-9.0)    5.0 (3.0-9.0)                0.7%                    0.4%
+                            MDS-UPDRS Part II    5.0 (3.0-9.0)    5.0 (3.0-9.0)                0.2%                    0.1%
+                     MDS-UPDRS Part III (OFF) 21.0 (15.0-28.0) 21.0 (15.0-28.0)                0.6%                    0.4%
+                                         MoCA 27.0 (26.0-29.0) 27.0 (26.0-29.0)                0.3%                    0.2%
+                                        RBDSQ    3.0 (2.0-6.0)    3.0 (2.0-6.0)                0.5%                    0.4%
+                                    SCOPA-AUT   9.0 (6.0-13.0)   9.0 (6.0-13.0)                1.2%                    1.1%
+                                        UPSIT 23.0 (16.0-28.0) 22.0 (16.0-28.0)                2.6%                    2.6%
+               DaTscan putamen SBR, bilateral    0.7 (0.6-0.9)    0.7 (0.6-0.9)                1.4%                    1.5%
+           Levodopa-equivalent daily dose, mg    0.0 (0.0-0.0)    0.0 (0.0-0.0)                0.0%                    0.0%
+                   Tremor subscore (11 items)    0.5 (0.3-0.8)    0.5 (0.3-0.8)                0.4%                    0.2%
+                      PIGD subscore (5 items)    0.2 (0.0-0.4)    0.2 (0.0-0.4)                0.4%                    0.2%
+             Tremor/PIGD ratio, where defined    1.8 (0.9-2.7)    1.8 (0.9-2.8)               26.0%                   26.4%
+
+==============================================================================
+CHECKS
+==============================================================================
+                                                                   check  passed
+                   frozen panel md5 matches the project's recorded value    True
+    source run present: 20261103T193205Z_e2_transition_patient_bootstrap    True
+    source run present: 20261103T202632Z_e8_harmonised_family_comparison    True
+          figure 2 reproduces the nine transition probabilities from E-2    True
+                     figure 2's reversion panel has all six change types    True
+                  figure 4's per-stratum gains sum to each model's total    True
+                               figure 4 covers all 3,361 cases per model    True
+                          every rate coordinate's interval includes zero    True
+                            three of four level coordinates exclude zero    True
+                                 table 1's full cohort is 1,080 patients    True
+                               table 1's analysed cohort is 934 patients    True
+                                 table 1's labelled visit count is 4,441    True
+
+  12 of 12 checks passed

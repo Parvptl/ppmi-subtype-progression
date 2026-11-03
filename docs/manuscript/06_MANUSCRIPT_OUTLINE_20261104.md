@@ -11,9 +11,11 @@ than leaving a gap to be filled later.
 prediction of Parkinson's disease motor subtypes* — 14 words, no punctuation,
 within the npj 15-word rule.
 
-**Four deliverables do not yet exist** and are specified in §4: Figure 2,
-Figure 4, Figure 5 panel (b), and Table 1. Everything else is built, and
-every input for the four exists — they need drawing, not computing.
+✅ **All four outstanding deliverables were built on 2026-11-04** by
+`scripts/80_manuscript_assets.py` into `manuscript/npj/` — Figure 2, Figure 4,
+Figure 5(b) and Table 1, with companion CSVs, 12/12 internal checks and 9/9
+source checks against E-2, E-8 and the frozen panel. Every asset in §4 now
+exists.
 
 ---
 
@@ -219,12 +221,12 @@ Groups were defined post hoc from true labels.
 | # | Content | Status | Source |
 |---|---|---|---|
 | **F1** | Participant flow, every exclusion counted | ✅ **built** | E-5 `fig1_participant_flow.png` |
-| **F2** | Label instability: transition matrix with patient-clustered intervals, reversion by change type, TD→PIGD by interval | ❌ **to build** | E-2 `transition_probabilities.csv`, `other_quantities.csv` |
+| **F2** | Label instability: transition matrix with patient-clustered intervals, reversion by change type, TD→PIGD by interval | ✅ **built** | `manuscript/npj/fig2_label_instability.png` |
 | **F3** | Nine specifications under one decision rule, plus paired contrasts | ✅ **built** | E-8 `fig1_harmonised_family_comparison.png` |
-| **F4** | Margin decomposition by current recorded label | ❌ **to build** | E-8 `margin_decomposition.csv` |
-| **F5** | The representation: PCA cumulative variance and outcome AUCs | ⚠️ **half built** — panel (a) exists as `fig09_representation.png`; **panel (b) does not exist**, the outcome AUCs are only tabular | `manuscript/figures/fig09_*`; `manuscript/tables/table5_clinical_outcome_associations.csv` |
+| **F4** | Margin decomposition by current recorded label | ✅ **built** | `manuscript/npj/fig4_margin_decomposition.png` |
+| **F5** | The representation: PCA cumulative variance and outcome AUCs | ✅ **built** — panel (a) `fig09_representation.png`, panel (b) `manuscript/npj/fig5b_outcome_discrimination.png` | as listed |
 | **F6** | Robustness: history windows and stage-wise accuracy | ✅ **built** | `docs/history_window/figures/fig3_*`, `docs/stage_wise_evaluation/figures/fig1_*` |
-| **T1** | Cohort characteristics at baseline | ❌ **to build** | `outputs/visit_panel.csv` baseline visits; every candidate variable is 97–100% complete |
+| **T1** | Cohort characteristics at baseline | ✅ **built** | `manuscript/npj/table1_cohort_characteristics.csv` |
 | **T2** | Transition counts and probabilities, patient-clustered intervals | ✅ **built** | E-2 `transition_probabilities.csv` |
 | **T3** | Harmonised comparison, nine specifications + five baselines | ✅ **built** | E-8 `harmonised_metrics.csv` |
 | **T4** | Two-class comparison: CT-HMM, rich profile, baselines | ✅ **built** | `…derived_label_vs_subtype_history.csv`, `auc_metrics.csv` |
@@ -353,8 +355,8 @@ Methods section is assembly, not discovery.
 
 **Blocking the Results section**
 
-1. **Build Figure 2, Figure 4, Figure 5(b) and Table 1** (§4). All four are
-   specified and their inputs exist. Hours, no refitting.
+1. ~~**Build Figure 2, Figure 4, Figure 5(b) and Table 1.**~~ ✅ **Done
+   2026-11-04**, in `manuscript/npj/`.
 2. **O-4** — run the threshold-sensitivity experiment so R2's second claim
    rests on a saved run rather than my recomputation.
 
