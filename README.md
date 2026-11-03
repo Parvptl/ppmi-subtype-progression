@@ -18,6 +18,10 @@ transitioning to another over future follow-up.
 | Proposal Stages 1–7 | Data prep → exploration → HB model → posterior inference → prediction → validation → output | **All complete** |
 | Step 3 / Directions 1–3 | GPR, subscore LMM/MOGP, time-varying rate, clusterability audit (scripts 11–20) | Complete; see `docs/GPR_onwards_explanatory_report.md` |
 | Cluster phase | Held-out multi-output GP comparison, HMM stability, temporal audit, extended clusterability (scripts 21–27) | See `docs/cluster_phase/` |
+| Next-visit prediction | CT-HMM TD-vs-PIGD prediction, latent clinical states, rich clinical profile (scripts 60–64) | Complete; `docs/next_visit_prediction/`, `docs/latent_clinical_states/` |
+| Model comparison | AIC/BIC, ROC/AUC, Indeterminate boundary, stage-wise evaluation (scripts 65–69) | Complete; `docs/model_comparison/`, `docs/stage_wise_evaluation/` |
+| History and retraining | History windows and two-visit retraining for both models, patient-level audit (scripts 70–75) | Complete; `docs/history_window/` |
+| Manuscript | Research audit, then the essential pre-writing analyses (scripts 76–78) | In progress; `docs/manuscript/` |
 | Later | σᵢ-as-phenotype analysis (needs a restricted subcohort) | Not started |
 
 The panel covers **1,080 sporadic PD patients, 5,774 visits, 4,441 with a
@@ -54,6 +58,10 @@ BTP/
 │   ├── hmm.py                    latent state + misclassification model
 │   ├── hbayes.py                 hierarchical Bayesian growth model (Gibbs)
 │   ├── newpatient.py             first-visit progression model (the clinical one)
+│   ├── next_visit.py             CT-HMM next-visit TD-vs-PIGD prediction
+│   ├── clinical_states.py        latent clinical states (closed as negative)
+│   ├── clinical_profile.py       rich longitudinal profile: per-domain level+rate
+│   ├── loo.py                    leave-one-patient-out machinery
 │   ├── splitting.py              patient-level train/test split
 │   ├── validate.py               agreement against PPMI's own derivations
 │   └── plots.py, model_plots.py  figures
@@ -69,10 +77,18 @@ BTP/
 │   ├── 07_longitudinal_cv.py     proposal Stages 4 and 6
 │   ├── 08–20_*.py                LOO, GPR, subscore models, time-varying rate,
 │   │                             clusterability audit (see docs/gpr_audit/)
-│   ├── 21–27_*.py                cluster-phase experiments (docs/cluster_phase/)
+│   ├── 21–59_*.py                cluster-phase and Stage-2 integer-score work
+│   │                             (docs/cluster_phase/)
+│   ├── 60–64_*.py                next-visit CT-HMM prediction, latent clinical
+│   │                             states, rich clinical profile
+│   ├── 65–69_*.py                AIC/BIC, ROC/AUC, Indeterminate boundary,
+│   │                             stage-wise evaluation (docs/model_comparison/)
+│   ├── 70–75_*.py                history windows, two-visit retraining,
+│   │                             patient-level audit (docs/history_window/)
+│   ├── 76–78_*.py                manuscript groundwork (docs/manuscript/)
 │   └── cluster/                  SLURM wrapper, job script, benchmarks
 │
-├── tests/                     ← 403 tests (2026-10-14), all exercising src/
+├── tests/                     ← 758 tests (2026-11-04), all exercising src/
 │   ├── test_subtype.py           classification rule and its edge cases
 │   ├── test_transitions.py       pairing, matrices, reversion, survival
 │   ├── test_ctmc.py              generator recovery from simulated data
@@ -208,16 +224,16 @@ PIGD 25.0%. Indeterminate is a real, populated state — roughly one visit in
 ten — which is exactly what the curated cut's collapsed label throws away.
 
 **The premise holds.** TD prevalence declines monotonically with follow-up —
-71.7% at baseline, 63.7% at Y4, 47.9% at Y8, 39.1% at Y11 — so the TD → PIGD
+71.7% at baseline, 63.5% at Y4, 47.9% at Y8, 39.1% at Y11 — so the TD → PIGD
 drift the project is built around is present in the data rather than assumed.
 
 **Subtypes are not monotone.** On the 2-class label, 26.2% of non-TD visits
-revert to TD at the next assessment, against 19.3% moving the other way. A
+revert to TD at the next assessment, against 19.2% moving the other way. A
 patient's observed subtype is a noisy reading, not a ratchet. This is the
 strongest available argument for the proposal's latent-state framing over
 simple label counting, and it should be stated early.
 
-**Transitions scale with interval.** TD → TD falls from 0.819 at ≤1.5 years to
+**Transitions scale with interval.** TD → TD falls from 0.820 at ≤1.5 years to
 0.578 beyond 4 years. Pooling over "consecutive visits" conflates progression
 rate with attendance, so matrices must be stratified by interval or the model
 moved to continuous time.
@@ -348,7 +364,13 @@ well calibrated across the full probability range.
 **The HMM's value grows with follow-up** — its advantage over a lookup table
 runs +0.005 at one visit, +0.021 at two, +0.047 at six or more. The two models
 are complementary: this one answers the first visit, the HMM answers every
-visit after.
+visit after. *(These three figures appear only in prose — in
+`src/ppmi_subtype/newpatient.py`, `report/Project_Report.tex` and here. No
+script computes them and no CSV under `outputs/` contains them, so they are
+unverified; `outputs/loo/loo_accuracy_by_history.csv` gives HMM accuracy by
+history length but not this contrast. Flagged in
+`docs/manuscript/01_STAGE1_RESEARCH_AUDIT_20261104.md` as requiring
+reproduction before they are used in the manuscript.)*
 
 **Which baseline measures matter** (held-out cost of dropping each): only
 `updrs2_score` (+0.015), DaTscan putamen binding (+0.005) and `age` (+0.004)
@@ -422,14 +444,42 @@ on the raw ratio cannot represent a non-negative, right-skewed quantity.
 the only one that gives an interpretable progression rate, per-patient slopes,
 and a route to the σᵢ-as-phenotype analysis in the proposal's second half.
 
-**The results are a lower bound on the drift.** 23.1% of visits carry no label.
-Roughly half of that loss is exams that were performed but could not be fully
-scored — and in 1,243 of those 1,253 exams the missing item is postural
-stability, the pull test, which is often unsafe in a patient with poor balance.
-Those exams come from more advanced patients (median Hoehn & Yahr 3.0 vs 2.0,
-p = 1.4×10⁻¹⁷), and postural stability is a *PIGD* item. So the visits lost are
-disproportionately the ones most likely to be PIGD. See §6.1 of the Weeks 3–4
-report.
+**The results are a lower bound on the drift.** 23.1% of visits carry no label,
+and the reason is overwhelmingly the OFF-medication requirement rather than
+unscorable examinations. Of the 1,333 unlabelled visits:
+
+| Why the visit carries no subtype | Visits | Share |
+|---|---:|---:|
+| **Only an ON-medication Part III exam exists, so the rule excludes it** | **1,195** | **89.6%** |
+| No Part III record at all | 65 | 4.9% |
+| Part III exam recorded but incomplete | 57 | 4.3% |
+| All 13 Part III items present; Part II blocked the label | 16 | 1.2% |
+
+The mechanism shows up independently in the curated cut's own columns: `hy` is
+present at 6.5% of unlabelled visits against 99.8% of labelled ones, and
+`updrs3_score` at 3.5% against 99.4%, while the ON-state versions are present
+throughout. These are ON-state visits of treated patients.
+
+So the visits lost are disproportionately **treated patients later in
+follow-up** — 96.8% on PD medication against 57.9%, median year 5.0 against
+2.0. The analysed sample is weighted toward earlier, untreated follow-up, which
+attenuates observed progression and makes the reported drift a lower bound.
+
+The second route is real but small. Among the 57 incomplete exams, postural
+stability — the pull test, often unsafe in a patient with poor balance — is the
+missing item in 54, and those exams do come from more advanced patients (median
+Hoehn & Yahr 3.0 against 2.0, p = 6.4×10⁻¹⁸). Postural stability is a *PIGD*
+item, so this route loses visits most likely to be PIGD. Both routes bias the
+drift the same way; they are simply very different sizes.
+
+> **Correction, 2026-11-04.** This section previously said the loss splits
+> "roughly half" between the two routes, following §6.1 of the Weeks 3–4
+> report, and quoted "1,243 of 1,253" incomplete exams. On the frozen panel the
+> split is 1,260 to 57. The report's findings *about* the incomplete-exam route
+> — the postural-stability share and the Hoehn & Yahr difference — both
+> reproduce; its size does not, and the counts predate the 2026-10-14 data
+> transfer. Measured in
+> `docs/manuscript/02_ESSENTIAL_ANALYSES_E1_E2_E5_20261104.md`.
 
 ## Reference
 
