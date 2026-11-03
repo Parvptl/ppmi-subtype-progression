@@ -10,6 +10,20 @@ this repository · **Panel** `outputs/visit_panel.csv`, md5
 > and E-6 rescoped. Affected rows below are marked inline. Two further
 > documentation defects were found during that work and are recorded in the
 > newer document, not here.
+>
+> **Update, 2026-11-04 (Stage 3).** The literature review is in
+> `03_LITERATURE_REVIEW_20261104.md`. It supplies Output 4, which this
+> document left open, and adds limitation **I18** below. It also found
+> external corroboration of the panel build that is stronger than the
+> internal agreement checks in §2.1a.
+>
+> **Update, 2026-11-04 (Stage 4).** Positioning is settled in
+> `04_SCIENTIFIC_POSITIONING_20261104.md`. It supersedes Output 7 below,
+> rejects all six candidate questions as the primary one in favour of a
+> synthesis, and adds **E-8** — the primary analysis table is not yet
+> comparable across model families, because they were scored under two
+> different label-derivation rules worth more than the differences
+> between the families themselves.
 
 **Nothing was fitted, retrained or modified for this audit.** Every number
 below was read from a saved output file, a committed report, or the source code,
@@ -697,6 +711,12 @@ conservative. State this; do not quietly equate the designs.
 
 ## OUTPUT 4 — Research gap
 
+✅ **DONE 2026-11-04 — superseded by `03_LITERATURE_REVIEW_20261104.md`,**
+which verified 14 references through Crossref and Europe PMC and derived the
+gap from them. Four of the six claims this section said would need checking
+held up; two were already covered by published work and the gap was narrowed
+accordingly. The text below is the pre-review placeholder, kept for the record.
+
 **I have not yet run the literature review.** Stage 3 of your workflow is a
 verified PubMed/Crossref search with DOIs, and I will not fabricate citations
 or a gap statement to fill this slot now. What follows is the *internal*
@@ -786,6 +806,7 @@ result**, not the model class.
 | I15 | **Patient-level subgroups are post hoc**, defined after seeing predictions. | E22 audit §10 |
 | I16 | **Latent states are not disease stages**, and the project is careful about this. Any drift toward staging language in the manuscript is unsupported. | E16 §7 |
 | I17 | **The clinical-relevance AUCs are univariate with the coordinate chosen on the same data it is compared on**, so each Δ is an upper bound. | E18 §6.6 |
+| I18 ⚠️ **NEW 2026-11-04** | **The five-year clinical output table is a latent-state quantity presented as a clinical one.** `hmm.clinical_table` returns latent-to-latent probabilities and its docstring says so, but the README and the Weeks 5–7 report quote it as "a patient currently Indeterminate has a 63% chance of being PIGD within five years, against 19% for a patient currently TD" — which a clinician reads as being about a *recorded* label. Recomputed through the emission matrix, the recorded-to-recorded figures are TD→PIGD **0.24–0.33** (quoted 0.19) and Indeterminate→PIGD **0.50–0.57** (quoted 0.63): the TD risk is understated and the Indeterminate risk overstated, by 5–14 points. The recomputation is also sensitive to the initial distribution π, which `outputs/model/` does not save. Presentation defect, not a modelling error. | `03_LITERATURE_REVIEW_20261104.md` §3.4 |
 
 ### Minor issues
 
@@ -851,6 +872,7 @@ separately at the end.
 | **E-5** ✅ **DONE 2026-11-04** | **Participant flow diagram**, every exclusion counted. | Done: `scripts/78`, 16/16 checks, figure `fig1_participant_flow.png`. Also corrected the README's account of label missingness. | Done |
 | **E-6** ⚠️ **RESCOPED 2026-11-04** | **A missingness sensitivity analysis.** ~~Worst-case assumption that unlabelled exams with a missing postural-stability item would have scored PIGD.~~ E-5 showed that subgroup is 54 visits, not ~1,250, so that bound is now uninformative. The analysis that matters is a **treatment-driven** one: bound the drift under assumptions about what the 1,195 ON-medication-only visits would have scored OFF. | I2 remains the largest threat to validity and is still only argued, not bounded — but the mechanism to bound is now known. | 1 day |
 | **E-7** | **STROBE and TRIPOD+AI checklists**, with each item marked complete / partial / missing / not applicable, and the descriptive-vs-predictive objectives separated. | Required; also the cleanest way to surface what is still missing. | 1 day |
+| **E-8** 🆕 **2026-11-04** | **Harmonise the multi-family comparison.** Re-score every family's saved predictions onto one 3-class probability vector on the 3,361-transition set, then apply one decision rule, one baseline and one metric suite. | **Blocks the primary analysis.** The same model moves +2.7 accuracy points on the label-derivation rule alone, and the baseline moves +2.1, so no "beats persistence by X" claim is currently well defined across families. No refitting needed. | Hours |
 
 ### Strongly recommended — would substantially improve the manuscript
 
@@ -886,6 +908,15 @@ the code path is live.
 ---
 
 ## OUTPUT 7 — Primary scientific narrative
+
+⚠️ **SUPERSEDED 2026-11-04 by `04_SCIENTIFIC_POSITIONING_20261104.md`.**
+The recommendation below — build the paper around the CARE AI abstract's
+thesis — survives and is confirmed. What changed is the reasoning and the
+hierarchy: Stage 3 showed that subtype instability is established by four
+prior studies, so it is background rather than the contribution, and
+Stage 4 found that the primary analysis table is not yet comparable
+across model families (E-8). Read the newer document for the decisions;
+this section is kept for the record.
 
 ### 7.1 The recommendation
 
