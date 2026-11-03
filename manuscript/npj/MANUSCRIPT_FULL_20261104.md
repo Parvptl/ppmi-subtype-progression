@@ -888,7 +888,11 @@ Data were obtained from the Parkinson's Progression Markers Initiative (PPMI) da
 
 ## Code availability
 
-> **UNRESOLVED — DECISION REQUIRED.** The pipeline, the Markov and hidden Markov models, the subscore models and every analysis script in `scripts/` are version-controlled. The Gaussian-process modules (`gpr.py`, `gpr_loo.py`, `gpr_plots.py`, `trajectory.py`, scripts 11–16 and three test files) are **untracked and were never pushed**, and the primary harmonised comparison depends on the subscore Gaussian process. A code-availability statement cannot cover the full analysis until those files are committed.
+All analysis code is version-controlled: the data pipeline, the observed-label Markov chains, the continuous-time hidden Markov model, the subscore models and the Gaussian-process implementation on which the subscore Gaussian process in the primary comparison depends, the continuous multi-domain representation, every analysis script, and an accompanying test suite of 758 tests. No part of the analysis depends on code outside the repository.
+
+Derived outputs are deliberately not included. They contain participant-level values and are not redistributable under PPMI's Data Use Agreement. A reader with PPMI access can regenerate them by running the pipeline against the frozen visit panel, whose checksum the repository records.
+
+> **AUTHOR QUERY.** The repository URL, and whether it will be made public or deposited with a DOI at acceptance, must be supplied by the authors. The code itself is complete and version-controlled; only the hosting decision is outstanding.
 
 ## Ethics declarations
 

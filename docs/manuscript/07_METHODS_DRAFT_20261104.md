@@ -491,7 +491,7 @@ of every internal validation check; runs exit non-zero if any check fails.
 | CT-HMM | ✅ fold-level predictions reproduce to 1.1 × 10⁻¹⁶ |
 | Harmonised comparison | ✅ natively-3-class models reproduce to 4 × 10⁻⁵; subscore models are a fresh Monte Carlo and are not bit-reproducible by design |
 | Growth model | ⚠️ reproducible but **not diagnosable** (C3) |
-| GPR line | ⚠️ reproducible locally, but the modules are **untracked and unpushed** — see §B |
+| GPR line | ✅ modules tracked and pushed (`dada934`, 2026-09-30); the earlier "untracked" note was wrong — see §B |
 | Test suite | ✅ 758 tests, all passing (617 s) |
 | Environment | ✅ pinned and recorded per run |
 
@@ -506,9 +506,13 @@ of every internal validation check; runs exit non-zero if any check fails.
    institutional position on secondary analysis.
 2. **PPMI acknowledgement wording** — the required citation and funding
    statement must be taken from PPMI's current guidance.
-3. **Code availability** — the Gaussian-process modules are untracked and were
-   deliberately never pushed. The primary comparison depends on the subscore
-   GP, so the statement cannot promise that line as things stand.
+3. **Code availability** ✅ **CORRECTED 2026-11-04.** The earlier entry here
+   claimed the Gaussian-process modules were untracked and never pushed. They
+   are tracked, were added on 2026-09-30 in `dada934`, and that commit is
+   already on `origin/main`. The whole chain the subscore GP depends on —
+   `scripts/18_subscore_multioutput_gp.py`, `mogp.py`, `gpr.py`,
+   `trajectory.py`, `subtype.py` — is tracked, as are its three test files.
+   The statement can promise the GPR line.
 4. **C6** — the archived 2020 release behind the 99.87% agreement figure is no
    longer present, so that check is not currently reproducible.
 

@@ -326,7 +326,7 @@ Methods section is assembly, not discovery.
 | Item | Status |
 |---|---|
 | **Data availability** | Draftable: PPMI via LONI under the DUA, not redistributable. Needs the current PPMI acknowledgement wording (`report/CARE_AI2026_Abstract.tex` carries a `% TODO` for exactly this). |
-| **Code availability** | **Problem.** The GPR modules (`gpr.py`, `gpr_loo.py`, `gpr_plots.py`, `trajectory.py`, scripts 11–16 and three test files) are untracked and were deliberately never pushed. A code-availability statement cannot promise the GPR line unless they are committed, and R3 depends on the subscore GP. **Decide before submission.** |
+| **Code availability** | ✅ **CORRECTED 2026-11-04.** The GPR modules, scripts 11–16 and the three test files are tracked (`dada934`, 2026-09-30, already on `origin/main`). R3's subscore GP depends on `scripts/18`, `mogp.py`, `gpr.py`, `trajectory.py` and `subtype.py`, all tracked. The statement is draftable now; only the repository's hosting and archival are outstanding. |
 | **Ethics** | **ABSENT (C5).** Needs the PPMI DUA reference and the institutional position on secondary analysis. |
 | **Funding** | **ABSENT (C5).** |
 | **Competing interests** | **ABSENT (C5).** |

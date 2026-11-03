@@ -846,7 +846,7 @@ result**, not the model class.
 | Confidence intervals | **Available**, patient-clustered, **except for the transition analysis** (C1). |
 | **Ethics documentation** | **ABSENT** (C5). |
 | **Data availability statement** | **Draftable** but needs the current PPMI wording. |
-| **Code availability** | **Problem.** The GPR modules (`gpr.py`, `gpr_loo.py`, `gpr_plots.py`, `trajectory.py`, scripts 11–16, 3 test files) are **untracked and were deliberately never pushed**. `outputs/` and `experiments/` are gitignored. A code-availability statement cannot honestly promise the GPR line unless those files are committed. |
+| **Code availability** | ✅ **CORRECTED 2026-11-04 — this entry was wrong.** The GPR modules (`gpr.py`, `gpr_loo.py`, `gpr_plots.py`, `trajectory.py`), scripts 11–16 and all three test files are **tracked**, added 2026-09-30 in `dada934` and already on `origin/main`. `git ls-files` confirms each one, `git status --short` is empty, and the repository has no untracked files at all. Nothing GP-related appears in `.gitignore`. `outputs/` and `experiments/` are gitignored because they hold participant-level derived data — a data-availability limit, not a code one. The claim was asserted here without checking and propagated to four other documents. The only open item is whether the repository will be public or archived with a DOI. |
 | **Author contributions** | **Inferable** — two git authors (Mayank Tewatia; Parv, 23+9 commits) plus Dr. Sahasranand K. R. as supervisor on the abstract. Needs the authors' own CRediT statement. |
 | **Funding** | **ABSENT.** |
 | **Conflicts of interest** | **ABSENT.** |

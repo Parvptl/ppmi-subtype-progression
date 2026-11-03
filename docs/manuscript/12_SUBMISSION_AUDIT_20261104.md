@@ -248,11 +248,29 @@ ethics approval, consent, funding, trial registration or external validation
 appears anywhere. PPMI also requires specific acknowledgement wording that is
 not in the repository. **Authors must supply all five.**
 
-**B2. Code availability cannot be stated honestly.** The Gaussian-process
-modules (`gpr.py`, `gpr_loo.py`, `gpr_plots.py`, `trajectory.py`, scripts
-11–16, three test files) are untracked and were never pushed, and the primary
-harmonised comparison depends on the subscore Gaussian process. Either commit
-them or the statement must disclose the gap.
+**B2. ❌ RETRACTED 2026-11-04 — the Gaussian-process modules were never
+untracked.** This entry claimed they were untracked and never pushed. All four
+(`gpr.py`, `gpr_loo.py`, `gpr_plots.py`, `trajectory.py`), scripts 11–16 and
+three test files were added on **2026-09-30 in `dada934`** (21 files, 6,224
+insertions, alongside eight `docs/gpr_audit/` documents), and that commit is
+**already on `origin/main`**. `git status --short` is empty and the repository
+contains no untracked files whatsoever; nothing GP-related is in `.gitignore`.
+
+R3's subscore GP depends on `scripts/18_subscore_multioutput_gp.py` and the
+tracked modules `mogp.py`, `gpr.py`, `trajectory.py` and `subtype.py`. The
+harmonised comparison itself re-scores the saved predictions and refits no GP,
+so the dependency is on code that exists in the published history.
+
+**Why this matters beyond the one claim.** The error originated in the Stage 1
+audit, which asserted it without running `git ls-files`, and this audit
+repeated it — an audit whose purpose was to catch exactly this kind of thing.
+Every numeric claim in the manuscript was re-derived from its run, but
+repository claims were taken on trust. That asymmetry is the lesson: a
+statement about the repository needs a command, not a recollection.
+
+**What is actually open** is narrower and is not a code problem: the repository
+URL, and whether it will be made public or archived with a DOI at acceptance.
+Recorded as an author query.
 
 **B3. The author list is unconfirmed.** Taken from the CARE AI 2026 abstract
 and marked as such.
@@ -353,15 +371,24 @@ never verified. **Re-check all of these at submission.**
 **Submission-ready:** the manuscript text. All five sections are drafted,
 internally consistent, and every headline quantity traces to a saved run.
 
-**Not submission-ready:** the paperwork (B1–B3) and four of ten display items
-(C1–C3). A1 is fixed and verified against a full rerun; A2 is retracted; A2′ is fixed
-and verified by round-trip in both directions.
+**Not submission-ready:** the paperwork (B1, B3) and four of ten display items
+(C1–C3). A1 is fixed and verified against a full rerun; A2 is retracted; A2′ is
+fixed and verified by round-trip in both directions; **B2 is retracted — the
+code was always tracked**, leaving only the repository's hosting and archival
+as an author query.
 
-**Order I would work in:** B1–B2 next, which need the authors and are not
+**Order I would work in:** B1 and B3 next, which need the authors and are not
 analysis work. Then C1–C3 as a single asset-building pass. D1 and D2 are
-experiments worth running before a reviewer asks. D3–D5 and E1–E2 are small
+experiments worth running before a reviewer asks. D3–D5 and E1–E3 are small
 and can ride along.
 
 **Nothing in this audit requires re-opening a scientific conclusion.** A1
 changes a point estimate on the one outcome the manuscript already reports as
 not established, in the conservative direction.
+
+**Two of this audit's own findings were wrong** (A2 and B2), and both were
+wrong the same way: a claim about the repository or its artifacts that was
+carried forward rather than re-derived. The numeric claims, which were all
+re-run from source, held up. Any future audit here should treat "the repository
+contains / does not contain X" as a claim needing a command, exactly as it
+treats a confidence interval.
