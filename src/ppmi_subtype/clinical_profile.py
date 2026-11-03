@@ -1357,11 +1357,17 @@ def best_component_vs_subtype(table: pd.DataFrame, associations: pd.DataFrame,
     y = table[outcome].to_numpy(dtype=float)
     ok = np.isfinite(y)
     score = table[best].to_numpy(float)
-    # Orient the component so a higher score means more outcome, matching the
-    # subtype reference's orientation.
+    # Orient the component so a higher score means more outcome.
     if auc(score[ok], y[ok].astype(bool)) < 0.5:
         score = -score
     ref = table["subtype_at_anchor"].map(_SUBTYPE_SCORE).to_numpy(float)
+    # The reference gets the same one-time orientation. Without it the
+    # component is allowed its favourable direction while the label is not,
+    # which inflates the difference on any outcome whose label AUC is below
+    # chance. The flip is fixed here, before the bootstrap, so orientation is
+    # a property of the score rather than something re-chosen per replicate.
+    if auc(ref[ok], y[ok].astype(bool)) < 0.5:
+        ref = -ref
 
     out = bootstrap_auc_difference(score[ok], ref[ok], y[ok].astype(bool),
                                    seed=seed, n_boot=n_boot)

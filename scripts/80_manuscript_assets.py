@@ -50,7 +50,12 @@ from ppmi_subtype.plots import (  # noqa: E402
 
 E2 = "experiments/20261103T193205Z_e2_transition_patient_bootstrap"
 E8 = "experiments/20261103T202632Z_e8_harmonised_family_comparison"
-T5 = "manuscript/tables/table5_clinical_outcome_associations.csv"
+# Full-precision rerun at HEAD carrying the A1 reference-orientation fix.
+# NOT scripts/82's output: that read the run's saved outcome_table.csv,
+# which script 64 writes with .round(4) while computing on the in-memory
+# full-precision table, so small-magnitude rate columns shift (see the
+# Stage 12 audit, A2).
+T5 = "experiments/20261103T220147Z_a2p_outcome_table_fullprec/h3_component_vs_subtype.csv"
 
 CLASSES = ["TD", "Indeterminate", "PIGD"]
 ACCENT = "#1f4e79"

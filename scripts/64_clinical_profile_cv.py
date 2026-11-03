@@ -544,7 +544,13 @@ def main() -> int:
     if missing_cols:
         raise SystemExit(f"panel is missing outcome columns: {missing_cols}")
     outcome_table = cp.build_outcome_table(panel, rep0, anchor_visit=1)
-    outcome_table.round(4).to_csv(out / "outcome_table.csv", index=False)
+    # Full precision, like the other per-patient tables this script saves. It
+    # was previously rounded to 4dp, which is destructive for the rate
+    # coordinates: those are of order 1e-3, so rounding collapses many of them
+    # to exactly zero and perturbs any rank statistic recomputed from the file.
+    # The analysis below uses the in-memory table either way, so this only
+    # affects whether the saved file can be reused -- and it could not be.
+    outcome_table.to_csv(out / "outcome_table.csv", index=False)
     assoc = cp.outcome_associations(outcome_table, seed=cfg.seed)
     assoc.round(4).to_csv(out / "outcome_associations.csv", index=False)
 
