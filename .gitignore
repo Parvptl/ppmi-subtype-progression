@@ -24,6 +24,7 @@ experiments/
 !reports/*.pdf
 !extra/old_ood_project/*.pdf
 !docs/band_width_sensitivity/*.pdf
+!paper/arxiv/*.pdf
 
 __pycache__/
 *.py[cod]
