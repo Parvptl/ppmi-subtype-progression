@@ -77,10 +77,28 @@ MIN_TAIL_PATIENTS = 20
 UNDEFINED_BAND = "undefined"
 
 
-def main_edges() -> np.ndarray:
-    """The 31 fixed edges 0.0, 0.1, ... 3.0 bounding the 30 main bands."""
-    n = int(round((MAIN_HIGH - MAIN_LOW) / MAIN_WIDTH))
-    return MAIN_LOW + np.arange(n + 1) / (1.0 / MAIN_WIDTH)
+def main_edges(width: float = MAIN_WIDTH) -> np.ndarray:
+    """The fixed edges MAIN_LOW, ... MAIN_HIGH bounding the main-range bands.
+
+    At the default width these are the 31 edges 0.0, 0.1, ... 3.0 over 30
+    bands. `width` is a parameter so the band-width sensitivity experiment can
+    vary it; it must divide ``[MAIN_LOW, MAIN_HIGH]`` a whole number of times,
+    because a part-width band at the top would not be comparable across
+    configurations.
+
+    The edges are computed as ``k * span / n`` rather than ``k * width``: both
+    are exact in rational arithmetic, but the former is one correctly rounded
+    division of two exactly representable numbers, so an edge like 0.9 at
+    width 0.3 lands on 0.9 instead of 0.8999999999999999. Boundary assignment
+    is exact only if the edges are.
+    """
+    span = MAIN_HIGH - MAIN_LOW
+    n = int(round(span / width))
+    if n < 1 or abs(n * width - span) > 1e-9:
+        raise ValueError(
+            f"band width {width} does not divide [{MAIN_LOW}, {MAIN_HIGH}] a "
+            "whole number of times")
+    return MAIN_LOW + np.arange(n + 1) * span / n
 
 
 def candidate_tail_edges(max_ratio: float) -> np.ndarray:
@@ -200,11 +218,20 @@ class BandScheme:
     td_threshold: float
     pigd_threshold: float
     band_boundaries: str = "outer"
+    #: Main-range band width. Defaults to the 0.1 this experiment fixed; the
+    #: band-width sensitivity experiment varies it and nothing else.
+    main_width: float = MAIN_WIDTH
 
     @property
     def edges(self) -> np.ndarray:
-        """All band lower edges, ascending: 30 main plus the retained tail."""
-        return np.concatenate([main_edges()[:-1], np.asarray(self.tail_lows, float)])
+        """All band lower edges, ascending: the main range plus the retained tail."""
+        return np.concatenate([main_edges(self.main_width)[:-1],
+                               np.asarray(self.tail_lows, float)])
+
+    @property
+    def n_main_bands(self) -> int:
+        """Number of fixed-width bands covering ``[MAIN_LOW, MAIN_HIGH)``."""
+        return len(main_edges(self.main_width)) - 1
 
     @property
     def n_bands(self) -> int:

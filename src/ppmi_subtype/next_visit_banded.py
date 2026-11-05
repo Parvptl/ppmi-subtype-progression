@@ -45,6 +45,15 @@ MODEL_CONTROL = "CT-HMM (subtype labels, joint code path)"
 MODELS = (MODEL_LABEL, MODEL_BANDED, MODEL_CONTROL)
 
 
+def band_width_model(width: float) -> str:
+    """Model name for one configuration of the band-width experiment.
+
+    The width goes in the name so predictions from several configurations can
+    share one frame and be scored by the same functions as every other model.
+    """
+    return f"CT-HMM (subtype x ratio band, width {width:.2f})"
+
+
 # ---------------------------------------------------------------------------
 #  Per-visit ratios, aligned to the LOPO sequences
 # ---------------------------------------------------------------------------
@@ -121,11 +130,17 @@ def fold_alphabet(
     held_out=None,
     min_observations: int = rb.MIN_TAIL_OBSERVATIONS,
     min_patients: int = rb.MIN_TAIL_PATIENTS,
+    main_width: float = rb.MAIN_WIDTH,
 ) -> tuple[rb.BandScheme, rb.JointAlphabet, pd.DataFrame]:
     """Build the band scheme from every patient except `held_out`.
 
     `held_out=None` builds it from the whole cohort, which is used for the
     experiment's global diagnostics and for nothing that is scored.
+
+    `main_width` sets the fixed main-range resolution. It is not data-dependent
+    --- it is a configuration of the experiment, identical in every fold --- so
+    varying it does not touch the leakage argument, which concerns the tail
+    merge alone.
     """
     train = [s for s in bdata.sequences if s["PATNO"] != held_out]
     if not train:
@@ -139,14 +154,16 @@ def fold_alphabet(
                                          min_observations=min_observations,
                                          min_patients=min_patients)
     scheme = rb.BandScheme(tuple(tail_lows), bdata.td_threshold,
-                           bdata.pigd_threshold, bdata.band_boundaries)
+                           bdata.pigd_threshold, bdata.band_boundaries,
+                           main_width)
     alphabet = rb.build_alphabet(scheme, bdata.subtype_names)
     return scheme, alphabet, tail_diag
 
 
 def assert_bands_training_only(bdata: BandedData, held_out, scheme: rb.BandScheme,
                                min_observations: int = rb.MIN_TAIL_OBSERVATIONS,
-                               min_patients: int = rb.MIN_TAIL_PATIENTS) -> None:
+                               min_patients: int = rb.MIN_TAIL_PATIENTS,
+                               main_width: float = rb.MAIN_WIDTH) -> None:
     """Check the fold's band edges are what the training patients alone produce.
 
     Rebuilds them from the training patients and compares. A band structure
@@ -154,11 +171,16 @@ def assert_bands_training_only(bdata: BandedData, held_out, scheme: rb.BandSchem
     ratios were what pushed a candidate band over the minimum --- which is
     exactly the leak this has to rule out.
     """
-    rebuilt, _, _ = fold_alphabet(bdata, held_out, min_observations, min_patients)
+    rebuilt, _, _ = fold_alphabet(bdata, held_out, min_observations, min_patients,
+                                  main_width)
     if not np.array_equal(np.asarray(rebuilt.tail_lows), np.asarray(scheme.tail_lows)):
         raise loo.LeakageError(
             f"fold {held_out}: band edges {scheme.tail_lows} are not the ones the "
             f"training patients produce ({rebuilt.tail_lows})")
+    if rebuilt.main_width != scheme.main_width:                    # pragma: no cover
+        raise loo.LeakageError(
+            f"fold {held_out}: main width {scheme.main_width} is not the "
+            f"configured {rebuilt.main_width}")
 
 
 def joint_sequences(bdata: BandedData, alphabet: rb.JointAlphabet,
@@ -345,6 +367,163 @@ def run_fold(
            if k in ("n_iter", "n_fev", "proj_grad", "converged", "termination")},
     }
     return pd.concat(frames, ignore_index=True), fold_diagnostics
+
+
+def run_fold_widths(
+    data: loo.LOOData,
+    bdata: BandedData,
+    cases: pd.DataFrame,
+    held_out,
+    seed: int,
+    n_restarts: int,
+    emission_floor: float | None,
+    widths,
+    min_observations: int = rb.MIN_TAIL_OBSERVATIONS,
+    min_patients: int = rb.MIN_TAIL_PATIENTS,
+    maxfun: int | None = None,
+) -> tuple[pd.DataFrame, list[dict]]:
+    """Fit the label baseline and one banded arm per main-range width.
+
+    The fold of the band-width sensitivity experiment. Everything outside the
+    alphabet is the fold :func:`run_fold` runs --- the same training split, the
+    same leakage assertions, the same audited starts, the same prediction,
+    alignment and normalisation checks --- so a width's arm differs from the
+    published 0.1 arm in the band edges and in nothing else.
+
+    The control arm is not refitted here. The previous experiment established
+    that the joint code path reproduces the square model exactly (zero
+    discordant cases), and repeating that once per width would cost a quarter
+    of the compute to re-answer a settled question.
+
+    Returns ``(predictions, fold_diagnostics)`` with one diagnostics row per
+    arm, so the band structure of every width in every fold is recoverable.
+    """
+    widths = [float(w) for w in widths]
+    train_sequences = [s for s in data.sequences if s["PATNO"] != held_out]
+    train_pairs = data.pairs[data.pairs["PATNO"] != held_out]
+    loo.assert_no_leakage(held_out, train_sequences, train_pairs)
+
+    test_cases = cases[cases["PATNO"] == held_out].sort_values("visit_index")
+    test_cases = test_cases.reset_index(drop=True)
+    test_sequence = next(s for s in data.sequences if s["PATNO"] == held_out)
+
+    raw: dict[str, np.ndarray] = {}
+    diagnostics: dict[str, dict] = {}
+    categories: dict[str, list[str]] = {}
+    fold_rows: list[dict] = []
+
+    held_seq = bdata.by_patient()[held_out]
+    k = test_cases["visit_index"].to_numpy(int)
+    held_max_ratio = (float(np.nanmax(held_seq["ratios"]))
+                      if np.isfinite(held_seq["ratios"]).any() else float("nan"))
+
+    # -- reference arm: the published CT-HMM over the three recorded labels --
+    starts = nv.audited_starts(len(data.states), len(data.states), emission_floor,
+                               seed, n_restarts)
+    label_fit, label_records = hmm_stability.fit_multistart(
+        train_sequences, data.states, n_hidden=len(data.states),
+        emission_floor=emission_floor, starts=starts, state_names=nv.STATE_NAMES)
+    label_preds = hmm.predictive_distributions(label_fit, [test_sequence])
+    label_preds = label_preds.sort_values("step").reset_index(drop=True)
+    _check_alignment(label_preds, test_cases, held_out, MODEL_LABEL)
+    raw[MODEL_LABEL] = label_preds[nv.PROB_COLS].to_numpy(dtype=float)
+    diagnostics[MODEL_LABEL] = _diagnostics(label_records, label_fit.loglik)
+    categories[MODEL_LABEL] = [nv.STATE_NAMES[c] for c in held_seq["labels"][k]]
+    fold_rows.append({
+        "held_out_patient": held_out, "model": MODEL_LABEL, "main_width": float("nan"),
+        "n_main_bands": 0, "n_tail_bands": 0, "tail_lows": "",
+        "n_categories": len(data.states), "n_params": int(label_fit.n_params),
+        "train_loglik": float(label_fit.loglik), "aic": float(label_fit.aic),
+        "min_diag_emission": float(np.min(np.diag(label_fit.E))),
+        "held_out_max_ratio": held_max_ratio,
+        "held_out_above_training_tail": False,
+        "n_train_patients": len(train_sequences), "n_cases": len(test_cases),
+        **{key: diagnostics[MODEL_LABEL][key] for key in
+           ("n_iter", "n_fev", "proj_grad", "converged", "termination")},
+    })
+
+    # -- one banded arm per configured main-range width ----------------------
+    for width in widths:
+        name = band_width_model(width)
+        scheme, alphabet, _ = fold_alphabet(bdata, held_out, min_observations,
+                                            min_patients, width)
+        assert_bands_training_only(bdata, held_out, scheme, min_observations,
+                                   min_patients, width)
+
+        train_joint = joint_sequences(bdata, alphabet,
+                                      [s["PATNO"] for s in train_sequences])
+        if held_out in {s["PATNO"] for s in train_joint}:          # pragma: no cover
+            raise loo.LeakageError(
+                f"held-out patient {held_out} is in the joint training set")
+        test_joint = joint_sequences(bdata, alphabet, [held_out])
+
+        fit, records = hmm_banded.fit_banded(
+            train_joint, alphabet, bdata.subtype_names, n_hidden=len(data.states),
+            emission_floor=emission_floor, seed=seed, n_restarts=n_restarts,
+            maxfun=maxfun)
+        preds = hmm_banded.predictive_distributions(fit, test_joint)
+        preds = preds.sort_values("step").reset_index(drop=True)
+        _check_alignment(preds, test_cases, held_out, name)
+        if not np.allclose(preds["p_joint_sum"], 1.0, atol=1e-9):
+            raise RuntimeError(
+                f"fold {held_out}, width {width}: joint probabilities did not sum "
+                f"to one before aggregation "
+                f"(worst {abs(preds['p_joint_sum'] - 1).max():.3e})")
+        raw[name] = preds[nv.PROB_COLS].to_numpy(dtype=float)
+        diagnostics[name] = _diagnostics(records, fit.loglik)
+
+        held_codes = alphabet.code(held_seq["labels"],
+                                   scheme.band_index(held_seq["ratios"]))
+        categories[name] = [alphabet.labels[c] for c in held_codes[k]]
+        fold_rows.append({
+            "held_out_patient": held_out, "model": name, "main_width": width,
+            "n_main_bands": int(scheme.n_main_bands),
+            "n_tail_bands": len(scheme.tail_lows),
+            "tail_lows": ",".join(f"{v:.2f}" for v in scheme.tail_lows),
+            "n_categories": int(alphabet.n_categories),
+            "n_params": int(fit.n_params),
+            "train_loglik": float(fit.loglik), "aic": float(fit.aic),
+            "min_diag_emission": float(np.min(np.diag(fit.M))),
+            "held_out_max_ratio": held_max_ratio,
+            "held_out_above_training_tail": bool(
+                held_max_ratio >= scheme.edges[-1]
+                if np.isfinite(held_max_ratio) else False),
+            "n_train_patients": len(train_sequences), "n_cases": len(test_cases),
+            **{key: diagnostics[name][key] for key in
+               ("n_iter", "n_fev", "proj_grad", "converged", "termination")},
+        })
+
+    # -- the per-case record, one block per arm ------------------------------
+    frames = []
+    for name in [MODEL_LABEL] + [band_width_model(w) for w in widths]:
+        probs = np.asarray(raw[name], dtype=float)
+        p_td, p_pigd, defined = nv.conditional_two_class(probs)
+        frame = test_cases[[
+            "PATNO", "visit_index", "n_history", "current_event", "current_years",
+            "target_event", "target_years", "interval_years", "current_label",
+            "actual_next_label", "eligible",
+        ]].copy()
+        frame["model"] = name
+        frame["main_width"] = (float("nan") if name == MODEL_LABEL
+                               else float(name.split("width ")[1].rstrip(")")))
+        frame["p_TD_raw"] = probs[:, nv.TD]
+        frame["p_Indeterminate_raw"] = probs[:, nv.IND]
+        frame["p_PIGD_raw"] = probs[:, nv.PIGD]
+        frame["P_TD"] = p_td
+        frame["P_PIGD"] = p_pigd
+        frame["two_class_defined"] = defined
+        frame["predicted_state"] = nv.predicted_state(p_td, p_pigd)
+        frame["is_tie"] = defined & (p_td == p_pigd)
+        frame["current_ratio"] = held_seq["ratios"][k]
+        frame["current_category"] = categories[name]
+        frame["target_ratio"] = held_seq["ratios"][k + 1]
+        for key, value in diagnostics[name].items():
+            frame[f"fit_{key}"] = value
+        frame["n_train_patients"] = len(train_sequences)
+        frame["held_out_patient"] = held_out
+        frames.append(frame)
+
+    return pd.concat(frames, ignore_index=True), fold_rows
 
 
 def _check_alignment(preds: pd.DataFrame, test_cases: pd.DataFrame, held_out,
