@@ -242,6 +242,65 @@ Calibration bin edges are not identical between the arms, because the sparse-bin
 merge is adaptive; the comparison of gaps is therefore indicative rather than
 exact.
 
+### Discrimination (AUC-ROC)
+
+**Added after the fact.** AUC was not among the metrics this experiment
+specified, and it was computed once the primary results were already in, so it
+is a post hoc analysis and is reported as one. It earns its place because
+accuracy depends on the argmax rule and the banded model moved its decision
+boundary: AUC is threshold-free and calibration-invariant, so it isolates
+*ranking* from both of those.
+
+PIGD is the positive class, the score is the conditional two-class P(PIGD), and
+the set is the same 3,029 cases from 899 patients. Conventions follow this
+project's existing `scripts/66_roc_auc_comparison.py`, including the
+patient-clustered bootstrap.
+
+| model | AUC-ROC | 95% CI (patient bootstrap) | PR-AUC | 95% CI |
+|---|---|---|---|---|
+| baseline | 0.8587 | [0.8402, 0.8764] | 0.7496 | [0.7106, 0.7873] |
+| ratio-banded | **0.8758** | [0.8588, 0.8933] | 0.7398 | [0.6971, 0.7803] |
+| control | 0.8587 | [0.8402, 0.8764] | 0.7497 | [0.7107, 0.7874] |
+
+    AUC difference (banded - baseline)    +0.0171   95% CI [+0.0089, +0.0260]
+    PR-AUC difference                     -0.0098   95% CI [-0.0318, +0.0126]
+    control - baseline, AUC               -0.000003 95% CI [-0.00001, +0.000005]
+
+**The bands do improve ranking, and this is the only contrast interval in the
+experiment that excludes zero.** It points the opposite way from accuracy, so it
+needs explaining rather than announcing.
+
+The explanation is *where on the curve* the gain sits. Accuracy uses one
+threshold -- argmax, which calls PIGD when the conditional P(PIGD) exceeds 0.5
+-- and both arms land in the same corner of the ROC:
+
+    baseline       operates at FPR 0.0898, TPR 0.6674   (800 PIGD calls)
+    ratio-banded   operates at FPR 0.1149, TPR 0.7079   (890 PIGD calls)
+
+Restricting the comparison to the region those points live in reverses the sign:
+
+    partial AUC, FPR <= 0.2, McClish-standardised
+      baseline 0.7883    banded 0.7823
+      difference -0.0060    95% CI [-0.0156, +0.0040]    includes zero
+
+The whole of the +0.0171 therefore comes from above FPR 0.2 -- the part of the
+curve where a model is calling more than a fifth of TD visits PIGD, which no
+operating point anyone would choose does. Inside the operating region the arms
+are indistinguishable and the point estimate favours the baseline, and PR-AUC,
+which weights the same region, agrees. `roc_td_vs_pigd.png` shows it directly:
+the curves are tangled below FPR 0.2, where both argmax points sit, and separate
+only to the right of them.
+
+Two cautions before reading +0.0171 as an improvement. AUC is invariant to
+calibration, and this model's calibration is four times worse, so a ranking gain
+carries no guarantee about the probabilities it ranks with. And the gain
+concentrates exactly where the rest of the analysis would predict -- within the
+current-TD stratum, AUC 0.6693 to 0.7501, and at short histories, 0.7665 to
+0.8359 at one prior visit -- which is where the bare subtype label is least
+informative and the filter has least else to work with. Within a stratum the
+ranking problem is harder than the pooled one, so these are comparable to each
+other and not to the 0.8758 above.
+
 ### Where it improved and where it got worse
 
 | cut | group | baseline | banded | change |
@@ -310,11 +369,16 @@ by pushing sparse categories to their bounds.
 
 Three observations support that reading over the alternatives:
 
-1. **The degradation grows with history.** A model that genuinely learned a
-   sharper latent state should do *better* when it has more visits to filter
-   over. This one does worse (−1.5 points at 5+ prior visits against −0.1 at
-   one), which is what over-confident filtering looks like: errors compound as
-   the belief is propagated.
+1. **The degradation is worst where the history is longest.** A model that
+   genuinely learned a sharper latent state should do *better* when it has more
+   visits to filter over. This one does worse: −1.50 points at 5+ prior visits
+   against −0.12 at one, though the pattern is not monotone -- the four-visit
+   stratum improves by 0.99. That is what over-confident filtering looks like,
+   errors compounding as the belief is propagated, and the AUC breakdown runs
+   the other way round in a manner that fits it: the *ranking* gain is largest
+   at one prior visit (+0.0695) and gone or negative by eight or nine, so the
+   bands help most before the filter has accumulated evidence to be
+   over-confident with.
 2. **Calibration degrades while the point estimate barely moves.** Mean P(PIGD)
    is 0.3049 against the baseline's 0.3047 — the model has not changed its
    average view, it has redistributed confidence, 4x less accurately.
@@ -325,6 +389,13 @@ Three observations support that reading over the alternatives:
    where the banded model is (marginally) better on both accuracy and Brier
    score. The eight near-empty categories are all main-range TD bands, whose
    0.1 width the experiment fixed in advance.
+
+The post hoc AUC analysis sharpens rather than softens this. The bands carry
+real ranking information -- +0.0171 globally, and +0.0807 within the current-TD
+stratum, where knowing *where in the TD range* a patient sits is precisely the
+information the bare label discards. What the model cannot do is convert it into
+a better decision at the threshold it decides on, which is a statement about the
+alphabet and the emission's variance, not about the ratio.
 
 That third point is the most actionable: if this line were pursued, the obvious
 next step is a band structure applied to the *main range* as well — either the
@@ -372,10 +443,14 @@ already do — is not tested here.
 * **Did the ratio-banded CT-HMM outperform the original?** No. 83.16% against
   83.69%, a difference of −0.53 points with a 95% paired interval of
   [−1.34, +0.34] that includes zero.
-* **Is any improvement meaningful?** There is no improvement to qualify. The one
-  genuine shift — balanced accuracy up 0.8 points, PIGD recall up 4.1 points — is
-  a move along the TD/PIGD trade-off, not a gain in discrimination, and it comes
-  with four-times-worse calibration.
+* **Is any improvement meaningful?** One is real but does not reach the
+  decision. Global AUC rises by +0.0171 [+0.0089, +0.0260], the only interval
+  here that excludes zero, so the bands do rank patients better. The gain lies
+  entirely above FPR 0.2; restricted to the region where the argmax rule
+  operates it is −0.0060 [−0.0156, +0.0040], and PR-AUC agrees. The other
+  genuine shift — balanced accuracy up 0.8 points, PIGD recall up 4.1 points —
+  is a move along the TD/PIGD trade-off, and it comes with four-times-worse
+  calibration.
 * **Is it consistent across patients?** No. 793 of 899 patients are unaffected,
   48 improve and 58 worsen.
 * **Is the additional complexity justified?** No. Ten times the parameters, no
@@ -384,12 +459,15 @@ already do — is not tested here.
 * **Should the model be retained for further research?** Not in this form. The
   implementation should be kept — it is tested, leakage-checked and reduces
   exactly to the audited baseline when the bands are removed, so it is a working
-  platform for the follow-ups named in H. The *44-category fixed-width alphabet*
+  platform for the follow-ups named in H. The AUC result strengthens that case:
+  the information is there to be had. The *44-category fixed-width alphabet*
   should not be carried forward.
 
 The result is a clear negative rather than an inconclusive one on the primary
 metric, and the direction of the point estimate, the calibration evidence and the
-history-length pattern agree on why.
+history-length pattern agree on why. The post hoc AUC analysis qualifies it
+without overturning it: the bands rank better in aggregate, and not where the
+model decides.
 
 ## J. Reproduction
 
@@ -398,6 +476,9 @@ history-length pattern agree on why.
         --out experiments/<UTC>_cthmm_ratio_banded_observations --workers 24
     # interrupted? completed folds are checkpointed inside --out
     python scripts/87_cthmm_ratio_banded_observations.py --out <same dir> --resume
+
+    # AUC-ROC, post hoc, reads the run above and refits nothing (~50 s)
+    python scripts/89_ratio_banded_auc_roc.py --out experiments/<UTC>_ratio_banded_auc_roc
 
     # the descriptive emission diagnostic (whole-cohort fit, ~30 s)
     python scripts/88_ratio_band_emission_diagnostic.py --out experiments/<UTC>_...
@@ -410,6 +491,7 @@ Run directories (gitignored, they contain participant-level predictions):
 
     experiments/20261104T152154Z_cthmm_ratio_banded_observations/
     experiments/20261104T155439Z_ratio_band_emission_diagnostic/
+    experiments/20261104T172138Z_ratio_banded_auc_roc/
 
 New code, all additive — no existing module was modified:
 
@@ -418,6 +500,7 @@ New code, all additive — no existing module was modified:
     src/ppmi_subtype/next_visit_banded.py    one LOPO fold, three arms
     scripts/87_cthmm_ratio_banded_observations.py
     scripts/88_ratio_band_emission_diagnostic.py
+    scripts/89_ratio_banded_auc_roc.py       AUC-ROC, post hoc
     tests/test_ratio_bands.py                25 tests
     tests/test_hmm_banded.py                 16 tests
     tests/test_next_visit_banded.py          13 tests
