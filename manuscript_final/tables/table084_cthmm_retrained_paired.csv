@@ -1,0 +1,8 @@
+role,comparison,n_targets,accuracy,accuracy 95% CI,balanced_accuracy,balanced 95% CI,auc,auc 95% CI,brier,brier 95% CI,log_loss,log loss 95% CI
+PRIMARY (pre-specified),"window-trained, last 2  -  full-trained, full history",2192,-0.0082,"[-0.0193, 0.0026]",-0.0312,"[-0.0441, -0.0183]",-0.021,"[-0.0301, -0.0120]",0.0099,"[0.0049, 0.0152]",0.0397,"[0.0222, 0.0576]"
+"training effect, history fixed","window-trained, last 2  -  full-trained, last 2",2192,-0.0064,"[-0.0155, 0.0027]",-0.0248,"[-0.0354, -0.0147]",-0.0127,"[-0.0197, -0.0060]",0.0082,"[0.0044, 0.0120]",0.0357,"[0.0204, 0.0516]"
+"history effect, training fixed","full-trained, last 2  -  full-trained, full history",2192,-0.0018,"[-0.0089, 0.0054]",-0.0064,"[-0.0150, 0.0023]",-0.0084,"[-0.0144, -0.0026]",0.0017,"[-0.0009, 0.0042]",0.0041,"[-0.0021, 0.0104]"
+"training effect, full history","window-trained, full history  -  full-trained, full history",2192,-0.0018,"[-0.0120, 0.0076]",-0.0203,"[-0.0320, -0.0099]",-0.0115,"[-0.0189, -0.0047]",0.0082,"[0.0041, 0.0125]",0.0458,"[0.0274, 0.0652]"
+vs persistence,"window-trained, last 2  -  persistence",2192,-0.0046,"[-0.0153, 0.0061]",-0.0159,"[-0.0290, -0.0028]",,,-0.0331,"[-0.0419, -0.0253]",,
+vs persistence,"full-trained, full history  -  persistence",2192,0.0036,"[-0.0057, 0.0130]",0.0153,"[0.0042, 0.0268]",,,-0.043,"[-0.0533, -0.0333]",,
+disjoint-window sensitivity,"non-overlap-window-trained, last 2  -  window-trained, last 2",2192,-0.0009,"[-0.0036, 0.0014]",-0.0003,"[-0.0035, 0.0031]",0.0156,"[0.0094, 0.0224]",-0.0042,"[-0.0060, -0.0025]",-0.0239,"[-0.0332, -0.0156]"

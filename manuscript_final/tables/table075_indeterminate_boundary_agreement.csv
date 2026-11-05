@@ -1,0 +1,3 @@
+model,n,n_patients,predicted_PIGD,predicted_TD,agreement_with_nearer_boundary,agreement 95% CI,expected under independence,excess over null,excess 95% CI,AUC P_PIGD for nearer-PIGD,AUC 95% CI
+CT-HMM,287,220,89,198,0.4878,"[0.4336, 0.5398]",0.4623,0.0255,"[-0.0287, 0.0775]",0.5843,"[0.5162, 0.6534]"
+Rich clinical profile,287,220,101,186,0.5017,"[0.4483, 0.5588]",0.4706,0.0312,"[-0.0223, 0.0882]",0.5748,"[0.5054, 0.6403]"

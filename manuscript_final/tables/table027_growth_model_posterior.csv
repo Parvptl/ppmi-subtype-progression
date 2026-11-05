@@ -1,0 +1,6 @@
+parameter,mean,sd,q2.5,q50,q97.5
+beta0 (population baseline ratio),2.292,0.0669,2.1577,2.2915,2.4272
+"beta1 (population progression, /yr)",-0.0927,0.0121,-0.1159,-0.0928,-0.0682
+sigma (total residual SD),1.138,0.0203,1.0993,1.1373,1.1778
+tau0 (SD of patient baselines),1.3408,0.0499,1.2466,1.3403,1.4421
+"tau1 (SD of patient slopes, /yr)",0.1033,0.0137,0.078,0.1031,0.1315

@@ -1,0 +1,6 @@
+model,mean held-out log-likelihood per prediction (10 splits),SD across splits
+HMM (no history),-0.7869,0.0246
+subtype + horizon,-0.7813,0.028
++ baseline ratio,-0.7735,0.0311
++ covariates,-0.7625,0.0378
++ ratio + covariates,-0.755,0.0416

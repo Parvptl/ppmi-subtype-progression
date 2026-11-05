@@ -1,0 +1,7 @@
+outcome,from_period,to_period,n_patients,delta_rate,95% CI,excludes zero
+pigd,0-2y,2-5y,533,0.0251,"[0.0036, 0.0466]",True
+tremor,0-2y,2-5y,533,-0.0059,"[-0.0309, 0.0202]",False
+pigd,0-2y,5y+,226,0.0727,"[0.0425, 0.1014]",True
+tremor,0-2y,5y+,226,-0.0396,"[-0.0731, -0.0079]",True
+pigd,2-5y,5y+,242,0.079,"[0.0500, 0.1108]",True
+tremor,2-5y,5y+,242,-0.0353,"[-0.0666, -0.0037]",True

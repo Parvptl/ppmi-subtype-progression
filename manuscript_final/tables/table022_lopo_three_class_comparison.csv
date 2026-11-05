@@ -1,0 +1,6 @@
+model,n_predictions,accuracy,patient-bootstrap 95% CI,mean per-patient accuracy,log-likelihood per prediction,Brier (3-class)
+HMM,3361,0.7539,"[0.7348, 0.7731]",0.7538,-0.6726,0.3688
+Markov (discrete),3361,0.7474,"[0.7272, 0.7670]",0.7513,-0.7066,0.3896
+CTMC (interval-aware),3361,0.7453,"[0.7250, 0.7646]",0.7481,-0.7105,0.3925
+Persistence (stay),3361,0.7227,"[0.7009, 0.7437]",0.7213,-7.662,0.5546
+Marginal (null),3361,0.6293,"[0.6011, 0.6565]",0.6404,-0.8756,0.5211

@@ -1,0 +1,16 @@
+condition,subtype_composition,n_patients,n_eligible_targets,mean_patient_accuracy,median_patient_accuracy,visit_level_accuracy
+last 2,all TD targets,405,1001,0.9626,1.0,0.979
+last 2,majority TD,83,445,0.6666,0.6667,0.7011
+last 2,evenly split,35,102,0.4605,0.5,0.5196
+last 2,majority PIGD,53,284,0.6441,0.6667,0.6796
+last 2,all PIGD targets,164,352,0.7673,1.0,0.858
+full history,all TD targets,510,1461,0.9444,1.0,0.9644
+full history,majority TD,105,600,0.6838,0.7143,0.7167
+full history,evenly split,60,188,0.4685,0.5,0.5372
+full history,majority PIGD,61,333,0.5921,0.6667,0.6486
+full history,all PIGD targets,162,439,0.8112,1.0,0.8633
+persistence,all TD targets,511,1462,0.9697,1.0,0.9836
+persistence,majority TD,105,600,0.6704,0.7143,0.705
+persistence,evenly split,59,186,0.4799,0.5,0.5376
+persistence,majority PIGD,61,333,0.5413,0.6,0.6006
+persistence,all PIGD targets,162,439,0.733,0.9,0.8132

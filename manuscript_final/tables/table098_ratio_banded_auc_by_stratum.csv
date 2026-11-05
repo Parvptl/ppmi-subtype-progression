@@ -1,0 +1,14 @@
+stratum,level,n,n_positive,auc_baseline,auc_banded,auc_delta
+current label,TD,2080,253,0.6693,0.7501,0.0807
+current label,Indeterminate,270,123,0.6328,0.6348,0.002
+current label,PIGD,679,538,0.6649,0.6728,0.0079
+prior visits,1,837,197,0.7665,0.8359,0.0695
+prior visits,2,697,183,0.8753,0.8915,0.0162
+prior visits,3,456,132,0.837,0.8418,0.0049
+prior visits,4,305,97,0.8509,0.8876,0.0367
+prior visits,5,200,68,0.8702,0.8659,-0.0043
+prior visits,6,171,70,0.873,0.8772,0.0042
+prior visits,7,125,50,0.8853,0.8861,0.0008
+prior visits,8,93,43,0.9167,0.9112,-0.0056
+prior visits,9,66,32,0.9347,0.9283,-0.0064
+prior visits,10,41,21,0.869,0.9262,0.0571

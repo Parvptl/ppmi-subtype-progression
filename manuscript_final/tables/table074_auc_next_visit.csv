@@ -1,0 +1,4 @@
+model,n,n_patients,n_positive,auc,patient-bootstrap 95% CI
+CT-HMM,3020,898,910,0.8583,"[0.8411, 0.8755]"
+Rich clinical profile,3020,898,910,0.8902,"[0.8748, 0.9053]"
+Persistence rule (reference),3020,898,910,0.7927,"[0.7725, 0.8127]"

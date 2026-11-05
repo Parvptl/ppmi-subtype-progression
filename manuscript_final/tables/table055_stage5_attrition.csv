@@ -1,0 +1,5 @@
+term,log_odds,bootstrap 95% CI
+intercept,-2.0123,"[-2.1506, -1.8642]"
+years_from_baseline,0.1386,"[0.1221, 0.1576]"
+tremor_score,0.0024,"[-0.1535, 0.1521]"
+pigd_score,0.5206,"[0.3598, 0.7137]"

@@ -1,0 +1,9 @@
+stratum,level,accuracy,n
+prior labelled visits,1,0.7473,934
+prior labelled visits,2,0.79,762
+prior labelled visits,3,0.751,502
+prior labelled visits,4,0.7387,333
+prior labelled visits,5,0.7361,830
+current label,Indeterminate,0.488,334
+current label,PIGD,0.7023,766
+current label,TD,0.8107,2261

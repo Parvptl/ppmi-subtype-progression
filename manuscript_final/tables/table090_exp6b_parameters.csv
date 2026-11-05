@@ -1,0 +1,6 @@
+parameter,full sequences,overlapping windows,disjoint windows
+obs_var,0.1943,0.1475,0.1702
+level_var,0.1032,0.1892,0.1345
+rate_var,0.0031,0.001,0.0013
+init_rate_var,0.0021,0.0008,0.0016
+log-likelihood (not comparable across columns),-36653.2313,-68110.0651,-38590.996

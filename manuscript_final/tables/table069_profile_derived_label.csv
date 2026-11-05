@@ -1,0 +1,9 @@
+model,n_patients,n_eligible,n_correct,accuracy,patient-bootstrap 95% CI,brier_two_class,log_loss,log_loss_clipped
+Profile: level only (random walk),898,3020,2549,0.844,"[0.8285, 0.8598]",0.1195,0.3814,False
+Profile: level + rate + medication,898,3020,2538,0.8404,"[0.8248, 0.8566]",0.1177,0.3766,False
+"Profile: level + rate, no medication",898,3020,2538,0.8404,"[0.8249, 0.8563]",0.1175,0.3759,False
+"Subtype-history: CT-HMM (latent, interval-aware)",898,3020,2528,0.8371,"[0.8202, 0.8540]",0.1215,0.3963,False
+Subtype-history: Persistence (last non-Indeterminate),898,3020,2518,0.8338,"[0.8167, 0.8509]",0.1598,4.1959,True
+"Subtype-history: Markov (observed, discrete)",898,3020,2506,0.8298,"[0.8130, 0.8471]",0.1327,0.4311,False
+Last observation carried forward,898,3020,2492,0.8252,"[0.8083, 0.8425]",0.1235,0.3941,False
+Population mean trajectory,898,3020,2088,0.6914,"[0.6677, 0.7153]",0.2083,0.6067,False

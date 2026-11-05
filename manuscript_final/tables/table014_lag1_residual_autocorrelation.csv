@@ -1,0 +1,4 @@
+quantity,estimate,ci_low,ci_high,interval
+observed lag-1 correlation,-0.2195,-0.2731,-0.1621,patient bootstrap
+"iid null, same visit pattern",-0.3328,-0.3689,-0.2951,Monte Carlo
+observed minus null,0.1133,0.0457,0.1785,combined resample

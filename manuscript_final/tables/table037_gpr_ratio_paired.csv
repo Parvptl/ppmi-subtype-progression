@@ -1,0 +1,7 @@
+model_a,model_b,question,diff_pooled,pooled 95% CI,diff_patient,patient-level 95% CI
+K1,K0,does a flexible kernel beat the linear one,-0.0333,"[-0.0467, -0.0205]",-0.0192,"[-0.0279, -0.0106]"
+K2,K1,does the linear kernel term add anything beside an RBF,0.0,"[0.0000, 0.0000]",0.0,"[0.0000, 0.0000]"
+K3,K1,does Matern beat the squared exponential,-0.0005,"[-0.0015, 0.0005]",-0.0006,"[-0.0013, 0.0002]"
+K0,hbayes,does the GP reproduce the growth model,-0.0009,"[-0.0033, 0.0014]",0.0028,"[0.0002, 0.0053]"
+K1,persistence,does the GP beat the trivial rule,-0.0707,"[-0.0979, -0.0451]",-0.0585,"[-0.0906, -0.0272]"
+K1,patient_mean,does the GP beat the patient's own average,-0.0908,"[-0.1200, -0.0631]",-0.0637,"[-0.0956, -0.0335]"

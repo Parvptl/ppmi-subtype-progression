@@ -1,0 +1,13 @@
+pathway,n_patients,share
+TD,399,0.4272
+TD → PIGD,83,0.0889
+PIGD,71,0.076
+TD → Indeterminate,39,0.0418
+TD → Indeterminate → TD,35,0.0375
+Indeterminate → PIGD,27,0.0289
+Indeterminate → TD,26,0.0278
+PIGD → TD,24,0.0257
+TD → Indeterminate → PIGD,21,0.0225
+TD → PIGD → TD,20,0.0214
+PIGD → TD → PIGD,19,0.0203
+Indeterminate → TD → PIGD,11,0.0118

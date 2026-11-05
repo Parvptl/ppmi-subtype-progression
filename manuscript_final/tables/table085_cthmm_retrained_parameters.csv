@@ -1,0 +1,10 @@
+parameter,full-sequence fit,window fit,difference
+pi[TD],0.7269,0.7542,0.0273
+pi[Indeterminate],0.1553,0.0443,-0.111
+pi[PIGD],0.1178,0.2016,0.0837
+Q diag [TD],-0.0971,-0.0588,0.0383
+Q diag [Indeterminate],-0.4688,-0.4367,0.0321
+Q diag [PIGD],-0.0546,-0.0106,0.0439
+E diag [TD],0.9401,0.8751,-0.0649
+E diag [Indeterminate],0.5,0.6651,0.1651
+E diag [PIGD],0.8718,0.8804,0.0086

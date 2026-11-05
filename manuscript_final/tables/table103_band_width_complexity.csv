@@ -1,0 +1,6 @@
+main_width,n_main_bands,n_tail_bands,n_bands,n_categories,n_params,block_TD,block_Indeterminate,block_PIGD,n_straddling_bands,n_empty,n_lt_10_obs,n_lt_15_obs,n_lt_30_obs,n_lt_20_patients,median_obs_per_category,min_obs_nonempty,obs_per_param
+0.05,60,10,70,73,224,48,6,19,1,11,28,32,40,34,22.0,1,19.17
+0.1,30,10,40,44,137,30,4,10,2,1,6,9,12,10,71.0,1,31.35
+0.2,15,10,25,29,92,21,3,5,2,0,1,1,2,2,135.0,8,46.68
+0.3,10,10,20,24,77,18,2,4,1,1,2,2,2,2,137.0,8,55.78
+0.5,6,10,16,20,65,15,3,2,2,0,0,0,0,0,148.0,35,66.08

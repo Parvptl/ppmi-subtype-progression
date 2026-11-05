@@ -1,0 +1,4 @@
+model,n_patients,n_eligible,n_correct,accuracy,patient-bootstrap 95% CI,brier_two_class,log_loss
+"CT-HMM (latent, interval-aware)",899,3029,2535,0.8369,"[0.8204, 0.8541]",0.1214,0.3961
+"CT-HMM (subtype labels, joint code path)",899,3029,2535,0.8369,"[0.8204, 0.8541]",0.1214,0.3961
+CT-HMM (subtype x ratio band),899,3029,2519,0.8316,"[0.8142, 0.8498]",0.1221,0.393

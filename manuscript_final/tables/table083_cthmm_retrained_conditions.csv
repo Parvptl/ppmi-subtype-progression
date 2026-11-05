@@ -1,0 +1,13 @@
+cohort,condition,n_targets,n_patients,accuracy,accuracy 95% CI,balanced_accuracy,sensitivity_PIGD,auc,brier,log_loss
+all eligible,persistence,3029,899,0.8336,"[0.8173, 0.8510]",0.7737,0.6225,,0.1598,
+all eligible,"full-trained, full history",3029,899,0.8369,"[0.8204, 0.8541]",0.7888,0.6674,0.8587,0.1214,0.3961
+all eligible,"full-trained, last 2",2192,742,0.8362,"[0.8156, 0.8553]",0.7977,0.6862,0.8633,0.1227,0.3988
+all eligible,"window-trained, full history",3029,899,0.8362,"[0.8199, 0.8532]",0.7725,0.6116,0.846,0.1279,0.4312
+all eligible,"window-trained, last 2",2192,742,0.8298,"[0.8098, 0.8498]",0.7729,0.6081,0.8506,0.131,0.4345
+all eligible,"non-overlap-window-trained, last 2",2192,742,0.8289,"[0.8087, 0.8491]",0.7725,0.6095,0.8663,0.1268,0.4105
+common targets,persistence,2192,742,0.8344,"[0.8128, 0.8539]",0.7888,0.6569,,0.164,
+common targets,"full-trained, full history",2192,742,0.838,"[0.8173, 0.8568]",0.804,0.7057,0.8717,0.121,0.3947
+common targets,"full-trained, last 2",2192,742,0.8362,"[0.8156, 0.8553]",0.7977,0.6862,0.8633,0.1227,0.3988
+common targets,"window-trained, full history",2192,742,0.8362,"[0.8172, 0.8550]",0.7837,0.6318,0.8602,0.1292,0.4405
+common targets,"window-trained, last 2",2192,742,0.8298,"[0.8098, 0.8498]",0.7729,0.6081,0.8506,0.131,0.4345
+common targets,"non-overlap-window-trained, last 2",2192,742,0.8289,"[0.8087, 0.8491]",0.7725,0.6095,0.8663,0.1268,0.4105

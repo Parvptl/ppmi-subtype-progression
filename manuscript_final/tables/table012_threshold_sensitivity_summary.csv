@@ -1,0 +1,13 @@
+quantity,value
+labelled_visits,4441.0
+visits_relabelled,298.0
+share_relabelled,0.0671
+patients_total,1080.0
+patients_with_any_relabelled,235.0
+share_patients_affected,0.2176
+indeterminate_before,441.0
+indeterminate_after,143.0
+agreement_2class_baseline,1.0
+agreement_2class_narrow,0.9774
+agreement_3class_baseline,0.9987
+agreement_3class_narrow,0.9286

@@ -1,0 +1,4 @@
+train_visits,n_future_visits,loglik_per_visit,accuracy,rmse_ratio,coverage_95
+1,2707,-1.0341,0.5755,2.1919,0.9738
+2,1886,-0.8917,0.6469,1.6216,0.929
+3,1256,-0.9398,0.6664,1.8082,0.9045

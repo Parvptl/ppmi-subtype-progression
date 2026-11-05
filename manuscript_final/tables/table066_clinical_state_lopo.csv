@@ -1,0 +1,9 @@
+states,model,n_patients (or n_paired),n_scored,accuracy (or delta),patient-bootstrap 95% CI,Brier (or delta),log loss,accuracy | current TD,accuracy | current Indeterminate,accuracy | current PIGD
+K = 6,Subtype-history CT-HMM (labels only),627,2091,0.8384,"[0.8183, 0.8568]",0.1211,0.3953,0.8809,0.6136,0.787
+K = 6,Persistence (last non-Indeterminate),627,2091,0.835,"[0.8147, 0.8541]",0.159,4.1729,0.8788,0.608,0.7803
+K = 6,Clinical-state CT-HMM (10 measurements),627,2091,0.7255,"[0.6960, 0.7534]",0.1831,0.5493,0.8441,0.5682,0.3969
+K = 6,contrast: clinical-state minus subtype-history CT-HMM,2089,2089,-0.113,"[-0.1438, -0.0807]",0.062,,,,
+K = 8,Subtype-history CT-HMM (labels only),627,2091,0.8384,"[0.8183, 0.8568]",0.1211,0.3953,0.8809,0.6136,0.787
+K = 8,Persistence (last non-Indeterminate),627,2091,0.835,"[0.8147, 0.8541]",0.159,4.1729,0.8788,0.608,0.7803
+K = 8,Clinical-state CT-HMM (10 measurements),627,2091,0.7336,"[0.7062, 0.7607]",0.1817,0.5444,0.8421,0.5795,0.4372
+K = 8,contrast: clinical-state minus subtype-history CT-HMM,2089,2089,-0.1048,"[-0.1357, -0.0757]",0.0606,,,,

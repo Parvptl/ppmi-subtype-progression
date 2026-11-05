@@ -1,0 +1,5 @@
+reason,visits,share
+"only an ON-medication Part III exam exists, so it is excluded",1195,0.8965
+no Part III row in the source file at all,65,0.0488
+Part III exam partially scored (>=1 item unrateable or absent),57,0.0428
+all 13 Part III items present; Part II blocked the label,16,0.012

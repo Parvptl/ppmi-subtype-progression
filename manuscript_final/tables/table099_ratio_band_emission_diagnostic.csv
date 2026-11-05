@@ -1,0 +1,10 @@
+quantity,subtype-only model,banded model
+"subtype marginal M[TD, TD]",0.9401,0.9533
+"subtype marginal M[TD, Indeterminate]",0.0303,0.0268
+"subtype marginal M[TD, PIGD]",0.0296,0.0199
+"subtype marginal M[Indeterminate, TD]",0.25,0.25
+"subtype marginal M[Indeterminate, Indeterminate]",0.5,0.5
+"subtype marginal M[Indeterminate, PIGD]",0.25,0.25
+"subtype marginal M[PIGD, TD]",0.0794,0.1325
+"subtype marginal M[PIGD, Indeterminate]",0.0488,0.0894
+"subtype marginal M[PIGD, PIGD]",0.8719,0.7781

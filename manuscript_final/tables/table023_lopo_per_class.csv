@@ -1,0 +1,4 @@
+state,support,n_predicted,precision,recall,f1
+TD,2115,2450,0.7857,0.9102,0.8434
+Indeterminate,332,1,0.0,0.0,
+PIGD,914,910,0.6692,0.6663,0.6678

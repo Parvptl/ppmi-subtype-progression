@@ -1,0 +1,10 @@
+quantity,CTMC (observed label),CT-HMM (latent state)
+rate TD -> Indeterminate (per year),0.2348,0.0937
+rate TD -> PIGD (per year),0.0583,0.0057
+rate Indeterminate -> TD (per year),1.2212,0.1156
+rate Indeterminate -> PIGD (per year),1.0689,0.3557
+rate PIGD -> TD (per year),0.088,0.0
+rate PIGD -> Indeterminate (per year),0.3499,0.0605
+mean sojourn in TD (years),3.41,10.06
+mean sojourn in Indeterminate (years),0.44,2.12
+mean sojourn in PIGD (years),2.28,16.52

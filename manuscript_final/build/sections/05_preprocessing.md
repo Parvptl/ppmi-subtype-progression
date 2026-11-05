@@ -1,0 +1,17 @@
+## 5. Preprocessing
+
+### 5.1 Examination selection
+
+PPMI records the MDS-UPDRS Part III examination in the OFF state, the ON state, or both at a visit. The label uses the OFF-medication examination when one exists and the untreated examination otherwise; an ON-only visit is never labelled. Where a visit holds more than one eligible Part III record the earliest is kept, and duplicates are removed by participant, event and examination state. The same-visit OFF and ON examinations were kept separately for the audit of Section 9.3, which measures their label agreement.
+
+### 5.2 Item handling
+
+PPMI codes an item that could not be rated as 101. The postural-stability item (3.12) carries this code at 4,302 raw records, 3,206 after OFF-state selection and 3,205 after de-duplication; the code is blanked before any arithmetic. The missing-item policy is strict: both subscores require all of their items, so a visit with any missing tremor item has no tremor score and a visit with any missing PIGD item has no PIGD score, and no label. Nothing is imputed anywhere in the pipeline. The reconstruction of the item sums from the raw item tables was checked against the frozen panel at every one of the 5,774 visits with zero mismatches in the tremor score, the PIGD score and the label.
+
+### 5.3 Time axis and covariates
+
+Time is measured in years from each participant's baseline visit using the recorded visit dates. For the clinical-measurement models (Sections 6.12 and 6.13) ten measurements were built from the same visit tables: a bradykinesia and rigidity score (the mean of the twenty Part III items that are neither tremor nor gait and postural items), the tremor and PIGD scores above, the MDS-UPDRS Part II and Part I totals, the Montreal Cognitive Assessment total, the 15-item Geriatric Depression Scale, the SCOPA-AUT autonomic score, the Epworth Sleepiness Scale, and the levodopa-equivalent daily dose (LEDD). All ten measurements are present at 97.6% of labelled visits. The first-visit model (Section 6.6) uses ten baseline measures: age, sex, disease duration, the REM sleep behaviour disorder screening questionnaire, the SCOPA-AUT score, the UPSIT smell identification score, the MoCA total, the bilateral putamen DaT-scan binding, the Hoehn and Yahr stage and the MDS-UPDRS Part II total. Each measurement is standardised with the mean and standard deviation of the training participants of the fold in which it is used; missing measurements are marginalised exactly in the Gaussian models rather than imputed. The one exception is the first-visit model, whose missing baseline covariates are mean-imputed inside the training split of each fit.
+
+### 5.4 Software and tests
+
+The pipeline is a Python 3.13 package (numpy 2.2, scipy 1.15, pandas 2.2, scikit-learn for the ranking metrics) run on CPU nodes of a SLURM cluster; every fit is deterministic given its seed (42 throughout), and every run directory records the git commit, the panel checksum, the installed package versions and, for the later experiments, a SHA-256 manifest of its output files. The test suite holds 841 collected tests covering the label rule, the panel construction, the transition and survival estimators, each model's likelihood and gradient, the leakage checks of each validation driver, and the bootstrap helpers; the Stage 1 audit of 4 November 2026 recorded 758 tests passing at that date, and tests added since are collected in the current suite.

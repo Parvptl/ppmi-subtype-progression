@@ -1,0 +1,13 @@
+model,ratio_range,n,n_patients,accuracy,brier_two_class
+"CT-HMM (latent, interval-aware)",undefined,547,311,0.9104,0.0789
+"CT-HMM (latent, interval-aware)","[0.00,0.90)",679,311,0.7923,0.1497
+"CT-HMM (latent, interval-aware)","[0.90,1.15)",237,204,0.6034,0.2336
+"CT-HMM (latent, interval-aware)","[1.15,2.00)",470,316,0.7277,0.2012
+"CT-HMM (latent, interval-aware)","[2.00,3.00)",435,288,0.8897,0.0935
+"CT-HMM (latent, interval-aware)","[3.00,inf)",661,342,0.9486,0.049
+CT-HMM (subtype x ratio band),undefined,547,311,0.8976,0.0828
+CT-HMM (subtype x ratio band),"[0.00,0.90)",679,311,0.8012,0.1509
+CT-HMM (subtype x ratio band),"[0.90,1.15)",237,204,0.616,0.2355
+CT-HMM (subtype x ratio band),"[1.15,2.00)",470,316,0.6957,0.1975
+CT-HMM (subtype x ratio band),"[2.00,3.00)",435,288,0.8805,0.0982
+CT-HMM (subtype x ratio band),"[3.00,inf)",661,342,0.9501,0.0464
