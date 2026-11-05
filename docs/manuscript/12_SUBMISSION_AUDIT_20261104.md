@@ -287,12 +287,35 @@ Submission-ready today: Fig. 2, Fig. 4, Fig. 5b (pending A1), Table 1.
 
 ### D — Evidential gaps
 
-**D1. O-4 — the threshold-sensitivity figures are a recomputation, not a saved
-run.** R2's claim that moving each threshold by ≈0.02 reclassifies 298 of 4,441
-visits (6.7%), all from the indeterminate class, shrinking it by 67.6%, is
-currently a post-hoc calculation from the frozen panel. Run it as a saved
-experiment or mark it post hoc in the caption. It is load-bearing for the
-Discussion's third paragraph.
+**D1. ✅ CLOSED 2026-11-04 — O-4 has been run and saved.** The figures in R2
+were previously a scratchpad recomputation with no manifest, seed record or
+checksum. The analysis now exists as a saved run,
+`experiments/20261104T002308Z_o4_threshold_sensitivity/`, built by
+`scripts/85_threshold_sensitivity.py` from a panel rebuilt under the
+pre-existing `config/config_narrow_0.91_1.13.yaml`.
+
+**23 of 23 checks pass**, including every figure the Stage 1 audit had recorded
+from the unsaved recomputation: 298 of 4,441 visits relabelled (6.71%), all
+from indeterminate, 198 to PIGD and 100 to tremor dominant, the class falling
+441 → 143 (−67.6%), TD 2,891 → 2,991, PIGD 1,109 → 1,307, and two-class
+agreement at 0.9774. The checks also verify what the recomputation never did:
+that the two panels carry numerically identical subscores, that the labelled
+set is unchanged so the denominator is fixed, that no tremor-dominant or PIGD
+visit moved, and that the frozen baseline panel's MD5 is untouched.
+
+Three results are new. **235 of 1,080 participants (21.8%)** have at least one
+relabelled visit — a visit-level 6.7% understates the reach. The **three-class
+agreement is computable** and falls 0.9987 → 0.9286 (see C2). And the
+indeterminate visits with a defined ratio take only **eleven distinct values**,
+of which the two dominant ones account for **all 298** relabellings, so the
+entire effect is two attainable values crossing a line that moved by 0.01 and
+0.0064.
+
+**B1 is closed with it:** Methods M3a now describes the executed procedure,
+including that the perturbation changes three things rather than two — both
+thresholds and the side each band boundary is closed on — and that no
+uncertainty interval is reported because a deterministic recomputation on a
+fixed panel has no sampling variability.
 
 **D2. E-7 was never run, so no reporting checklist is claimed.** STROBE and
 TRIPOD+AI were both verified at Stage 3 but are **deliberately not cited**,
@@ -300,10 +323,20 @@ because citing a standard the manuscript has not been assessed against asserts
 a compliance that does not exist. Run E-7, then add both references. Many
 journals request the completed checklist at submission.
 
-**D3. C6 — the 99.87% three-class agreement check is not reproducible**
-(`data/validation/` is empty). This is **disclosed in the manuscript's
-limitations**. If the archived release is restored, rerun the check and delete
-that sentence.
+**D3. ❌ RETRACTED 2026-11-04 — the check is reproducible, and always was.**
+This entry stated that `data/validation/` was empty. **It is not.** It holds
+`PPMI_Original_Cohort_BL_to_Year_5_Dataset_Apr2020.csv` (1.68 MB, 3,446 rows)
+with the `td_pigd_old` column `validate.against_archived_three_class`
+requires, present since 14 October. Re-running the panel build reproduced the
+figure exactly — **0.9987 on 1,597 compared visits from 390 participants** —
+and the three-class agreement under the perturbed rule (0.9286) is now
+computable too, which the Stage 1 audit had recorded as impossible. The
+Discussion's limitations sentence disclosing the check as irreproducible has
+been **removed because it was false**, not because anything changed.
+
+This is the third repository claim here to fail the same way, after A2 and B2:
+an assertion about what the repository contained, carried forward rather than
+checked with a command.
 
 **D4. Erro 2019's abstract was never retrieved** — only Crossref metadata was
 verified. It supports a general instability claim that references 4, 5 and 7

@@ -49,6 +49,10 @@ from ppmi_subtype.plots import (  # noqa: E402
     GRID, INK, INK_MUTED, STATE_COLORS, _finish, _style,
 )
 
+E5 = "experiments/20261103T192414Z_e5_participant_flow"
+CPCV = "experiments/20261020T180515Z_clinical_profile_cv"
+PLA = "experiments/20261103T175003Z_patient_level_accuracy_audit"
+ROC = "experiments/20261023T202640Z_roc_auc_comparison"
 E2 = "experiments/20261103T193205Z_e2_transition_patient_bootstrap"
 E8 = "experiments/20261103T202632Z_e8_harmonised_family_comparison"
 # Full-precision rerun at HEAD carrying the A1 reference-orientation fix.
@@ -283,6 +287,260 @@ def figure_4(out: Path, checks: dict) -> pd.DataFrame:
     checks["figure 4 covers all 3,361 cases per model"] = bool(
         dec.groupby("model").n.sum().eq(3361).all())
     return dec
+
+
+# ---------------------------------------------------------------------------
+#  Tables 2-5 -- manuscript formatting
+# ---------------------------------------------------------------------------
+def tables_2_to_5(out: Path, checks: dict) -> None:
+    """Format the four outstanding tables. Values are carried through exactly;
+    only naming, ordering and displayed precision change."""
+    def ci(lo, hi, dp=3):
+        return f"{lo:.{dp}f} to {hi:.{dp}f}"
+
+    # ---- Table 2: transition probabilities
+    d = pd.read_csv(ROOT / E2 / "transition_probabilities.csv")
+    t2 = pd.DataFrame({
+        "From": d.from_state, "To": d.to_state,
+        "Visits in state": d.n_from.map("{:,}".format),
+        "n": d.n_transitions.map("{:,}".format),
+        "Probability": d.probability.round(3),
+        "95% CI": [ci(a, b) for a, b in
+                                       zip(d.bootstrap_low, d.bootstrap_high)],
+        "Design effect": d.design_effect.round(2),
+    })
+    t2.to_csv(out / "table2_transition_probabilities.csv", index=False)
+    checks["table 2 has all nine transition cells"] = len(t2) == 9
+
+    # ---- Table 3: harmonised comparison
+    d = pd.read_csv(ROOT / E8 / "harmonised_metrics.csv").sort_values(
+        "accuracy", ascending=False)
+    t3 = pd.DataFrame({
+        "Specification": d.model, "Family": d.family,
+        "Accuracy": d.accuracy.round(4),
+        "Brier": d.brier_multiclass.round(3),
+        "Log loss": d.log_loss.round(3),
+        "Macro F1": d.macro_f1.round(3),
+        #  One column instead of three: nine columns could not be set at a
+        #  readable width on an A4 page without breaking headers mid-word.
+        "Predictions issued (TD / Ind. / PIGD)": [
+            f"{int(a):,} / {int(b):,} / {int(c):,}" for a, b, c in
+            zip(d.n_predicted_TD, d.n_predicted_Indeterminate, d.n_predicted_PIGD)],
+    })
+    t3.to_csv(out / "table3_harmonised_comparison.csv", index=False)
+    checks["table 3 has all fourteen specifications"] = len(t3) == 14
+    checks["table 3's best accuracy is 0.7575"] = bool(
+        abs(d.accuracy.max() - 0.7575) < 5e-5)
+
+    # ---- Table 4: two-class secondary analysis
+    d = pd.read_csv(ROOT / CPCV / "derived_label_vs_subtype_history.csv")
+    keep = ["Subtype-history: CT-HMM (latent, interval-aware)",
+            "Subtype-history: Persistence (last non-Indeterminate)",
+            "Subtype-history: Markov (observed, discrete)",
+            "Profile: level + rate + medication",
+            "Last observation carried forward",
+            "Population mean trajectory"]
+    d = d[d.model.isin(keep)].copy()
+    d["order"] = d.model.map({k: i for i, k in enumerate(keep)})
+    d = d.sort_values("order")
+    t4 = pd.DataFrame({
+        "Model": d.model.str.replace("Subtype-history: ", "", regex=False),
+        "Accuracy": d.accuracy.round(4),
+        "Brier (2-class)": d.brier_two_class.round(4),
+        "Log loss": d.log_loss.round(3),
+    })
+    a = pd.read_csv(ROOT / ROC / "auc_metrics.csv").set_index("model")
+    t4["AUC"] = [f"{a.loc[m,'auc']:.4f} ({a.loc[m,'ci_low']:.4f} to {a.loc[m,'ci_high']:.4f})"
+                 if m in a.index else "\u2014"
+                 for m in ["CT-HMM", "Persistence", "Markov", "Rich clinical profile",
+                           "LOCF", "Population"]]
+    t4.to_csv(out / "table4_two_class.csv", index=False)
+    checks["table 4's CT-HMM accuracy is 0.8371"] = bool(
+        abs(float(d.loc[d.model.str.contains("CT-HMM"), "accuracy"].iloc[0]) - 0.8371) < 5e-5)
+    checks["table 4's persistence accuracy is 0.8338"] = bool(
+        abs(float(d.loc[d.model.str.contains("Persistence"), "accuracy"].iloc[0]) - 0.8338) < 5e-5)
+
+    # ---- Table 5: per-participant accuracy by composition
+    d = pd.read_csv(ROOT / PLA / "patient_accuracy_by_subtype_composition.csv")
+    #  Both arms, because R8's point is that the trivial rule shows the same
+    #  gradient: the table would be misleading with the model alone. Four
+    #  decimals, since two of these values sit on a three-decimal tie.
+    #  The persistence rows are duplicated verbatim under experiments 6A and
+    #  6B; 6A is taken so both arms come from the same block.
+    mod = d[d.condition == "full history"].set_index("subtype_composition")
+    per = d[(d.condition == "persistence")
+            & (d.experiment == "6A")].set_index("subtype_composition")
+    order = [c for c in ["all TD targets", "majority TD", "evenly split",
+                         "majority PIGD", "all PIGD targets"] if c in mod.index]
+    t5 = pd.DataFrame({
+        "Recorded-label composition": order,
+        "Participants \u2020": [f"{int(mod.loc[c,'n_patients']):,}" for c in order],
+        "Eligible targets \u2020": [f"{int(mod.loc[c,'n_eligible_targets']):,}" for c in order],
+        "Hidden Markov model": [round(float(mod.loc[c,'mean_patient_accuracy']), 4) for c in order],
+        "Persistence rule": [round(float(per.loc[c,'mean_patient_accuracy']), 4)
+                             if c in per.index else float("nan") for c in order],
+    })
+    t5.to_csv(out / "table5_composition.csv", index=False)
+    checks["table 5 has at least three composition groups"] = len(t5) >= 3
+    checks["table 5's all-TD group matches R8 (0.9444 vs 0.9697)"] = bool(
+        abs(float(mod.loc["all TD targets", "mean_patient_accuracy"]) - 0.9444) < 5e-5
+        and abs(float(per.loc["all TD targets", "mean_patient_accuracy"]) - 0.9697) < 5e-5)
+    checks["table 5's evenly-split group matches R8 (0.4685 vs 0.4799)"] = bool(
+        abs(float(mod.loc["evenly split", "mean_patient_accuracy"]) - 0.4685) < 5e-5
+        and abs(float(per.loc["evenly split", "mean_patient_accuracy"]) - 0.4799) < 5e-5)
+
+    for nm in ("table2_transition_probabilities", "table3_harmonised_comparison",
+               "table4_two_class", "table5_composition"):
+        say(f"  {nm}.csv")
+
+
+# ---------------------------------------------------------------------------
+#  Figure 1 -- participant flow
+# ---------------------------------------------------------------------------
+def figure_1(out: Path, checks: dict) -> pd.DataFrame:
+    """CONSORT-style flow, redrawn to journal specification from E-5's ledger.
+
+    Two no-op rows in the ledger are folded away rather than drawn: the
+    follow-up cap excluded nothing, and two rows restate a count already shown.
+    Every exclusion that removed anything keeps its own callout.
+    """
+    led = pd.read_csv(ROOT / E5 / "flow_ledger.csv").set_index("stage")
+
+    def row(k):
+        r = led.loc[k]
+        return int(r["visits"]), int(r["patients"])
+
+    stages = [
+        ("Curated data cut, as published", *row("curated data cut, as published"), None),
+        ("Sporadic PD subgroup", *row("subgroup in ['Sporadic PD']"),
+         "3,708 participants and 13,661 visits\nin other subgroups"),
+        ("Analysis cohort", *row("cohort patient-visits"),
+         "15 visits at excluded events\n(PW, ST, U01, U02)"),
+        ("Visits with a TD/PIGD label", *row("labelled visits"),
+         "1,333 visits without a\nscorable OFF examination"),
+        ("Participants with \u2265 2 labelled visits", *row("patients with >= 2 labelled visits"),
+         "146 participants with a\nsingle labelled visit"),
+        ("Consecutive labelled pairs", *row("consecutive labelled visit pairs"), None),
+        ("Two-class scoring set", *row("eligible for two-class TD-vs-PIGD scoring"),
+         "332 pairs whose next label\nis indeterminate"),
+    ]
+
+    fig, ax = plt.subplots(figsize=(8.6, 6.8))
+    n = len(stages)
+    step = 1.0 / n
+    bw, bh, bx = 0.46, 0.098, 0.04
+    cx = bx + bw / 2
+    for i, (name, visits, pats, excl) in enumerate(stages):
+        top = 1.0 - i * step
+        bot = top - bh
+        unit = "pairs" if ("pair" in name.lower() or "scoring" in name.lower()) else "visits"
+        ax.add_patch(plt.Rectangle((bx, bot), bw, bh, facecolor="white",
+                                   edgecolor=ACCENT, lw=1.5, zorder=3))
+        ax.text(bx + 0.018, top - bh * 0.33, name, fontsize=9.3, color=INK,
+                va="center", ha="left", weight="bold", zorder=4)
+        ax.text(bx + 0.018, top - bh * 0.72,
+                f"{pats:,} participants  \u00b7  {visits:,} {unit}",
+                fontsize=8.8, color=INK_MUTED, va="center", ha="left", zorder=4)
+        #  Vertical arrow lives in the gap above this box, never inside one.
+        if i:
+            ax.annotate("", xy=(cx, top), xytext=(cx, top + (step - bh)),
+                        arrowprops=dict(arrowstyle="-|>", color=ACCENT, lw=1.4),
+                        annotation_clip=False)
+        #  Exclusion leaves from the box's right edge at its vertical centre,
+        #  so it crosses no text.
+        if excl:
+            ey = top - bh / 2
+            ax.annotate("", xy=(bx + bw + 0.050, ey), xytext=(bx + bw, ey),
+                        arrowprops=dict(arrowstyle="-|>", color=MUTED, lw=1.2))
+            ax.text(bx + bw + 0.062, ey, "excluded\n" + excl, fontsize=7.9,
+                    color=INK_MUTED, va="center", ha="left", linespacing=1.35)
+    ax.set_xlim(0, 1.0)
+    ax.set_ylim(1.0 - (n - 1) * step - bh - 0.025, 1.035)
+    ax.axis("off")
+    ax.set_title("Participant flow", fontsize=10.8, loc="left", color=INK)
+    p = _finish(fig, out / "fig1_participant_flow.png")
+    say(f"  {p.name}")
+    led.reset_index().to_csv(out / "fig1_participant_flow.csv", index=False)
+
+    checks["figure 1 starts at 4,788 participants"] = row("curated data cut, as published")[1] == 4788
+    checks["figure 1's cohort is 1,080 participants / 5,774 visits"] = row("cohort patient-visits") == (5774, 1080)
+    checks["figure 1's labelled count is 4,441"] = row("labelled visits")[0] == 4441
+    checks["figure 1 ends at 3,361 pairs from 934 participants"] = row("consecutive labelled visit pairs") == (3361, 934)
+    return led
+
+
+# ---------------------------------------------------------------------------
+#  Figure 3 -- harmonised comparison
+# ---------------------------------------------------------------------------
+def figure_3(out: Path, checks: dict) -> pd.DataFrame:
+    """Accuracy of all fourteen specifications on the same 3,361 transitions."""
+    d = pd.read_csv(ROOT / E8 / "harmonised_metrics.csv").sort_values("accuracy")
+    fam_colour = {"subscore GP": ACCENT, "latent-state HMM": "#2e6f9e",
+                  "observed-label chain": "#6a9ec0", "subscore LMM": "#7f9bb0",
+                  "time-varying LMM": "#9ab4c4", "baseline": MUTED}
+    persistence = float(d.loc[d.model == "Persistence (recorded label)", "accuracy"].iloc[0])
+    locf = float(d.loc[d.model == "Persistence (subscore LOCF)", "accuracy"].iloc[0])
+    fitted = d[d.family != "baseline"]
+
+    fig, ax = plt.subplots(figsize=(8.8, 5.4))
+    yy = np.arange(len(d), dtype=float)
+    for y, (_, r) in zip(yy, d.iterrows()):
+        col = fam_colour.get(r.family, MUTED)
+        #  A connector is drawn only for a fitted specification, and only to
+        #  the canonical reference it is actually scored against (Methods
+        #  M12a). Baselines get a marker alone: drawing one baseline's margin
+        #  over another would invite exactly the confusion this figure must
+        #  avoid.
+        if r.family != "baseline":
+            ax.plot([persistence, r.accuracy], [y, y], color=col, lw=1.6,
+                    alpha=0.55, zorder=2, solid_capstyle="butt")
+        ax.plot(r.accuracy, y, "o", ms=6.0, color=col, zorder=4)
+
+    ax.axvline(persistence, color=WARM, lw=1.5, ls="--", zorder=3)
+    ax.text(persistence - 0.0016, len(d) - 0.35,
+            f"canonical reference\nlabel persistence {persistence:.4f}",
+            fontsize=8.0, color=WARM, ha="right", va="top", linespacing=1.3)
+    #  The second persistence rule is a different baseline on a different
+    #  input and is not the reference for any contrast reported here.
+    ax.axvline(locf, color=MUTED, lw=1.2, ls=":", zorder=3)
+    ax.text(locf + 0.0016, 1.1,
+            f"subscore LOCF persistence {locf:.4f}\n(separate baseline, not the reference)",
+            fontsize=7.6, color=INK_MUTED, ha="left", va="bottom",
+            linespacing=1.3)
+
+    #  The band marks the nine fitted specifications; its width is stated in
+    #  the caption rather than on the figure, where it collided with the data.
+    ax.axvspan(fitted.accuracy.min(), fitted.accuracy.max(), color=ACCENT,
+               alpha=0.055, zorder=1)
+
+    ax.set_yticks(yy)
+    ax.set_yticklabels(d.model, fontsize=8.8)
+    ax.set_xlabel("Accuracy on the same 3,361 transitions", fontsize=9.4)
+    ax.set_title("One decision rule, one evaluation set, one canonical reference",
+                 fontsize=10.6, loc="left")
+    ax.grid(axis="x", color=GRID, lw=0.8)
+    ax.set_axisbelow(True)
+    _style(ax)
+    ax.set_ylim(-0.7, len(d) - 0.3)
+    for fam, col in fam_colour.items():
+        if (d.family == fam).any():
+            ax.plot([], [], "o", color=col, ms=6.0, label=fam)
+    #  Upper left is empty: every line starts at the persistence reference on
+    #  the right, so nothing is drawn there.
+    ax.legend(frameon=False, fontsize=8.2, loc="upper left",
+              handletextpad=0.5, labelspacing=0.55)
+    p = _finish(fig, out / "fig3_harmonised_comparison.png")
+    say(f"  {p.name}")
+    d.to_csv(out / "fig3_harmonised_comparison.csv", index=False)
+
+    checks["figure 3 shows all fourteen specifications"] = len(d) == 14
+    checks["figure 3's fitted span is 1.22 accuracy points"] = bool(
+        abs((fitted.accuracy.max() - fitted.accuracy.min()) - 0.0122) < 5e-4)
+    checks["figure 3's canonical reference is recorded-label persistence 0.7227"] = bool(
+        abs(persistence - 0.7227) < 5e-5)
+    checks["figure 3 distinguishes subscore LOCF persistence at 0.7453"] = bool(
+        abs(locf - 0.7453) < 5e-5 and abs(locf - persistence) > 0.02)
+    return d
 
 
 # ---------------------------------------------------------------------------
@@ -549,6 +807,15 @@ def main() -> int:
     section("FIGURE 4 -- WHERE THE MARGIN COMES FROM")
     figure_4(out, checks)
 
+    section("TABLES 2-5 -- MANUSCRIPT FORMATTING")
+    tables_2_to_5(out, checks)
+
+    section("FIGURE 1 -- PARTICIPANT FLOW")
+    figure_1(out, checks)
+
+    section("FIGURE 3 -- HARMONISED COMPARISON")
+    figure_3(out, checks)
+
     section("FIGURE 5a -- REPRESENTATION DIMENSIONALITY")
     figure_5a(out, checks)
 
@@ -576,7 +843,7 @@ def main() -> int:
                         "elapsed_seconds": round(time.time() - started, 1),
                         "git_commit": commit, "panel_md5": md5,
                         "models_fitted": 0},
-        "sources": {"figure_2": E2, "figure_4": E8, "figure_5a": DIM, "figure_5b": T5,
+        "sources": {"figure_1": E5, "figure_2": E2, "figure_3": E8, "figure_4": E8, "figure_5a": DIM, "figure_5b": T5,
                     "table_1": "outputs/visit_panel.csv"},
         "checks": {k: bool(v) for k, v in checks.items()},
         "files": {p.name: sha(p) for p in sorted(out.iterdir()) if p.is_file()},

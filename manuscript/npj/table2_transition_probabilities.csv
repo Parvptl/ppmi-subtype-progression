@@ -1,0 +1,10 @@
+From,To,Visits in state,n,Probability,95% CI,Design effect
+TD,TD,"2,261","1,827",0.808,0.788 to 0.826,1.38
+TD,Indeterminate,"2,261",181,0.08,0.068 to 0.092,1.15
+TD,PIGD,"2,261",253,0.112,0.098 to 0.127,1.23
+Indeterminate,TD,334,147,0.44,0.381 to 0.500,1.2
+Indeterminate,Indeterminate,334,64,0.192,0.148 to 0.234,1.08
+Indeterminate,PIGD,334,123,0.368,0.318 to 0.417,0.91
+PIGD,TD,766,141,0.184,0.153 to 0.218,1.36
+PIGD,Indeterminate,766,87,0.114,0.091 to 0.138,1.08
+PIGD,PIGD,766,538,0.702,0.661 to 0.738,1.46

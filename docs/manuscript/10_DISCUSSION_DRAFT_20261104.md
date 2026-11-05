@@ -52,9 +52,10 @@ but by declining to repeat a class that is rarely repeated. Its fragility is
 arithmetic as much as clinical. Because the tremor score averages eleven
 integer ratings and the PIGD score five, few ratio values fall inside a band
 0.25 wide; half of indeterminate visits sat at a single value one hundredth
-from a threshold, and in a post-hoc calculation moving the thresholds by about
-0.02 — less than the spacing between attainable values — reclassified 6.7% of
-all labelled visits, every one of them out of the indeterminate class. The constraint our
+from a threshold, and moving the thresholds by about 0.02 — less than the
+spacing between attainable values — reclassified 6.7% of all labelled visits
+and a fifth of participants, every one of them out of the indeterminate
+class. The constraint our
 specification placed on the emission matrix was binding for this state alone,
 which is the same fact expressed in the model's parameters. Whether the
 construct identifies a distinct phenotype has been questioned on clinical
@@ -141,10 +142,7 @@ bound, and the cognitive outcome is not fully independent of the feature set.
 Medication enters all of these models as an input measured in routine care and
 confounded by indication; no coefficient on it supports a causal reading. The
 per-participant analysis and its grouping by label composition were specified
-after the predictions were generated and are reported as descriptive. Finally,
-one internal agreement figure quoted in the cohort section cannot currently be
-recomputed, because the archived release it was checked against is no longer
-present in the repository.
+after the predictions were generated and are reported as descriptive.
 
 Within those limits, the measurement rather than the model was the binding
 constraint on predicting this label in this cohort. The practical consequence
@@ -178,10 +176,14 @@ medication.
 
 # §B — Open items
 
-1. **C6 disclosure** — the final sentence of the limitations discloses that the
-   99.87% three-class agreement check is not currently reproducible
-   (`data/validation/` is empty). If the archived release is restored before
-   submission, that sentence should be deleted and the check rerun.
+1. **C6 ✅ CLOSED 2026-11-04.** The limitations previously disclosed that the
+   99.87% three-class agreement check was not reproducible because
+   `data/validation/` was empty. **It is not empty** — it holds
+   `PPMI_Original_Cohort_BL_to_Year_5_Dataset_Apr2020.csv` with the
+   `td_pigd_old` column the check needs. Re-running the panel build reproduced
+   the figure exactly at 0.9987 on 1,597 compared visits from 390 participants.
+   The sentence has been removed because it was false, not because the
+   situation changed.
 2. **C3** — no growth-model result is quoted in Results or Discussion. If the
    model appears in supplementary material, the limitations need a sentence on
    its single-chain MCMC, and it must be labelled descriptive.

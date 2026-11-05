@@ -1,0 +1,11 @@
+stage,visits,patients,note
+"curated data cut, as published",19450,4788,
+subgroup in ['Sporadic PD'],5789,1080,"-13,661 visits, -3,708 patients"
+"exclude events ['PW', 'ST', 'U01', 'U02']",5774,1080,-15 visits
+follow-up <= 15 years,5774,1080,-0 visits
+cohort patient-visits,5774,1080,
+with a TD/PIGD subtype label,4441,1080,"-1,333 visits unlabelled"
+labelled visits,4441,1080,
+patients with >= 2 labelled visits,4295,934,-146 patients with one only
+consecutive labelled visit pairs,3361,934,one prediction opportunity each
+eligible for two-class TD-vs-PIGD scoring,3029,899,-332 Indeterminate targets

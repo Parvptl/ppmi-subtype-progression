@@ -157,25 +157,36 @@ logistics decision rather than a fact to be retrieved.
 
 **Goes in.** `## Code availability`, L904, replacing the AUTHOR QUERY block.
 
-### 2.7 Author order, affiliations and corresponding author — **blocking**
+### 2.7 ✅ RESOLVED 2026-11-04 — author list supplied by the authors
 
-**Needed.** Confirmation that the abstract's order (Parv Patel, Mayank
-Tewatia, Dr. Sahasranand K. R.) carries to the manuscript; each author's full
-affiliation, since the abstract gives only one covering all three; the
-corresponding author with an institutional email; and ORCID identifiers, which
-most npj titles require at least for the corresponding author.
+The authors supplied the list directly, superseding what the repository held:
 
-**Repository status.** Order and a single shared affiliation are in the
-abstract. The manuscript currently carries this with the explicit marker
-*"order and affiliations to be confirmed by the authors"*.
+> **Towards Longitudinal Prediction of Parkinson's Disease Motor Subtypes**
+> Parv Patel¹, Mayank Tewatia¹, Varsha Vasudevan², and K. R. Sahasranand¹
+> ¹ Indian Institute of Technology Palakkad, India · ² NeuroComp
 
-**Why it matters.** Author order on a conference abstract does not always carry
-to a journal paper, and a single shared affiliation may be an abbreviation that
-was fine for a one-page abstract and is not fine here.
+Three things the repository had wrong or missing, now corrected throughout:
 
-**Goes in.** The author line at L5.
+* **Varsha Vasudevan is a fourth author** and appears nowhere in the
+  repository — not in any report, the CARE AI abstract, or the git history.
+* **There are two affiliations**, not one. NeuroComp is new information.
+* **K. R. Sahasranand is an author**, which settles the inconsistency recorded
+  earlier between the CARE AI abstract (third author) and the project report
+  (supervisor). The author form is used.
 
----
+The title is also the authors' own, replacing the thesis-stating working
+title.
+
+**Still outstanding for this item:** the corresponding author, institutional
+email addresses, and ORCID identifiers.
+
+> **Note on the clean PDF.** `MANUSCRIPT_REVIEW_DRAFT.pdf` is now a clean
+> reading copy at the authors' request: no review banner, and no author-query
+> boxes. **Removing the boxes did not supply the declarations.** Ethics,
+> funding, competing interests, CRediT and the PPMI acknowledgement remain
+> absent, and §2.1–2.5 above are still the standing record of what is needed.
+> The Data availability and Code availability statements are kept in the PDF
+> because their prose is accurate on its own.
 
 ## 3. Journal requirements that could not be verified
 

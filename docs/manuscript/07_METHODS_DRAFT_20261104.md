@@ -111,6 +111,57 @@ covering 390 patients.
 
 ---
 
+## M3a. Threshold sensitivity of the subtype definition
+
+The subtype is a threshold applied to a ratio, so its stability under a small
+change to those thresholds is a property of the definition rather than of any
+model. We quantified it by rebuilding the entire panel under a perturbed rule
+and comparing the two label columns.
+
+The perturbed rule was specified in the repository before this analysis, as
+`config/config_narrow_0.91_1.13.yaml`, and was not selected after inspecting
+results. It differs from the primary rule in three respects, not two: both
+numeric thresholds move, and the side on which each band boundary is closed is
+reversed.
+
+| | PIGD | Indeterminate | Tremor dominant |
+|---|---|---|---|
+| Primary | ratio ≤ 0.90 | 0.90 < ratio < 1.15 | ratio ≥ 1.15 |
+| Perturbed | ratio < 0.91 | 0.91 ≤ ratio ≤ 1.13 | ratio > 1.13 |
+
+The perturbation is deliberately smaller than the spacing between values the
+ratio can actually attain near the band edges, which is the comparison of
+interest: a classification that is stable only to changes larger than its own
+measurement resolution is not stable in any useful sense.
+
+No model is involved and nothing is refitted. The panel was rebuilt by the
+same pipeline with only the configuration changed, so the two panels share
+every visit, every subscore and every cohort decision, and differ only in the
+label column. Both of those invariances were verified rather than assumed: the
+tremor and PIGD subscores are numerically identical across the two panels, and
+the set of visits that carry a label is unchanged, so the comparison has a
+fixed denominator throughout.
+
+Visits were joined one-to-one on participant and visit identifier, and we
+report the full three-by-three table of primary against perturbed label, the
+movement into and out of each class, and the number of **participants** with at
+least one relabelled visit, since a visit-level share understates how widely a
+relabelling is distributed. Both rules were additionally compared against
+PPMI's own two-class and three-class derivations.
+
+**No uncertainty interval is reported for this analysis, and none is
+appropriate.** It is a deterministic recomputation on a fixed panel, not an
+estimate from a sample: applying a different arithmetic rule to the same
+numbers has no sampling variability. The relevant uncertainty is in whether the
+primary thresholds are the right ones, which this analysis addresses by showing
+the consequence of changing them rather than by placing an interval around
+them.
+
+Neither rule is treated as correct. The primary rule is the published one and
+the perturbed rule is a small deviation from it; both are rules, and neither is
+an adjudicated diagnosis. The analysis is reported to characterise the
+label's fragility, not to argue that any published labelling is wrong.
+
 ## M4. Missing labels
 
 Labels were not imputed; analyses used complete cases. Because the pattern of

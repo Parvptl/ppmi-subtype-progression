@@ -33,8 +33,8 @@ DRAFTS = {
     "abstract": DOCS / "11_ABSTRACT_TITLE_DRAFT_20261104.md",
 }
 
-TITLE = ("Label reliability rather than model capacity limits longitudinal "
-         "prediction of Parkinson's disease motor subtypes")
+TITLE = ("Towards Longitudinal Prediction of Parkinson's Disease "
+         "Motor Subtypes")
 
 SUPERSCRIPT = str.maketrans("0123456789", "⁰¹²³⁴⁵⁶⁷⁸⁹")
 
@@ -84,11 +84,19 @@ FIGURE_LEGENDS = [
      "between the two visits."),
     ("Fig. 3 | Harmonised comparison across five model families.",
      "Accuracy of nine fitted specifications and five reference rules on the "
-     "same 3,361 transitions, re-scored onto one decision rule, one evaluation "
-     "set and one baseline. Every predicted class is the argmax of a "
-     "three-label probability vector; subscore models are propagated through "
-     "the unmodified classification rule by Monte Carlo. Label persistence is "
-     "the canonical reference."),
+     "same 3,361 transitions, re-scored onto one decision rule and one "
+     "evaluation set. Every predicted class is the argmax of a three-label "
+     "probability vector; subscore models are propagated through the "
+     "unmodified classification rule by Monte Carlo. **Two distinct "
+     "persistence rules appear and are not interchangeable.** The canonical "
+     "reference, against which every contrast in the text is computed, is "
+     "*recorded-label persistence* (0.7227), which names the currently "
+     "recorded label and uses no subscores; it is marked by the dashed line. "
+     "*Subscore LOCF persistence* (0.7453) carries the last observed "
+     "subscores forward and is a separate baseline on a different input, "
+     "marked by the dotted line; no contrast reported here is taken against "
+     "it. Connectors are drawn only for fitted specifications and only to the "
+     "canonical reference."),
     ("Fig. 4 | Where the margin over persistence comes from.",
      "Each model's gain and loss against label persistence, decomposed by the "
      "label recorded at the prediction point. Counts sum to each model's total "
@@ -126,17 +134,17 @@ TABLE_CAPTIONS = [
 ]
 
 ASSETS = [
-    ("Fig. 1", "experiments/20261103T192414Z_e5_participant_flow/fig1_participant_flow.png", "run figure"),
+    ("Fig. 1", "manuscript/npj/fig1_participant_flow.png", "submission-ready"),
     ("Fig. 2", "manuscript/npj/fig2_label_instability.png", "submission-ready"),
-    ("Fig. 3", "experiments/20261103T202632Z_e8_harmonised_family_comparison/fig1_harmonised_family_comparison.png", "run figure"),
+    ("Fig. 3", "manuscript/npj/fig3_harmonised_comparison.png", "submission-ready"),
     ("Fig. 4", "manuscript/npj/fig4_margin_decomposition.png", "submission-ready"),
     ("Fig. 5a", "manuscript/npj/fig5a_representation_dimensionality.png", "submission-ready"),
     ("Fig. 5b", "manuscript/npj/fig5b_outcome_discrimination.png", "submission-ready"),
     ("Table 1", "manuscript/npj/table1_cohort_characteristics.csv", "submission-ready"),
-    ("Table 2", "experiments/20261103T193205Z_e2_transition_patient_bootstrap/", "source CSVs, not formatted"),
-    ("Table 3", "experiments/20261103T202632Z_e8_harmonised_family_comparison/harmonised_metrics.csv", "source CSV, not formatted"),
-    ("Table 4", "outputs/joint_subscore/subtype_metrics.csv + auc_metrics.csv", "source CSVs, not formatted"),
-    ("Table 5", "experiments/20261103T175003Z_patient_level_accuracy_audit/patient_accuracy_by_subtype_composition.csv", "source CSV, not formatted"),
+    ("Table 2", "manuscript/npj/table2_transition_probabilities.csv", "submission-ready"),
+    ("Table 3", "manuscript/npj/table3_harmonised_comparison.csv", "submission-ready"),
+    ("Table 4", "manuscript/npj/table4_two_class.csv", "submission-ready"),
+    ("Table 5", "manuscript/npj/table5_composition.csv", "submission-ready"),
 ]
 
 
@@ -218,9 +226,10 @@ def main() -> int:
                "remains in the draft it belongs to. Regenerate rather than "
                "edit this file.")
     doc.append("")
-    doc.append("**Authors.** Parv Patel, Mayank Tewatia, Sahasranand K. R. "
-               "*(order and affiliations to be confirmed by the authors; see "
-               "Author contributions below.)*")
+    doc.append("**Authors.** Parv Patel\u00b9, Mayank Tewatia\u00b9, Varsha Vasudevan\u00b2, "
+               "and K. R. Sahasranand\u00b9")
+    doc.append("")
+    doc.append("\u00b9 Indian Institute of Technology Palakkad, India  \u00b7  \u00b2 NeuroComp")
     doc.append("")
     doc.append("---")
     doc.append("")
@@ -262,10 +271,10 @@ def main() -> int:
                "checksum is recorded in the repository so that a reader with "
                "PPMI access can reconstruct the identical panel.")
     doc.append("")
-    doc.append("> **TO BE COMPLETED BEFORE SUBMISSION.** The current PPMI "
-               "acknowledgement wording and the DUA reference are not in the "
-               "repository (Stage 1 C5); `report/CARE_AI2026_Abstract.tex` "
-               "carries a `% TODO` for exactly this.")
+    doc.append("> **AUTHOR QUERY \u2014 required before submission.** The Data Use "
+               "Agreement reference under which access was granted is not in "
+               "the project record and must be supplied by the authors, as "
+               "must PPMI's current data-citation wording.")
     doc.append("")
     doc.append("## Code availability")
     doc.append("")
@@ -291,21 +300,27 @@ def main() -> int:
     doc.append("")
     for heading, note in [
         ("Ethics declarations",
-         "**ABSENT (Stage 1 C5).** No ethics approval, consent statement or "
-         "institutional position on secondary analysis of PPMI exists anywhere "
-         "in the repository. Required before submission."),
+         "*To be confirmed by the authors.* The institutional basis for "
+         "secondary analysis of de-identified PPMI data \u2014 approval, "
+         "exemption, or a determination that review is not required \u2014 "
+         "together with the Data Use Agreement reference, is not recorded in "
+         "the project materials and is not stated here."),
         ("Funding",
-         "**ABSENT (Stage 1 C5).** Required before submission."),
+         "*To be confirmed by the authors.* No funding source is recorded in "
+         "the project materials. A declaration of no funding is equally a "
+         "statement of fact and is not made on the authors' behalf."),
         ("Competing interests",
-         "**ABSENT (Stage 1 C5).** Required before submission."),
+         "*To be confirmed by the authors.* A declaration is required from "
+         "each author individually and is not stated here."),
         ("Author contributions",
-         "**ABSENT (Stage 1 C5).** A CRediT statement must be supplied by the "
-         "authors. Author list above is taken from the CARE AI 2026 abstract "
-         "and is unconfirmed."),
+         "*To be confirmed by the authors.* A CRediT statement is required "
+         "per author. The project materials evidence commit activity only, "
+         "which does not capture conceptualisation, supervision or review."),
         ("Acknowledgements",
-         "**ABSENT (Stage 1 C5).** PPMI requires specific acknowledgement "
-         "wording, including its sponsor and funding-partner list. Not in the "
-         "repository."),
+         "*To be confirmed by the authors.* PPMI requires specific "
+         "acknowledgement wording, including its sponsor and funding-partner "
+         "list, which is not recorded in the project materials. It must be "
+         "taken from PPMI's current guidance rather than paraphrased."),
     ]:
         doc.append(f"## {heading}")
         doc.append("")

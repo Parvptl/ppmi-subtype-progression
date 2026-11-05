@@ -27,12 +27,12 @@ re-opening a conclusion.
 
 | ID | Issue | Class | Priority |
 |---|---|---|---|
-| B1 | Threshold-perturbation result has no Methods and is not marked post hoc | **validity** | **critical** |
+| B1 | ✅ **FIXED** — Methods M3a written from the executed run | **validity** | **critical** |
 | G1 | ✅ **FIXED** — three contradicting *(supplementary)* labels removed | **validity** | **high** |
 | D1 | ✅ **FIXED** — Figure 5a drawn from verified source data | **validity** | **high** |
 | B2 | ✅ **FIXED** — the Methods now states it reports no result, and why | validity (minor) | medium |
-| C1 | Threshold figures rest on a recomputation, not a saved run | validity | high (deferred) |
-| C2 | The 99.87% agreement check is not reproducible | validity | medium (disclosed) |
+| C1 | ✅ **FIXED** — O-4 run and saved, 23/23 checks pass | validity | high |
+| C2 | ❌ **RETRACTED** — it is reproducible; the claim was wrong | validity | medium |
 | H1 | Reference 6 (Erro 2019) was never read beyond Crossref metadata | references | medium |
 | H2 | STROBE / TRIPOD+AI deliberately uncited pending E-7 | submission | medium |
 | E1 | Tables 2–5 are unformatted source CSVs | presentation | high |
@@ -75,7 +75,7 @@ convergence, and it is argued explicitly rather than left implicit.
 
 ## B. Sections incomplete or requiring rewriting
 
-### B1 — The threshold-perturbation result has no Methods *(critical, validity)*
+### B1 — ✅ FIXED — the threshold-perturbation result had no Methods *(critical, validity)*
 
 **Location.** Reported at L164–167 (R2) and again at L383–385 (Discussion).
 
@@ -99,16 +99,18 @@ paper's three main interpretive moves. An undocumented, unregistered
 calculation supporting a central argument is the kind of thing that costs
 credibility disproportionately to its actual importance.
 
-**Recommended action.** Two steps, only the first of which is in scope now.
-(1) Mark the figures post hoc wherever they appear — **done in this review
-pass**, see §K. (2) Add a short Methods subsection describing the perturbation
-once O-4 is run, stating the pre-specified range and its rationale. Writing
-that subsection now is deliberately *not* done: O-4 is deferred, and
-describing a procedure that may change when it is actually run would create a
-second discrepancy rather than fix one.
+**Resolved.** O-4 has been run and saved
+(`experiments/20261104T002308Z_o4_threshold_sensitivity/`), and **Methods M3a**
+now describes the executed procedure: the purpose, both threshold triples, the
+fact that the perturbation changes the closure side as well as the two numbers,
+the shared cohort and verified-identical subscores, the comparison procedure,
+the participant-level denominator, and an explicit statement that no
+uncertainty interval is reported because a deterministic recomputation on a
+fixed panel has no sampling variability. The post-hoc marking added earlier has
+been removed from R2 and the Discussion, since the analysis is now a saved run
+from a configuration committed on 2026-09-11, before any of this work.
 
-**Priority: critical** for the validity fix (done); **high, deferred** for the
-Methods subsection.
+**Priority: critical — closed.**
 
 ### B2 — ✅ FIXED — growth-model Methods described a model with no result *(medium)*
 
@@ -172,26 +174,30 @@ strata; the harmonised metrics for all fourteen specifications; representation
 dimensionality; the Hoehn & Yahr and MCI outcome deltas; and every cohort
 count. Two claims remain outstanding.
 
-### C1 — Threshold figures rest on a recomputation *(high, deferred)*
+### C1 — ✅ FIXED — threshold figures rested on a recomputation *(high)*
 
-The figures in B1 above (298/4,441, 6.7%, 67.6%, 97.74%) were computed from
-the frozen panel but never saved as a run, so they have no manifest, no seed
-record and no checksum. **Action:** run O-4 — deferred by instruction. Until
-then they carry the post-hoc marking added in §K.
+**Resolved.** All four reproduce exactly in the saved run, together with every
+other figure the Stage 1 audit recorded, and the run carries a manifest with
+both panel checksums, the git commit, the two configurations and 23 checks.
+Three results are new: 235 of 1,080 participants (21.8%) affected; three-class
+agreement falling 0.9987 → 0.9286; and the finding that indeterminate visits
+with a defined ratio take only eleven distinct values, two of which account for
+all 298 relabellings.
 
-### C2 — The 99.87% three-class agreement is not reproducible *(medium)*
+### C2 — ❌ RETRACTED — the 99.87% check is reproducible *(medium)*
 
 **Location.** L120–122 (R1).
 
-`data/validation/` is empty, so the archived 2020 release the check was made
-against is gone. This is **already disclosed** in the Discussion's limitations
-("one internal agreement figure quoted in the cohort section cannot currently
-be recomputed"), which is the honest minimum. **Action:** restore the archived
-release and rerun, or leave the disclosure. Note that R1's editorial framing
-already instructs that this figure must not be promoted to "validation", and
-the manuscript respects that.
+This entry said `data/validation/` was empty, so the archived 2020 release was
+gone. **It is not empty.** The file is present with the column the check needs,
+and re-running the panel build reproduced 0.9987 exactly on 1,597 compared
+visits from 390 participants. The Discussion's limitations sentence has been
+removed because it was false.
 
----
+Worth recording: this is the third claim of this kind to be wrong, after A2 and
+B2 in the submission audit. All three asserted something about the repository's
+contents without running a command to check. The numeric claims, which were
+always re-derived from source, have held up throughout.
 
 ## D. Figures missing or needing redrawing
 

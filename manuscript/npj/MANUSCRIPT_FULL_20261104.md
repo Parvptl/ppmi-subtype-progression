@@ -1,8 +1,10 @@
-# Label reliability rather than model capacity limits longitudinal prediction of Parkinson's disease motor subtypes
+# Towards Longitudinal Prediction of Parkinson's Disease Motor Subtypes
 
 > **Assembled by `scripts/81_assemble_manuscript.py` on 2026-11-04 from the Stage 6–10 drafts.** Manuscript text only: every editorial note in those drafts is excluded here and remains in the draft it belongs to. Regenerate rather than edit this file.
 
-**Authors.** Parv Patel, Mayank Tewatia, Sahasranand K. R. *(order and affiliations to be confirmed by the authors; see Author contributions below.)*
+**Authors.** Parv Patel¹, Mayank Tewatia¹, Varsha Vasudevan², and K. R. Sahasranand¹
+
+¹ Indian Institute of Technology Palakkad, India  ·  ² NeuroComp
 
 ---
 
@@ -156,17 +158,29 @@ tremor dominant to PIGD rose from 0.100 (0.087–0.116) to 0.289 (0.167–0.432)
 A single pooled matrix therefore averages one-year and multi-year transitions
 in whatever proportion attendance produced.
 
-Finally, the classification was fragile to perturbations smaller than the
-measurement's own resolution. Because the tremor score is a mean of eleven
-integer ratings and the PIGD score a mean of five, few ratio values are
-reachable inside a band 0.25 wide: half of indeterminate visits sat at a ratio
-of 0.9091 and a further quarter at 1.1364, each about one hundredth from a
-threshold. In a post-hoc calculation on the frozen panel, moving each
-threshold by approximately 0.02 reclassified 298 of 4,441 labelled visits
-(6.7%), **all of them from the indeterminate class**, which shrank by 67.6%,
-and reduced agreement with PPMI's two-class label from 100.00% to 97.74%. The
-perturbation was not pre-specified and these figures are reported as
-exploratory.
+Finally, the classification was fragile to a perturbation of its thresholds
+smaller than the measurement's own resolution (Methods M3a). Because the tremor
+score is a mean of eleven integer ratings and the PIGD score a mean of five,
+very few ratio values are reachable inside a band 0.25 wide: the 381
+indeterminate visits with a defined ratio take only **eleven distinct values**,
+of which 198 (52.0%) sit at 0.9091 and 100 (26.2%) at 1.1364 — one hundredth
+and seven thousandths from a threshold respectively.
+
+Rebuilding the whole panel under the perturbed rule relabelled **298 of 4,441
+labelled visits (6.7%), every one of them from the indeterminate class**. No
+tremor-dominant or PIGD visit moved. The indeterminate class fell from 441
+visits to 143, a reduction of 67.6%, with 198 becoming PIGD and 100 tremor
+dominant; those two movements are exactly the two ratio values above, so the
+entire effect is two attainable values crossing a line that moved by 0.01 and
+0.0064. Of the 143 visits that remained indeterminate, 60 did so only because
+their ratio is undefined. Measured over participants rather than visits, the
+perturbation touched **235 of 1,080 (21.8%)**. Agreement with PPMI's own
+derivations fell from 100.00% to 97.74% on the two-class label and from 99.87%
+to 92.86% on the three-class label.
+
+Neither rule is an adjudicated diagnosis, and this is not evidence that any
+published labelling is wrong; it measures how much of the indeterminate class
+survives a change too small for the instrument to resolve.
 
 ### Nine model specifications across five families converge
 
@@ -382,9 +396,10 @@ but by declining to repeat a class that is rarely repeated. Its fragility is
 arithmetic as much as clinical. Because the tremor score averages eleven
 integer ratings and the PIGD score five, few ratio values fall inside a band
 0.25 wide; half of indeterminate visits sat at a single value one hundredth
-from a threshold, and in a post-hoc calculation moving the thresholds by about
-0.02 — less than the spacing between attainable values — reclassified 6.7% of
-all labelled visits, every one of them out of the indeterminate class. The constraint our
+from a threshold, and moving the thresholds by about 0.02 — less than the
+spacing between attainable values — reclassified 6.7% of all labelled visits
+and a fifth of participants, every one of them out of the indeterminate
+class. The constraint our
 specification placed on the emission matrix was binding for this state alone,
 which is the same fact expressed in the model's parameters. Whether the
 construct identifies a distinct phenotype has been questioned on clinical
@@ -471,10 +486,7 @@ bound, and the cognitive outcome is not fully independent of the feature set.
 Medication enters all of these models as an input measured in routine care and
 confounded by indication; no coefficient on it supports a causal reading. The
 per-participant analysis and its grouping by label composition were specified
-after the predictions were generated and are reported as descriptive. Finally,
-one internal agreement figure quoted in the cohort section cannot currently be
-recomputed, because the archived release it was checked against is no longer
-present in the repository.
+after the predictions were generated and are reported as descriptive.
 
 Within those limits, the measurement rather than the model was the binding
 constraint on predicting this label in this cohort. The practical consequence
@@ -569,6 +581,57 @@ Recomputed labels were compared against PPMI's own two derivations. Agreement
 was 4,431 of 4,431 (100.00%) against the curated cut's two-class `td_pigd`, and
 1,595 of 1,597 (99.87%) against a three-class label in an archived 2020 release
 covering 390 patients.
+
+### Threshold sensitivity of the subtype definition
+
+The subtype is a threshold applied to a ratio, so its stability under a small
+change to those thresholds is a property of the definition rather than of any
+model. We quantified it by rebuilding the entire panel under a perturbed rule
+and comparing the two label columns.
+
+The perturbed rule was specified in the repository before this analysis, as
+`config/config_narrow_0.91_1.13.yaml`, and was not selected after inspecting
+results. It differs from the primary rule in three respects, not two: both
+numeric thresholds move, and the side on which each band boundary is closed is
+reversed.
+
+| | PIGD | Indeterminate | Tremor dominant |
+|---|---|---|---|
+| Primary | ratio ≤ 0.90 | 0.90 < ratio < 1.15 | ratio ≥ 1.15 |
+| Perturbed | ratio < 0.91 | 0.91 ≤ ratio ≤ 1.13 | ratio > 1.13 |
+
+The perturbation is deliberately smaller than the spacing between values the
+ratio can actually attain near the band edges, which is the comparison of
+interest: a classification that is stable only to changes larger than its own
+measurement resolution is not stable in any useful sense.
+
+No model is involved and nothing is refitted. The panel was rebuilt by the
+same pipeline with only the configuration changed, so the two panels share
+every visit, every subscore and every cohort decision, and differ only in the
+label column. Both of those invariances were verified rather than assumed: the
+tremor and PIGD subscores are numerically identical across the two panels, and
+the set of visits that carry a label is unchanged, so the comparison has a
+fixed denominator throughout.
+
+Visits were joined one-to-one on participant and visit identifier, and we
+report the full three-by-three table of primary against perturbed label, the
+movement into and out of each class, and the number of **participants** with at
+least one relabelled visit, since a visit-level share understates how widely a
+relabelling is distributed. Both rules were additionally compared against
+PPMI's own two-class and three-class derivations.
+
+**No uncertainty interval is reported for this analysis, and none is
+appropriate.** It is a deterministic recomputation on a fixed panel, not an
+estimate from a sample: applying a different arithmetic rule to the same
+numbers has no sampling variability. The relevant uncertainty is in whether the
+primary thresholds are the right ones, which this analysis addresses by showing
+the consequence of changing them rather than by placing an interval around
+them.
+
+Neither rule is treated as correct. The primary rule is the published one and
+the perturbed rule is a small deviation from it; both are rules, and neither is
+an adjudicated diagnosis. The analysis is reported to characterise the
+label's fragility, not to argue that any published labelling is wrong.
 
 ### Missing labels
 
@@ -907,7 +970,7 @@ of every internal validation check; runs exit non-zero if any check fails.
 
 Data were obtained from the Parkinson's Progression Markers Initiative (PPMI) database and are available to qualified researchers from the PPMI repository at the Laboratory of Neuro Imaging (LONI) under PPMI's Data Use Agreement. The authors are not permitted to redistribute participant-level data. The analysis operates on a frozen visit panel whose checksum is recorded in the repository so that a reader with PPMI access can reconstruct the identical panel.
 
-> **TO BE COMPLETED BEFORE SUBMISSION.** The current PPMI acknowledgement wording and the DUA reference are not in the repository (Stage 1 C5); `report/CARE_AI2026_Abstract.tex` carries a `% TODO` for exactly this.
+> **AUTHOR QUERY — required before submission.** The Data Use Agreement reference under which access was granted is not in the project record and must be supplied by the authors, as must PPMI's current data-citation wording.
 
 ## Code availability
 
@@ -919,23 +982,23 @@ Derived outputs are deliberately not included. They contain participant-level va
 
 ## Ethics declarations
 
-> **ABSENT (Stage 1 C5).** No ethics approval, consent statement or institutional position on secondary analysis of PPMI exists anywhere in the repository. Required before submission.
+> *To be confirmed by the authors.* The institutional basis for secondary analysis of de-identified PPMI data — approval, exemption, or a determination that review is not required — together with the Data Use Agreement reference, is not recorded in the project materials and is not stated here.
 
 ## Funding
 
-> **ABSENT (Stage 1 C5).** Required before submission.
+> *To be confirmed by the authors.* No funding source is recorded in the project materials. A declaration of no funding is equally a statement of fact and is not made on the authors' behalf.
 
 ## Competing interests
 
-> **ABSENT (Stage 1 C5).** Required before submission.
+> *To be confirmed by the authors.* A declaration is required from each author individually and is not stated here.
 
 ## Author contributions
 
-> **ABSENT (Stage 1 C5).** A CRediT statement must be supplied by the authors. Author list above is taken from the CARE AI 2026 abstract and is unconfirmed.
+> *To be confirmed by the authors.* A CRediT statement is required per author. The project materials evidence commit activity only, which does not capture conceptualisation, supervision or review.
 
 ## Acknowledgements
 
-> **ABSENT (Stage 1 C5).** PPMI requires specific acknowledgement wording, including its sponsor and funding-partner list. Not in the repository.
+> *To be confirmed by the authors.* PPMI requires specific acknowledgement wording, including its sponsor and funding-partner list, which is not recorded in the project materials. It must be taken from PPMI's current guidance rather than paraphrased.
 
 ## References
 
@@ -962,7 +1025,7 @@ Derived outputs are deliberately not included. They contain participant-level va
 
 **Fig. 2 | Instability of the recorded label.** **a**, Transition probabilities between consecutive labelled visits, with 95% patient-clustered bootstrap intervals (2,000 resamples of participants). **b**, Proportion of observed changes of state that returned to the origin state at the following visit, by change type. **c**, Transition probabilities stratified by the elapsed interval between the two visits.
 
-**Fig. 3 | Harmonised comparison across five model families.** Accuracy of nine fitted specifications and five reference rules on the same 3,361 transitions, re-scored onto one decision rule, one evaluation set and one baseline. Every predicted class is the argmax of a three-label probability vector; subscore models are propagated through the unmodified classification rule by Monte Carlo. Label persistence is the canonical reference.
+**Fig. 3 | Harmonised comparison across five model families.** Accuracy of nine fitted specifications and five reference rules on the same 3,361 transitions, re-scored onto one decision rule and one evaluation set. Every predicted class is the argmax of a three-label probability vector; subscore models are propagated through the unmodified classification rule by Monte Carlo. **Two distinct persistence rules appear and are not interchangeable.** The canonical reference, against which every contrast in the text is computed, is *recorded-label persistence* (0.7227), which names the currently recorded label and uses no subscores; it is marked by the dashed line. *Subscore LOCF persistence* (0.7453) carries the last observed subscores forward and is a separate baseline on a different input, marked by the dotted line; no contrast reported here is taken against it. Connectors are drawn only for fitted specifications and only to the canonical reference.
 
 **Fig. 4 | Where the margin over persistence comes from.** Each model's gain and loss against label persistence, decomposed by the label recorded at the prediction point. Counts sum to each model's total margin and cover all 3,361 transitions.
 
@@ -988,15 +1051,15 @@ Where each display item currently stands. "Run figure" means a figure exists fro
 
 | Item | Source | Status |
 |---|---|---|
-| Fig. 1 | `experiments/20261103T192414Z_e5_participant_flow/fig1_participant_flow.png` | run figure |
+| Fig. 1 | `manuscript/npj/fig1_participant_flow.png` | submission-ready |
 | Fig. 2 | `manuscript/npj/fig2_label_instability.png` | submission-ready |
-| Fig. 3 | `experiments/20261103T202632Z_e8_harmonised_family_comparison/fig1_harmonised_family_comparison.png` | run figure |
+| Fig. 3 | `manuscript/npj/fig3_harmonised_comparison.png` | submission-ready |
 | Fig. 4 | `manuscript/npj/fig4_margin_decomposition.png` | submission-ready |
 | Fig. 5a | `manuscript/npj/fig5a_representation_dimensionality.png` | submission-ready |
 | Fig. 5b | `manuscript/npj/fig5b_outcome_discrimination.png` | submission-ready |
 | Table 1 | `manuscript/npj/table1_cohort_characteristics.csv` | submission-ready |
-| Table 2 | `experiments/20261103T193205Z_e2_transition_patient_bootstrap/` | source CSVs, not formatted |
-| Table 3 | `experiments/20261103T202632Z_e8_harmonised_family_comparison/harmonised_metrics.csv` | source CSV, not formatted |
-| Table 4 | `outputs/joint_subscore/subtype_metrics.csv + auc_metrics.csv` | source CSVs, not formatted |
-| Table 5 | `experiments/20261103T175003Z_patient_level_accuracy_audit/patient_accuracy_by_subtype_composition.csv` | source CSV, not formatted |
+| Table 2 | `manuscript/npj/table2_transition_probabilities.csv` | submission-ready |
+| Table 3 | `manuscript/npj/table3_harmonised_comparison.csv` | submission-ready |
+| Table 4 | `manuscript/npj/table4_two_class.csv` | submission-ready |
+| Table 5 | `manuscript/npj/table5_composition.csv` | submission-ready |
 

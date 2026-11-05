@@ -76,17 +76,29 @@ tremor dominant to PIGD rose from 0.100 (0.087–0.116) to 0.289 (0.167–0.432)
 A single pooled matrix therefore averages one-year and multi-year transitions
 in whatever proportion attendance produced.
 
-Finally, the classification was fragile to perturbations smaller than the
-measurement's own resolution. Because the tremor score is a mean of eleven
-integer ratings and the PIGD score a mean of five, few ratio values are
-reachable inside a band 0.25 wide: half of indeterminate visits sat at a ratio
-of 0.9091 and a further quarter at 1.1364, each about one hundredth from a
-threshold. In a post-hoc calculation on the frozen panel, moving each
-threshold by approximately 0.02 reclassified 298 of 4,441 labelled visits
-(6.7%), **all of them from the indeterminate class**, which shrank by 67.6%,
-and reduced agreement with PPMI's two-class label from 100.00% to 97.74%. The
-perturbation was not pre-specified and these figures are reported as
-exploratory.
+Finally, the classification was fragile to a perturbation of its thresholds
+smaller than the measurement's own resolution (Methods M3a). Because the tremor
+score is a mean of eleven integer ratings and the PIGD score a mean of five,
+very few ratio values are reachable inside a band 0.25 wide: the 381
+indeterminate visits with a defined ratio take only **eleven distinct values**,
+of which 198 (52.0%) sit at 0.9091 and 100 (26.2%) at 1.1364 — one hundredth
+and seven thousandths from a threshold respectively.
+
+Rebuilding the whole panel under the perturbed rule relabelled **298 of 4,441
+labelled visits (6.7%), every one of them from the indeterminate class**. No
+tremor-dominant or PIGD visit moved. The indeterminate class fell from 441
+visits to 143, a reduction of 67.6%, with 198 becoming PIGD and 100 tremor
+dominant; those two movements are exactly the two ratio values above, so the
+entire effect is two attainable values crossing a line that moved by 0.01 and
+0.0064. Of the 143 visits that remained indeterminate, 60 did so only because
+their ratio is undefined. Measured over participants rather than visits, the
+perturbation touched **235 of 1,080 (21.8%)**. Agreement with PPMI's own
+derivations fell from 100.00% to 97.74% on the two-class label and from 99.87%
+to 92.86% on the three-class label.
+
+Neither rule is an adjudicated diagnosis, and this is not evidence that any
+published labelling is wrong; it measures how much of the indeterminate class
+survives a change too small for the instrument to resolve.
 
 > **Editorial.** The threshold result is currently a recomputation from the
 > frozen panel rather than a saved run (O-4). Either run it or mark it as a
