@@ -47,9 +47,15 @@ numerical value, interval or class definition was altered.
 | 6 Growth model | `manuscript_final/figures/fig27_growth_trajectories.png` |
 | 7 Ratio GP comparison | `manuscript_final/figures/fig29_gpr_model_comparison.png` |
 
-## Outstanding before posting
+## PPMI acknowledgement
 
-The PPMI Data Use Agreement requires the current list of PPMI funding partners
-to be reproduced verbatim in the acknowledgement. That list is not recorded in
-this repository and has deliberately not been invented; it must be inserted
-from the current PPMI publication policy before the preprint is posted.
+The Acknowledgements section carries both statements the PPMI Data Use Agreement
+requires: the data-source statement with RRID:SCR_006431, and the funding-partner
+list reproduced verbatim from the current PPMI publication policy.
+
+The data-source statement gives the acquisition date as **2026-08-20**. That is
+the date `docs/DATA_REQUIREMENTS.md` records for the two MDS-UPDRS item files,
+which were the last component of the analysed dataset to be obtained; the
+curated cut and participant-status files came on 2026-07-26. If PPMI expects the
+date of first access rather than last, change it in `main.tex` under
+`\section*{Acknowledgements}`.

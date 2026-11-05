@@ -1,0 +1,26 @@
+\begin{tabular}{@{}lrrrrrr@{}}
+\toprule
+\multicolumn{7}{@{}l}{\textit{(a) Full-cohort fits from 40 random starts per configuration}}\\
+Configuration & Par. & Best log-lik. & Worst log-lik. & Within 0.01 & Optima & Max $|\Delta E|$ \\
+\midrule
+3 states, floor 0.5 & 14 & $-2969.06$ & $-2969.06$ & 1.000 & 1  & 0.0003 \\
+3 states, floor 0.6 & 14 & $-2974.77$ & $-3657.69$ & 0.975 & 2  & 0.0002 \\
+3 states, floor 0.7 & 14 & $-2979.10$ & $-3657.69$ & 0.975 & 2  & 0.0000 \\
+3 states, free      & 14 & $-2955.32$ & $-2955.45$ & 0.950 & 2  & \textbf{0.9280} \\
+4 states, free      & 23 & $-2947.37$ & $-2954.83$ & 0.600 & 15 & 0.0050 \\
+5 states, free      & 34 & $-2938.82$ & $-2953.92$ & \textbf{0.025} & \textbf{36} & 0.0000 \\
+\midrule
+\multicolumn{7}{@{}l}{\textit{(b) Held-out performance of each configuration (argmax rule)}}\\
+Configuration & \multicolumn{2}{l}{Accuracy} & \multicolumn{2}{l}{95\% CI} & Bal.\ acc. & Rec.\ Ind. \\
+\midrule
+3 states, floor 0.5 & \multicolumn{2}{l}{0.7542} & \multicolumn{2}{l}{(0.7351, 0.7734)} & 0.5259 & 0.000 \\
+3 states, free      & \multicolumn{2}{l}{0.7539} & \multicolumn{2}{l}{(0.7341, 0.7733)} & 0.5222 & 0.000 \\
+4 states, free      & \multicolumn{2}{l}{0.7525} & \multicolumn{2}{l}{(0.7327, 0.7715)} & 0.5222 & 0.000 \\
+5 states, free      & \multicolumn{2}{l}{0.7542} & \multicolumn{2}{l}{(0.7348, 0.7732)} & 0.5256 & 0.000 \\
+\midrule
+\multicolumn{7}{@{}l}{\textit{(c) A prior-corrected decision rule recovers the minority class at a cost}}\\
+3 states, floor 0.5 & \multicolumn{2}{l}{0.7123} & \multicolumn{2}{l}{(0.6912, 0.7342)} & 0.5706 & \textbf{0.253} \\
+3 states, free      & \multicolumn{2}{l}{0.6897} & \multicolumn{2}{l}{(0.6662, 0.7139)} & 0.5709 & 0.307 \\
+5 states, free      & \multicolumn{2}{l}{0.6807} & \multicolumn{2}{l}{(0.6558, 0.7065)} & 0.5702 & 0.319 \\
+\bottomrule
+\end{tabular}

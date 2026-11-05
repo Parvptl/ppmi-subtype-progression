@@ -25,6 +25,8 @@ experiments/
 !extra/old_ood_project/*.pdf
 !docs/band_width_sensitivity/*.pdf
 !paper/arxiv/*.pdf
+# only the rendered preprint, not the third-party PPMI policy PDFs kept beside it
+!paper/preprint/main.pdf
 
 __pycache__/
 *.py[cod]

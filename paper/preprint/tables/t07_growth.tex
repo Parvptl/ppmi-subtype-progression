@@ -1,0 +1,20 @@
+\begin{tabular}{@{}llrl@{}}
+\toprule
+Parameter & Interpretation & Mean & 95\% CrI \\
+\midrule
+$\beta_0$ & population baseline ratio              & 2.2920 & (2.1577, 2.4272) \\
+$\beta_1$ & population change in $r$, per year     & $-0.0927$ & ($-0.1159$, $-0.0682$) \\
+$\sigma$  & total residual SD                      & 1.1380 & (1.0993, 1.1778) \\
+$\tau_0$  & between-patient SD of intercepts       & 1.3408 & (1.2466, 1.4421) \\
+$\tau_1$  & between-patient SD of slopes, per year & 0.1033 & (0.0780, 0.1315) \\
+\midrule
+\multicolumn{4}{@{}l}{\textit{Residual spread against the width of the Indeterminate band}}\\
+\multicolumn{2}{@{}l}{$\sigma$ / band width ($0.25$)} & \multicolumn{2}{l}{4.6} \\
+\multicolumn{2}{@{}l}{Variance of $r$: between / within patients} & \multicolumn{2}{l}{53.6\% / 46.4\%} \\
+\midrule
+\multicolumn{4}{@{}l}{\textit{Head to head against the hidden Markov model on the 825 pairs both can score}}\\
+\multicolumn{2}{@{}l}{Hidden Markov model} & \multicolumn{2}{l}{log-lik.\ $-0.6559$; accuracy 0.7612; Brier 0.3573} \\
+\multicolumn{2}{@{}l}{Hierarchical Bayesian growth} & \multicolumn{2}{l}{log-lik.\ $-0.6814$; accuracy 0.7370; Brier 0.3786} \\
+\multicolumn{2}{@{}l}{Across six further patient splits} & \multicolumn{2}{l}{HMM ahead 6 of 6, mean $+0.0579$ (SD 0.0188)} \\
+\bottomrule
+\end{tabular}

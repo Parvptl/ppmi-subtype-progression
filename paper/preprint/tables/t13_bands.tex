@@ -1,0 +1,23 @@
+\begin{tabular}{@{}lrrrrrrr@{}}
+\toprule
+Observation alphabet & Cat. & Par. & Accuracy & AUC-ROC & PR-AUC & pAUC & Calib.\ gap \\
+\midrule
+Subtype only                 & 3  & 14  & \textbf{0.8369} & 0.8587 & 0.7496 & 0.7883 & \textbf{0.0065} \\
+Subtype $\times$ band, 0.05  & 73 & 224 & 0.8336 & 0.8739 & 0.7330 & 0.7802 & 0.0250 \\
+Subtype $\times$ band, 0.10  & 44 & 137 & 0.8316 & 0.8758 & 0.7398 & 0.7823 & 0.0285 \\
+Subtype $\times$ band, 0.20  & 29 & 92  & 0.8336 & 0.8775 & \textbf{0.7540} & 0.7868 & 0.0240 \\
+Subtype $\times$ band, 0.30  & 24 & 77  & 0.8359 & \textbf{0.8784} & 0.7523 & \textbf{0.7892} & 0.0224 \\
+Subtype $\times$ band, 0.50  & 20 & 65  & 0.8320 & 0.8765 & 0.7409 & 0.7827 & 0.0291 \\
+\midrule
+\multicolumn{8}{@{}l}{\textit{Paired contrasts against the subtype-only model}}\\
+\multicolumn{3}{@{}l}{Accuracy, band 0.10} & \multicolumn{5}{l}{$-0.0053$ \,($-0.0134$, $+0.0034$) \quad interval contains zero} \\
+\multicolumn{3}{@{}l}{AUC-ROC, every width} & \multicolumn{5}{l}{$+0.0151$ to $+0.0197$ \quad every interval excludes zero} \\
+\multicolumn{3}{@{}l}{PR-AUC, band 0.30} & \multicolumn{5}{l}{$+0.0027$ \,($-0.0170$, $+0.0214$) \quad interval contains zero} \\
+\multicolumn{3}{@{}l}{Partial AUC, band 0.30} & \multicolumn{5}{l}{$+0.0009$ \,($-0.0074$, $+0.0090$) \quad interval contains zero} \\
+\addlinespace[2pt]
+\multicolumn{8}{@{}l}{\textit{Where the AUC gain sits (band 0.10 vs subtype only)}}\\
+\multicolumn{3}{@{}l}{Current label TD ($n{=}2{,}080$)} & \multicolumn{5}{l}{0.669 $\to$ 0.750} \\
+\multicolumn{3}{@{}l}{Current label Indeterminate ($n{=}270$)} & \multicolumn{5}{l}{0.633 $\to$ 0.635} \\
+\multicolumn{3}{@{}l}{Current label PIGD ($n{=}679$)} & \multicolumn{5}{l}{0.665 $\to$ 0.673} \\
+\bottomrule
+\end{tabular}

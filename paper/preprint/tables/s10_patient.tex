@@ -1,0 +1,32 @@
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+\multicolumn{6}{@{}l}{\textit{(a) Distribution of per-patient two-class accuracy}}\\
+Condition & $n$ patients & Visit-level & Mean patient & Median & \% perfect \\
+\midrule
+Profile, full history   & 898 & 0.8391 & 0.8342 & 1.000 & 63.7 \\
+Profile, last 2 visits  & 740 & 0.8425 & 0.8395 & 1.000 & 68.2 \\
+Profile, last 1 visit   & 898 & 0.8252 & 0.8219 & 1.000 & 63.3 \\
+Persistence             & 898 & 0.8338 & 0.8307 & 1.000 & 63.1 \\
+\multicolumn{6}{@{}l}{Profile, full history: 5.0\% of patients correct at no visit; 8.2\% below 50\%; 70.9\% at 80\% or better.}\\
+\midrule
+\multicolumn{6}{@{}l}{\textit{(b) Per-patient accuracy by the composition of that patient's recorded target labels}}\\
+Composition & $n$ patients & $n$ targets & Profile & Persistence & \\
+\midrule
+All TD targets      & 510 & 1,461 & 0.9444 & 0.9697 & \\
+Majority TD         & 105 & 600   & 0.6838 & 0.6704 & \\
+Evenly split        & 60  & 188   & \textbf{0.4685} & \textbf{0.4799} & \\
+Majority PIGD       & 61  & 333   & 0.5921 & 0.5413 & \\
+All PIGD targets    & 162 & 439   & 0.8112 & 0.7330 & \\
+\midrule
+\multicolumn{6}{@{}l}{\textit{(c) Per-patient class-specific rates}}\\
+\multicolumn{2}{@{}l}{Mean PIGD sensitivity, all patients with PIGD targets} & \multicolumn{2}{r}{0.5503} & \multicolumn{2}{l}{(persistence 0.4679)} \\
+\multicolumn{2}{@{}l}{\quad among patients with $\geq 2$ PIGD targets} & \multicolumn{2}{r}{0.7222} & \multicolumn{2}{l}{(persistence 0.6537)} \\
+\multicolumn{2}{@{}l}{Mean TD specificity} & \multicolumn{2}{r}{0.8583} & \multicolumn{2}{l}{(persistence 0.8834)} \\
+\midrule
+\multicolumn{6}{@{}l}{\textit{(d) Patient-level paired comparisons (mean difference, patients improved / worsened / unchanged)}}\\
+\multicolumn{2}{@{}l}{Last 1 vs full history} & $-0.0123$ & \multicolumn{3}{l}{($-0.0225$, $-0.0017$); 46 / 78 / 774} \\
+\multicolumn{2}{@{}l}{Last 2 vs full history} & $+0.0080$ & \multicolumn{3}{l}{($-0.0000$, $+0.0164$); 41 / 30 / 669} \\
+\multicolumn{2}{@{}l}{Window-trained vs full-trained} & $-0.0040$ & \multicolumn{3}{l}{($-0.0157$, $+0.0083$); 36 / 44 / 660} \\
+\multicolumn{2}{@{}l}{Full history vs persistence} & $+0.0029$ & \multicolumn{3}{l}{($-0.0078$, $+0.0141$); 72 / 58 / 768} \\
+\bottomrule
+\end{tabular}

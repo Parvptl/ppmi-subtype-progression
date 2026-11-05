@@ -1,0 +1,30 @@
+\begin{tabular}{@{}lrr@{}}
+\toprule
+\multicolumn{3}{@{}l}{\textit{(a) Nested first-visit models: held-out log-likelihood per prediction (mean of 10 splits)}}\\
+Model & Mean & SD across splits \\
+\midrule
+Hidden Markov model, no history       & $-0.7869$ & 0.0246 \\
+Current subtype $+$ horizon           & $-0.7813$ & 0.0280 \\
+\quad $+$ baseline ratio              & $-0.7735$ & 0.0311 \\
+\quad $+$ ten baseline covariates     & $-0.7625$ & 0.0378 \\
+\quad $+$ ratio $+$ covariates        & $\mathbf{-0.7550}$ & 0.0416 \\
+\midrule
+\multicolumn{3}{@{}l}{\textit{(b) Cost of dropping each covariate (log-likelihood per prediction)}}\\
+Covariate & \multicolumn{2}{r}{Cost of dropping} \\
+\midrule
+MDS-UPDRS Part II total               & \multicolumn{2}{r}{0.0153} \\
+DaTscan putamen binding, bilateral    & \multicolumn{2}{r}{0.0050} \\
+Age                                   & \multicolumn{2}{r}{0.0042} \\
+Hoehn \& Yahr stage                   & \multicolumn{2}{r}{0.0021} \\
+Sex                                   & \multicolumn{2}{r}{0.0002} \\
+MoCA, UPSIT, disease duration, SCOPA-AUT, RBDSQ & \multicolumn{2}{r}{$\leq 0$} \\
+\midrule
+\multicolumn{3}{@{}l}{\textit{(c) Performance by prediction horizon (main split)}}\\
+Horizon & $n$ & Accuracy \\
+\midrule
+$<1.5$ y        & 241 & 0.7759 \\
+1.5--3.5 y      & 358 & 0.7570 \\
+3.5--6.5 y      & 218 & 0.6789 \\
+$>6.5$ y        & 185 & 0.6162 \\
+\bottomrule
+\end{tabular}
