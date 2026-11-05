@@ -1,0 +1,3 @@
+# Rendered artefacts are byte-exact: never line-ending convert them.
+*.pdf binary
+*.png binary

@@ -16,12 +16,14 @@ experiments/
 # history, so these are never committed.
 .backup_step2/
 
-# Papers and the supervisor's proposal are third-party material. The only PDFs
-# we generate ourselves are the progress reports.
+# Papers and the supervisor's proposal are third-party material. The PDFs we
+# render ourselves are kept, one exception per directory that holds them: the
+# progress reports, and the experiment reports under docs/.
 *.pdf
 !report/*.pdf
 !reports/*.pdf
 !extra/old_ood_project/*.pdf
+!docs/band_width_sensitivity/*.pdf
 
 __pycache__/
 *.py[cod]
