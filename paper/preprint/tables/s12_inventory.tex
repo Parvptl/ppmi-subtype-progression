@@ -1,0 +1,72 @@
+\begin{longtable}{@{}p{0.40\textwidth}p{0.27\textwidth}p{0.11\textwidth}p{0.14\textwidth}@{}}
+\toprule
+Analysis & Cohort / units & Status & Reported in \\
+\midrule
+\endfirsthead
+\toprule
+Analysis & Cohort / units & Status & Reported in \\
+\midrule
+\endhead
+\multicolumn{4}{@{}l}{\textit{The target: how the label is built and how fragile it is}}\\
+Cohort construction and participant flow & 1,080 pt / 5,774 visits & completed & \S\ref{sec:data} \\
+Exact reconstruction of the label from raw items & 1,080 pt / 5,774 visits & completed & \S\ref{sec:construction} \\
+Label agreement between OFF and ON examinations & 714 pt / 2,343 pairs & completed & \S\ref{sec:construction} \\
+Attainable ratios on the integer lattice & 4,441 labelled visits & completed & \S\ref{sec:construction} \\
+Threshold-placement sensitivity & 1,080 pt / 4,441 visits & completed & \S\ref{sec:construction} \\
+\addlinespace[3pt]
+\multicolumn{4}{@{}l}{\textit{The dynamics of the label, measured before any model}}\\
+Transition structure, reversion, conversion, interval dependence & 934 pt / 3,361 transitions & completed & \S\ref{sec:dynamics} \\
+First-order Markov property in the recorded label & 2,427 triples & completed & \S\ref{sec:dynamics} \\
+Pre-registered audit of the Indeterminate class & 934 pt & completed; inconclusive by its own rule & \S\ref{sec:dynamics}, \ref{sup:ind} \\
+Lag-1 autocorrelation of within-patient residual change & 397 pt / 2,050 pairs & completed & \S\ref{sec:dynamics} \\
+\addlinespace[3pt]
+\multicolumn{4}{@{}l}{\textit{Can a generative model of the ratio reproduce the label?}}\\
+Pre-registered posterior-predictive label check & 821 pt / 3,528 visits & completed; negative & \S\ref{sec:ppc} \\
+Diagnostic localisation of the misfit & 821 pt / 3,528 visits & completed; descriptive & \S\ref{sec:ppc}, \ref{sup:ppc} \\
+\addlinespace[3pt]
+\multicolumn{4}{@{}l}{\textit{Models of the label itself}}\\
+Chains and the latent-state model on one split & 1,002 held-out pairs & completed & \ref{sup:hmm} \\
+Leave-one-patient-out three-class prediction & 934 pt / 3,361 transitions & completed & \S\ref{sec:discrete} \\
+Uniqueness of the fitted optimum; configuration sensitivity & 934 pt / 3,361 & completed & \ref{sup:hmm} \\
+Five latent states & 934 pt / 3,361 & completed; negative, 404/934 folds converged & \S\ref{sec:discrete}, \ref{sup:hmm} \\
+Prediction with no history (first-visit model) & 1,002 held-out rows & completed & \ref{sup:firstvisit} \\
+\addlinespace[3pt]
+\multicolumn{4}{@{}l}{\textit{Models of the continuous quantity the label is cut from}}\\
+Hierarchical Bayesian growth model of the ratio & 821 pt; 825 matched pairs & completed & \S\ref{sec:continuous} \\
+Student-t slope and residual variants & 821 pt / 7 splits & completed & \ref{sup:studentt} \\
+Gaussian-process regression of the ratio & 821 pt / 2,707 points & completed & \S\ref{sec:continuous} \\
+Independent Gaussian processes on the two subscores & 934 pt / 3,361 points & completed & \S\ref{sec:continuous} \\
+Joint bivariate mixed model of the subscores & 934 pt / 8,590 obs & completed & \ref{sup:subscore} \\
+Multi-output Gaussian processes & 934 pt / 3,361 points & completed & \ref{sup:subscore} \\
+Fifteen-arm held-out subscore comparison & 934 pt / 3,361 points & completed & \ref{sup:subscore} \\
+Time-varying spline model of the subscore rates & 934 pt & completed & \ref{sup:temporal} \\
+Identifiability and interval audit of that model & 934 pt & completed & \ref{sup:temporal} \\
+\addlinespace[3pt]
+\multicolumn{4}{@{}l}{\textit{The harmonised comparison}}\\
+Fourteen specifications under one decision rule & 934 pt / 3,361 transitions & completed & \S\ref{sec:harmonised} \\
+Decomposition of each margin by current label & 934 pt / 3,361 transitions & completed & \S\ref{sec:harmonised} \\
+\addlinespace[3pt]
+\multicolumn{4}{@{}l}{\textit{Does a richer observation help?}}\\
+Two-class next-visit prediction, seven models & 899 pt / 3,029 transitions & completed & \S\ref{sec:richer} \\
+Discrete latent state over ten clinical measurements & 654 pt / 2,091 cases & completed; negative & \S\ref{sec:richer}, \ref{sup:clinical} \\
+Continuous level-and-rate profile over nine domains & 934 pt / 3,353 predictions & completed & \S\ref{sec:richer} \\
+Profile-derived label against the latent-state model & 898 pt / 3,020 transitions & completed & \S\ref{sec:richer} \\
+Information criteria within likelihood families & full cohort & completed & \ref{sup:misc} \\
+Threshold-free discrimination of next-visit PIGD & 898 pt / 3,020 transitions & completed & \S\ref{sec:richer} \\
+Ratio band added to the observation alphabet & 899 pt / 3,029 transitions & completed & \S\ref{sec:richer} \\
+Band-width sweep over five widths & 899 pt / 3,029 transitions & completed & \S\ref{sec:richer}, \ref{sup:bands} \\
+\addlinespace[3pt]
+\multicolumn{4}{@{}l}{\textit{Where and when prediction fails}}\\
+Model calls at Indeterminate visits & 220 pt / 287 visits & completed & \ref{sup:misc} \\
+Accuracy by prediction stage & 896 pt / 3,017 targets & completed & \ref{sup:stage} \\
+Truncated prediction history, latent-state model & 228 pt / 734 common targets & completed & \S\ref{sec:ceiling}, \ref{sup:history} \\
+Truncated prediction history, clinical profile & 481 pt / 1,489 common targets & completed & \ref{sup:history} \\
+Retraining the latent-state model on two-visit windows & 742 pt / 2,192 targets & completed; negative & \ref{sup:history} \\
+Truncated history and retraining for the profile & 898 / 740 pt & completed & \ref{sup:history} \\
+Patient-level distribution of accuracy & 898 pt & completed & \S\ref{sec:ceiling}, \ref{sup:patient} \\
+\addlinespace[3pt]
+\multicolumn{4}{@{}l}{\textit{Specified but not run on the cohort}}\\
+Integer-score measurement model of the items & --- & synthetic recovery only; not run on real data & \ref{sup:notrun} \\
+Re-execution saving per-visit replicate labels & --- & specified, reviewed, not run & \ref{sup:notrun} \\
+\bottomrule
+\end{longtable}

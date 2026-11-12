@@ -1,0 +1,21 @@
+\begin{tabular}{@{}lrlrr@{}}
+\toprule
+Model & Accuracy & 95\% CI & Brier & Log loss \\
+\midrule
+Hidden Markov model (latent, interval-aware) & 0.8369 & (0.8204, 0.8541) & 0.1214 & 0.3961 \\
+Direct logistic (history $+$ interval)       & 0.8359 & (0.8195, 0.8529) & 0.1225 & 0.4003 \\
+Persistence (last non-Indeterminate label)   & 0.8336 & (0.8173, 0.8510) & 0.1598 & $4.193^{\dagger}$ \\
+Markov chain, discrete-time                  & 0.8293 & (0.8129, 0.8468) & 0.1328 & 0.4314 \\
+Markov chain, continuous-time                & 0.8277 & (0.8114, 0.8451) & 0.1343 & 0.4346 \\
+Direct logistic (history only)               & 0.8194 & (0.8019, 0.8372) & 0.1244 & 0.4055 \\
+Marginal (two-class prior)                   & 0.6983 & (0.6703, 0.7278) & 0.2111 & 0.6134 \\
+\midrule
+\multicolumn{5}{@{}l}{\textit{Pre-specified paired contrasts (model a $-$ model b) on identical cases}}\\
+\multicolumn{2}{@{}l}{Latent state, observed process held interval-aware} & \multicolumn{3}{l}{$+0.0092$ \,($+0.0003$, $+0.0179$) \quad \textbf{excludes zero}} \\
+\multicolumn{2}{@{}l}{Elapsed time, observed-label chain} & \multicolumn{3}{l}{$-0.0017$ \,($-0.0039$, $+0.0003$)} \\
+\multicolumn{2}{@{}l}{Elapsed time, discriminative family} & \multicolumn{3}{l}{$+0.0165$ \,($+0.0112$, $+0.0217$) \quad \textbf{excludes zero}} \\
+\multicolumn{2}{@{}l}{Latent generative $-$ discriminative} & \multicolumn{3}{l}{$+0.0010$ \,($-0.0054$, $+0.0075$)} \\
+\multicolumn{2}{@{}l}{Hidden Markov model $-$ persistence} & \multicolumn{3}{l}{$+0.0033$ \,($-0.0037$, $+0.0100$)} \\
+\multicolumn{2}{@{}l}{Hidden Markov model $-$ marginal prior} & \multicolumn{3}{l}{$+0.1387$ \,($+0.1107$, $+0.1665$) \quad \textbf{excludes zero}} \\
+\bottomrule
+\end{tabular}

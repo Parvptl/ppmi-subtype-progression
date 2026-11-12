@@ -1,0 +1,23 @@
+\begin{tabular}{@{}llrlrrrr@{}}
+\toprule
+Specification & Family & Acc. & $\Delta$ vs.\ persistence (95\% CI) & Brier & Log loss & Macro-F1 & Rec.\ Ind. \\
+\midrule
+\multicolumn{8}{@{}l}{\textit{Fitted models}}\\
+Subscore GP, independent   & GP               & 0.7575 & $+0.0348$ \,(0.0252, 0.0450) & 0.3602 & 0.6537 & 0.5074 & 0.000 \\
+Subscore GP, joint         & GP               & 0.7563 & $+0.0336$ \,(0.0243, 0.0436) & 0.3594 & 0.6518 & 0.5070 & 0.000 \\
+HMM, 3 latent states       & latent HMM       & 0.7539 & $+0.0312$ \,(0.0223, 0.0411) & 0.3688 & 0.6726 & 0.5037 & 0.000 \\
+HMM, 5 latent states$^{*}$ & latent HMM       & 0.7513 & $+0.0286$ \,(0.0196, 0.0381) & 0.3700 & 0.6746 & 0.5011 & 0.000 \\
+Time-varying LMM, constant & mixed model      & 0.7495 & $+0.0268$ \,(0.0136, 0.0398) & 0.3826 & 0.6919 & 0.4977 & 0.000 \\
+Joint subscore LMM         & mixed model      & 0.7495 & $+0.0268$ \,(0.0136, 0.0398) & 0.3826 & 0.6919 & 0.4977 & 0.000 \\
+Markov chain, discrete     & observed-label   & 0.7474 & $+0.0247$ \,(0.0159, 0.0334) & 0.3896 & 0.7066 & 0.4929 & 0.000 \\
+Time-varying LMM, spline   & mixed model      & 0.7462 & $+0.0235$ \,(0.0102, 0.0364) & 0.3794 & 0.6860 & 0.4937 & 0.000 \\
+Markov chain, continuous   & observed-label   & 0.7453 & $+0.0226$ \,(0.0135, 0.0316) & 0.3925 & 0.7105 & 0.4909 & 0.000 \\
+\addlinespace[3pt]
+\multicolumn{8}{@{}l}{\textit{Baselines}}\\
+Subscore LOCF              & baseline         & 0.7453 & $+0.0226$ \,(0.0146, 0.0311) & 0.3723 & 0.7556 & 0.4970 & 0.000 \\
+Patient-mean subscore      & baseline         & 0.7423 & $+0.0196$ \,(0.0061, 0.0332) & 0.3802 & 0.7594 & 0.4903 & 0.003 \\
+\textbf{Persistence}       & \textbf{baseline}& \textbf{0.7227} & ---                   & 0.5546 & 7.6620$^{\dagger}$ & \textbf{0.5559} & \textbf{0.193} \\
+Marginal null              & baseline         & 0.6293 & $-0.0934$ \,($-0.1202$, $-0.0691$) & 0.5211 & 0.8756 & 0.2575 & 0.000 \\
+Population-mean subscore   & baseline         & 0.6254 & $-0.0973$ \,($-0.1215$, $-0.0723$) & 0.5174 & 0.8716 & 0.3460 & 0.000 \\
+\bottomrule
+\end{tabular}

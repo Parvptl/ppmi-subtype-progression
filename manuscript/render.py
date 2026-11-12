@@ -48,7 +48,9 @@ figcaption {
   font-size: 8.8pt; color: #52514e; text-align: left;
   margin-top: 5pt; line-height: 1.45;
 }
-figcaption b { color: #1f4e79; }
+/* The figure number leads every caption in bold; give it the heading blue.
+   <strong> is what the project's inline formatter emits for **...**. */
+figcaption b, figcaption strong { color: #1f4e79; }
 .missing-figure {
   border: 1px dashed #c0392b; color: #c0392b; padding: 8pt;
   font-size: 9pt; text-align: left;
@@ -57,36 +59,90 @@ figcaption b { color: #1f4e79; }
 
 IMAGE = re.compile(r"^!\[(?P<caption>.*?)\]\((?P<path>[^)]+)\)\s*$")
 
+#: Stand-in left in the Markdown where a figure belongs, swapped for real HTML
+#: after conversion by :func:`splice_figures`.
+#:
+#: Raw ``<figure>`` HTML cannot be put into the Markdown and left for the
+#: renderer to pass through: ``_md_to_pdf.convert`` has no raw-HTML branch, so
+#: an unrecognised line falls through to its paragraph handler, which runs
+#: ``inline()`` -> ``html.escape()`` and turns the tags into visible text. The
+#: placeholder is deliberately bare alphanumerics so that escaping leaves it
+#: untouched and it can be found again afterwards.
+MARK = "FIGUREPLACEHOLDER{}ENDFIGUREPLACEHOLDER"
+MARK_RE = re.compile(
+    r"<p>\s*FIGUREPLACEHOLDER(\d+)ENDFIGUREPLACEHOLDER\s*</p>")
 
-def embed_images(md: str, base: Path) -> tuple[str, int, list[str]]:
-    """Replace image lines with inline <figure> blocks. Returns (md, n, missing).
+
+def embed_images(md: str, base: Path,
+                 inline_data: bool = True) -> tuple[str, list[str], list[str]]:
+    """Swap image lines for placeholders. Returns (md, blocks, missing).
+
+    ``blocks`` holds the HTML for each placeholder in order, to be spliced in
+    by :func:`splice_figures` once the Markdown has been converted.
+
+    With ``inline_data`` the PNG is carried as a base64 data URI, so the HTML
+    stands alone with no image directory. Without it the figure keeps its
+    relative path, which is what a browser's print-to-PDF path wants: the
+    base64 form makes a multi-megabyte document that headless Chrome will not
+    finish laying out.
 
     A referenced figure that does not exist is rendered as a visible red box
     rather than silently dropped, so a stale reference cannot pass unnoticed
     into a document someone is about to present.
     """
-    out, n, missing = [], 0, []
+    # Captions carry Markdown emphasis -- every one opens with **Figure n.** --
+    # so they go through the project's inline formatter rather than being
+    # escaped wholesale, which would print the asterisks literally.
+    inline = load_renderer().inline
+
+    out, blocks, missing = [], [], []
     for line in md.splitlines():
         m = IMAGE.match(line.strip())
         if not m:
             out.append(line)
             continue
-        path = (base / m.group("path")).resolve()
+        rel = m.group("path")
+        path = (base / rel).resolve()
         caption = m.group("caption")
         if not path.exists():
-            missing.append(m.group("path"))
-            out.append(f'<div class="missing-figure">MISSING FIGURE: '
-                       f'{html_mod.escape(m.group("path"))}</div>')
-            continue
-        uri = base64.b64encode(path.read_bytes()).decode("ascii")
-        # Emitted as raw HTML; the project renderer passes through block-level
-        # HTML lines it does not recognise as Markdown.
-        out.append(
-            f'<figure><img src="data:image/png;base64,{uri}" alt="'
-            f'{html_mod.escape(caption)}"/>'
-            f'<figcaption>{html_mod.escape(caption)}</figcaption></figure>')
-        n += 1
-    return "\n".join(out), n, missing
+            missing.append(rel)
+            blocks.append(f'<div class="missing-figure">MISSING FIGURE: '
+                          f'{html_mod.escape(rel)}</div>')
+        else:
+            if inline_data:
+                uri = base64.b64encode(path.read_bytes()).decode("ascii")
+                src = f"data:image/png;base64,{uri}"
+            else:
+                src = html_mod.escape(rel)
+            # alt stays plain text and escaped; the caption is formatted.
+            alt = html_mod.escape(re.sub(r"[*`]", "", caption), quote=True)
+            blocks.append(
+                f'<figure><img src="{src}" alt="{alt}"/>'
+                f'<figcaption>{inline(caption)}</figcaption></figure>')
+        out.append(MARK.format(len(blocks) - 1))
+    return "\n".join(out), blocks, missing
+
+
+def splice_figures(html_text: str, blocks: list[str]) -> tuple[str, int]:
+    """Replace each placeholder paragraph with its figure. Returns (html, n).
+
+    Every placeholder must be found: one left behind would print as a nonsense
+    word where a figure should be, so an unmatched placeholder is an error
+    rather than something to tolerate.
+    """
+    seen: list[int] = []
+
+    def sub(m: re.Match) -> str:
+        idx = int(m.group(1))
+        seen.append(idx)
+        return blocks[idx]
+
+    out = MARK_RE.sub(sub, html_text)
+    if len(seen) != len(blocks) or "FIGUREPLACEHOLDER" in out:
+        raise RuntimeError(
+            f"spliced {len(seen)} of {len(blocks)} figures; the renderer's "
+            "output did not have the expected placeholder paragraphs")
+    return out, len(seen)
 
 
 #: A rendered manuscript of this length is a few dozen pages. Anything far
@@ -150,10 +206,10 @@ def main() -> int:
 
     src = Path(args.source)
     md = src.read_text(encoding="utf-8")
-    md, n_figs, missing = embed_images(md, src.parent)
+    md, blocks, missing = embed_images(md, src.parent)
 
     renderer = load_renderer()
-    body = renderer.convert(md)
+    body, n_figs = splice_figures(renderer.convert(md), blocks)
     document = (
         "<!DOCTYPE html><html><head><meta charset='utf-8'>"
         f"<title>{html_mod.escape(src.stem)}</title>"
@@ -162,7 +218,9 @@ def main() -> int:
 
     out_html = Path(args.html)
     out_html.write_text(document, encoding="utf-8")
-    print(f"wrote {out_html.relative_to(ROOT)}  ({n_figs} figures embedded)")
+    # n_figs counts every spliced block, including any red missing-figure box.
+    print(f"wrote {out_html.relative_to(ROOT)}  "
+          f"({n_figs - len(missing)} figures embedded)")
     if missing:
         print(f"  WARNING: {len(missing)} referenced figure(s) not found:")
         for m in missing:

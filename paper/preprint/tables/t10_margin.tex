@@ -1,0 +1,22 @@
+\begin{tabular}{@{}llrrrrrr@{}}
+\toprule
+Model & Stratum & $n$ & Share & Model acc. & Persist.\ acc. & Cases gained & Share of gain \\
+\midrule
+HMM, 3 latent states   & TD            & 2,261 & 67.3\% & 0.8107 & 0.8080 & 6   & 5.7\% \\
+                       & Indeterminate & 334   & 9.9\%  & 0.4880 & 0.1916 & \textbf{99} & \textbf{94.3\%} \\
+                       & PIGD          & 766   & 22.8\% & 0.7023 & 0.7023 & \textbf{0}  & 0.0\% \\
+\addlinespace[2pt]
+Subscore GP, indep.    & TD            & 2,261 & 67.3\% & 0.8120 & 0.8080 & 9   & 7.7\% \\
+                       & Indeterminate & 334   & 9.9\%  & 0.4910 & 0.1916 & 100 & 85.5\% \\
+                       & PIGD          & 766   & 22.8\% & 0.7128 & 0.7023 & 8   & 6.8\% \\
+\addlinespace[2pt]
+Markov chain, discrete & TD            & 2,261 & 67.3\% & 0.8080 & 0.8080 & 0   & 0.0\% \\
+                       & Indeterminate & 334   & 9.9\%  & 0.4401 & 0.1916 & 83  & \textbf{100.0\%} \\
+                       & PIGD          & 766   & 22.8\% & 0.7023 & 0.7023 & 0   & 0.0\% \\
+\midrule
+\multicolumn{8}{@{}l}{\textit{Share of predictions identical to the persistence rule}}\\
+HMM, 3 latent states   & \multicolumn{3}{l}{TD 98.4\%} & \multicolumn{2}{l}{Indeterminate 0.3\%} & \multicolumn{2}{l}{PIGD 96.9\%} \\
+Subscore GP, indep.    & \multicolumn{3}{l}{TD 97.2\%} & \multicolumn{2}{l}{Indeterminate 0.0\%} & \multicolumn{2}{l}{PIGD 97.4\%} \\
+Markov chain, discrete & \multicolumn{3}{l}{TD 100.0\%} & \multicolumn{2}{l}{Indeterminate 0.0\%} & \multicolumn{2}{l}{PIGD 100.0\%} \\
+\bottomrule
+\end{tabular}
