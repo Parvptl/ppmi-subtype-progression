@@ -1,6 +1,0 @@
-model,n_predictions,n_patients,n_domain_observations,loglik_per_domain_observation,patient-bootstrap 95% CI,rmse_standardised,mae_standardised,coverage_95
-Profile: level + rate + medication,3353,934,30099,-1.0453,"[-1.0706, -1.0215]",0.7007,0.5011,0.9406
-Profile: level only (random walk),3353,934,30099,-1.0492,"[-1.0744, -1.0260]",0.7025,0.5012,0.9407
-"Profile: level + rate, no medication",3353,934,30099,-1.0511,"[-1.0765, -1.0270]",0.7055,0.5018,0.94
-Last observation carried forward,3353,934,30099,-1.1187,"[-1.1434, -1.0946]",0.7426,0.5212,0.9444
-Population mean trajectory,3353,934,30099,-1.4342,"[-1.4693, -1.4021]",1.0129,0.7749,0.9451

@@ -353,11 +353,8 @@ recorded label is Indeterminate, where the observed-label chains are degenerate
 and the CT-HMM gains 6.3 pp by carrying a latent posterior through the
 uninformative observation.
 
-This is consistent with, and does not contradict, the earlier finding that
-*subtype clustering* is inconclusive (`docs/cluster_phase/`, "Close the Stage 6
-clustering investigation as inconclusive"). A two-state latent process read
-through misclassification is a much weaker claim than a cluster structure, and
-the effect found here is correspondingly small.
+A latent process read through misclassification is a modest claim, and the
+effect found here is correspondingly small.
 
 ---
 

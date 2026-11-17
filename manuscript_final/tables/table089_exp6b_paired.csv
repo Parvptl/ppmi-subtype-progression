@@ -1,8 +1,0 @@
-role,comparison,n_targets,accuracy,accuracy 95% CI,auc,auc 95% CI,brier,brier 95% CI,log_loss,log loss 95% CI,sensitivity_PIGD,sensitivity 95% CI
-"PRIMARY: training effect, history fixed at last 2","D: window-trained, last 2  -  B: full-trained, last 2",2184,-0.0032,"[-0.0116, 0.0050]",-0.0043,"[-0.0078, -0.0009]",0.0036,"[0.0016, 0.0057]",0.0065,"[0.0003, 0.0131]",0.0014,"[-0.0161, 0.0194]"
-"training effect, history fixed at full","C: window-trained, full history  -  A: full-trained, full history",2184,-0.0014,"[-0.0089, 0.0064]",-0.0068,"[-0.0101, -0.0037]",0.0042,"[0.0024, 0.0060]",0.0105,"[0.0048, 0.0163]",-0.007,"[-0.0237, 0.0090]"
-"history effect, training fixed at full-sequence","B: full-trained, last 2  -  A: full-trained, full history",2184,0.0014,"[-0.0060, 0.0083]",-0.003,"[-0.0063, 0.0004]",0.0007,"[-0.0012, 0.0025]",0.0048,"[-0.0011, 0.0107]",-0.0182,"[-0.0362, -0.0014]"
-"history effect, training fixed at windows","D: window-trained, last 2  -  C: window-trained, full history",2184,-0.0005,"[-0.0065, 0.0055]",-0.0005,"[-0.0021, 0.0010]",0.0001,"[-0.0008, 0.0009]",0.0007,"[-0.0020, 0.0037]",-0.0098,"[-0.0217, 0.0026]"
-disjoint vs overlapping windows,"D': disjoint-window-trained, last 2  -  D: window-trained, last 2",2184,0.0009,"[-0.0047, 0.0064]",0.0009,"[-0.0006, 0.0025]",-0.0011,"[-0.0019, -0.0003]",-0.0019,"[-0.0046, 0.0006]",-0.0028,"[-0.0134, 0.0073]"
-vs persistence,"D: window-trained, last 2  -  persistence",2184,0.0037,"[-0.0046, 0.0122]",,,-0.043,"[-0.0541, -0.0325]",,,0.0266,"[0.0101, 0.0441]"
-vs persistence,"B: full-trained, last 2  -  persistence",2184,0.0069,"[-0.0010, 0.0154]",,,-0.0466,"[-0.0581, -0.0361]",,,0.0252,"[0.0084, 0.0426]"

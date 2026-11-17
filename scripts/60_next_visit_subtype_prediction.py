@@ -64,7 +64,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from ppmi_subtype import loo, next_visit as nv  # noqa: E402
 from ppmi_subtype.config import load_config  # noqa: E402
 
-#: The frozen visit panel. Checked, as scripts/26 does, so a prediction table
+#: The frozen visit panel. Checked on load, so a prediction table
 #: can never be attributed to the wrong input.
 EXPECTED_PANEL_MD5 = "fb038ddbdc19ab3368e13940f398e7ba"
 

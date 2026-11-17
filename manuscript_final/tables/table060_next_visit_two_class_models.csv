@@ -1,8 +1,0 @@
-model,n_patients,n_cases_total,n_eligible,n_correct,accuracy,patient-bootstrap 95% CI,mean_per_patient_accuracy,brier_two_class,log_loss,log_loss_clipped,mean_P_PIGD
-"CT-HMM (latent, interval-aware)",899,3361,3029,2535,0.8369,"[0.8204, 0.8541]",0.8335,0.1214,0.3961,False,0.3047
-Direct logistic (history + interval),899,3361,3029,2532,0.8359,"[0.8195, 0.8529]",0.8303,0.1225,0.4003,False,0.3018
-Persistence (last non-Indeterminate),899,3361,3029,2525,0.8336,"[0.8173, 0.8510]",0.8307,0.1598,4.1929,True,0.2496
-"Markov (observed, discrete)",899,3361,3029,2512,0.8293,"[0.8129, 0.8468]",0.8274,0.1328,0.4314,False,0.3018
-"CTMC (observed, interval-aware)",899,3361,3029,2507,0.8277,"[0.8114, 0.8451]",0.8243,0.1343,0.4346,False,0.3038
-Direct logistic (history only),899,3361,3029,2482,0.8194,"[0.8019, 0.8372]",0.8027,0.1244,0.4055,False,0.3019
-Marginal (two-class prior),899,3361,3029,2115,0.6983,"[0.6703, 0.7278]",0.7074,0.2111,0.6134,False,0.3018

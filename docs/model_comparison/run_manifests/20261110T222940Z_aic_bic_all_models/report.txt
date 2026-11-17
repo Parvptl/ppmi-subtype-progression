@@ -1,0 +1,109 @@
+
+==============================================================================
+ALL MODELS, RANKED WITHIN EACH COMPARABLE GROUP
+==============================================================================
+  Lower is better. Delta is to the best model IN THE SAME GROUP; it is
+  meaningless between groups, which sit on different likelihoods.
+
+  B width 0.05 (joint PMF over subtype x band)   (n = 4,295 terms)
+                                                  model    loglik   k      aic      bic  delta_aic_in_group  delta_bic_in_group
+      Banded CT-HMM, state-dependent bands (width 0.05) -13759.18 224 27966.36 29392.17                0.00               536.4
+    Banded CT-HMM, state-independent bands (width 0.05) -14076.54  84 28321.09 28855.76              354.72                 0.0
+
+  B width 0.10 (joint PMF over subtype x band)   (n = 4,295 terms)
+                                                  model    loglik   k      aic      bic  delta_aic_in_group  delta_bic_in_group
+      Banded CT-HMM, state-dependent bands (width 0.10) -13123.40 137 26520.80 27392.84                0.00               88.27
+    Banded CT-HMM, state-independent bands (width 0.10) -13422.24  55 26954.48 27304.57              433.68                0.00
+
+  B width 0.20 (joint PMF over subtype x band)   (n = 4,295 terms)
+                                                  model    loglik  k      aic      bic  delta_aic_in_group  delta_bic_in_group
+      Banded CT-HMM, state-dependent bands (width 0.20) -12133.56 92 24451.12 25036.72                0.00                0.00
+    Banded CT-HMM, state-independent bands (width 0.20) -12398.29 40 24876.57 25131.18              425.45               94.46
+
+  B width 0.30 (joint PMF over subtype x band)   (n = 4,295 terms)
+                                                  model    loglik  k      aic      bic  delta_aic_in_group  delta_bic_in_group
+      Banded CT-HMM, state-dependent bands (width 0.30) -11119.56 77 22393.13 22883.25                0.00                0.00
+    Banded CT-HMM, state-independent bands (width 0.30) -11368.01 35 22806.01 23028.80              412.88              145.54
+
+  B width 0.50 (joint PMF over subtype x band)   (n = 4,295 terms)
+                                                  model    loglik  k      aic      bic  delta_aic_in_group  delta_bic_in_group
+      Banded CT-HMM, state-dependent bands (width 0.50) -10405.36 65 20940.72 21354.46                0.00                0.00
+    Banded CT-HMM, state-independent bands (width 0.50) -10626.73 31 21315.46 21512.78              374.74              158.32
+
+  L1 joint PMF over label sequences   (n = 4,295 terms)
+                                                    model   loglik  k     aic     bic  delta_aic_in_group  delta_bic_in_group
+              CT-HMM (3 latent states, no emission floor) -2955.32 14 5938.64 6027.75                0.00                0.00
+              CT-HMM (5 latent states, no emission floor) -2940.97 34 5949.95 6166.36               11.31              138.61
+                                 CT-HMM (3 latent states) -2969.06 14 5966.12 6055.23               27.48               27.48
+                        Markov (discrete) + initial state -3087.12  8 6190.23 6241.15              251.59              213.40
+                    CTMC (interval-aware) + initial state -3099.84  8 6215.68 6266.60              277.04              238.85
+    CT-HMM (2 latent states, 3 labels, no emission floor) -3010.70  7 6035.39 6079.95               96.75               52.20
+
+  L2 conditional PMF over pairs   (n = 3,361 terms)
+                    model   loglik  k     aic     bic  delta_aic_in_group  delta_bic_in_group
+        Markov (discrete) -2367.77  6 4747.55 4784.27                0.00                0.00
+    CTMC (interval-aware) -2380.50  6 4773.00 4809.72               25.45               25.45
+
+  L3 joint PMF over TD/PIGD-only label sequences   (n = 3,812 terms)
+                                                    model   loglik  k     aic     bic  delta_aic_in_group  delta_bic_in_group
+    CT-HMM (3 latent states, 2 labels, no emission floor) -1600.22 11 3222.45 3291.15                0.00               22.43
+    CT-HMM (2 latent states, 2 labels, no emission floor) -1613.74  5 3237.49 3268.72               15.04                0.00
+            CT-HMM (2 latent states, 2 labels, floor 0.5) -1613.74  5 3237.49 3268.72               15.04                0.00
+
+  P density over 9 clinical domains   (n = 38,486 terms)
+                                   model    loglik  k      aic      bic  delta_aic_in_group  delta_bic_in_group
+      Profile: level + rate + medication -45812.34 45 91714.68 92099.79                0.00                0.00
+       Profile: level only (random walk) -45940.77 27 91935.53 92166.60              220.85               66.81
+    Profile: level + rate, no medication -45993.33 36 92058.67 92366.76              343.99              266.96
+
+  R density over the ratio   (n = 3,528 terms)
+    model   loglik  k      aic      bic  delta_aic_in_group  delta_bic_in_group
+    GP K1 -6245.21  6 12502.41 12539.42                0.00                0.00
+    GP K3 -6245.12  7 12504.24 12547.42                1.83                8.00
+    GP K2 -6245.21  7 12504.41 12547.59                2.00                8.17
+    GP K0 -6320.30  5 12650.60 12681.44              148.19              142.02
+
+  C density over 10 clinical features   (n = 42,773 terms)
+                               model    loglik   k       aic       bic  delta_aic_in_group  delta_bic_in_group
+    Latent clinical states, 8 states -40764.26 223  81974.53  83906.52                0.00                0.00
+    Latent clinical states, 6 states -41701.08 155  83712.16  85055.03             1737.64             1148.51
+    Latent clinical states, 5 states -42401.92 124  85051.84  86126.13             3077.31             2219.61
+    Latent clinical states, 4 states -44880.37  95  89950.75  90773.80             7976.22             6867.27
+    Latent clinical states, 3 states -50509.14  68 101154.28 101743.41            19179.76            17836.89
+    Latent clinical states, 2 states -52939.46  43 105964.91 106337.45            23990.39            22430.93
+
+  S density over both subscores   (n = 8,590 terms)
+                                            model  loglik  k       aic       bic  delta_aic_in_group  delta_bic_in_group
+                          Multi-output GP K3/full 5979.31 17 -11924.62 -11804.63                0.00               12.84
+                          Multi-output GP K2/full 5977.29 17 -11920.57 -11800.58                4.05               16.88
+                          Multi-output GP K3/diag 5967.61 13 -11909.22 -11817.46               15.40                0.00
+                          Multi-output GP K2/diag 5965.73 13 -11905.46 -11813.70               19.16                3.76
+      Spline LMM, knots alt_2.5_6 + random slopes 5852.56 21 -11663.12 -11514.90              261.50              302.57
+    Spline LMM, knots primary_2_5 + random slopes 5850.54 21 -11659.07 -11510.85              265.55              306.62
+      Spline LMM, knots alt_1.5_4 + random slopes 5837.24 21 -11632.49 -11484.26              292.13              333.20
+     Spline LMM, knots one_knot_3 + random slopes 5821.66 19 -11605.33 -11471.22              319.29              346.25
+       Spline LMM, knots constant + random slopes 5737.68 17 -11441.35 -11321.36              483.27              496.10
+                          Multi-output GP K0/full 5726.35 13 -11426.69 -11334.93              497.93              482.53
+                          Multi-output GP K0/diag 5717.38 10 -11414.77 -11344.18              509.85              473.28
+                          Multi-output GP K1/full 5643.00 14 -11258.00 -11159.19              666.62              658.28
+                          Multi-output GP K1/diag 5634.77 11 -11247.54 -11169.90              677.08              647.57
+                    Spline LMM, knots primary_2_5 4896.04 14  -9764.08  -9665.26             2160.54             2152.20
+                      Spline LMM, knots alt_2.5_6 4895.36 14  -9762.72  -9663.90             2161.90             2153.57
+                     Spline LMM, knots one_knot_3 4893.30 12  -9762.59  -9677.89             2162.03             2139.57
+                      Spline LMM, knots alt_1.5_4 4894.74 14  -9761.48  -9662.67             2163.14             2154.80
+                       Spline LMM, knots constant 4875.99 10  -9731.98  -9661.40             2192.64             2156.07
+                     Joint LMM, random intercepts 4875.99 10  -9731.98  -9661.40             2192.64             2156.07
+
+  7 families combined: band, label, latent_size, profile, ratio_gp, states, subscore
+
+==============================================================================
+PROVENANCE
+==============================================================================
+  python             3.13.7
+  numpy              2.2.4
+  pandas             2.2.3
+  node               LAPTOP-REO7VQMD
+  seed               42
+  panel_md5          fb038ddbdc19ab3368e13940f398e7ba
+  elapsed_seconds    0.2
+  git_commit         e2c0dfaa10a7ecf6d1fa9c008912b290b43223c6

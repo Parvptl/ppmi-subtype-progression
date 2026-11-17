@@ -1,5 +1,0 @@
-cohort,criterion,patients,labelled_visits,finite_visits,prediction_points,patients_removed,never_changed,ever_changed,median_finite_visits,median_span_years
-unfiltered,none,821,3951,3528,2707,0,392,429,3.0,3.0856
-A4-filtered,A4,803,3853,3457,2654,65,383,420,3.0,3.0856
-D1-filtered,D1,641,3139,2860,2219,256,224,417,4.0,3.1677
-E2-filtered,E2,596,2743,2538,1942,274,214,382,3.0,3.0828

@@ -1,9 +1,0 @@
-cohort,window,n_targets,n_patients,accuracy,accuracy 95% CI,balanced_accuracy,sensitivity_PIGD,auc,brier,log_loss
-all eligible,last 2,2184,740,0.8402,"[0.8209, 0.8585]",0.7981,0.6765,0.8935,0.1177,0.38
-all eligible,last 3,1489,481,0.8314,"[0.8085, 0.8526]",0.7988,0.6835,0.8972,0.1209,0.3842
-all eligible,full history,3021,898,0.8414,"[0.8258, 0.8576]",0.7973,0.6861,0.891,0.1173,0.3755
-all eligible,"full history, current-visit LEDD",3021,898,0.8401,"[0.8247, 0.8558]",0.7942,0.6784,0.8911,0.1173,0.3747
-common targets,last 2,1489,481,0.8287,"[0.8060, 0.8503]",0.7947,0.6742,0.8947,0.1219,0.3921
-common targets,last 3,1489,481,0.8314,"[0.8085, 0.8526]",0.7988,0.6835,0.8972,0.1209,0.3842
-common targets,full history,1489,481,0.8294,"[0.8062, 0.8510]",0.8026,0.7079,0.8972,0.1207,0.3822
-common targets,"full history, current-visit LEDD",1489,481,0.8281,"[0.8052, 0.8492]",0.8003,0.7022,0.8974,0.1208,0.3819

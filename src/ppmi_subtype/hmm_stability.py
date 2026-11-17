@@ -1,7 +1,7 @@
 """Multi-start and held-out machinery for the HMM stability study (Stage 4).
 
 `hmm.fit_hmm` is the audited fitter and is not changed. Its restarts perturb a
-single fixed start by N(0, 0.4); an earlier probe (`scripts/_multistart5.py`)
+single fixed start by N(0, 0.4); an earlier multi-start probe
 found every outer seed returned a bit-identical solution, so those restarts
 never tested whether the likelihood has other optima. This module runs the
 *same objective* (`hmm._neg_loglik`, same bounds, same optimiser settings) from

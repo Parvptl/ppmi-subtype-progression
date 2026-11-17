@@ -1,8 +1,0 @@
-model,n,share_of_all_cases,mean_P_PIGD,mean_p_Indeterminate_raw,would_have_said_PIGD,would_have_said_TD,n_undefined
-"CT-HMM (latent, interval-aware)",332,0.0988,0.3714,0.1235,111,221,0
-"CTMC (observed, interval-aware)",332,0.0988,0.365,0.1079,86,246,0
-Direct logistic (history + interval),332,0.0988,0.3739,0.0,111,221,0
-Direct logistic (history only),332,0.0988,0.3725,0.0,121,211,0
-Marginal (two-class prior),332,0.0988,0.3017,0.0,0,332,0
-"Markov (observed, discrete)",332,0.0988,0.3616,0.1095,87,245,0
-Persistence (last non-Indeterminate),332,0.0988,0.3197,0.0,98,234,0

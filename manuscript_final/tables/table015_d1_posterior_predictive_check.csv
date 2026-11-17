@@ -1,6 +1,0 @@
-statistic,observed,replicate mean,z (capped at 3.09),p
-S1 Indeterminate share,0.1029,0.0648,-3.091,0.001
-S2 reversion after entry (R_E),0.5796,0.5555,-0.495,0.3104
-S3 direct reversion (R_D),0.3115,0.4356,3.091,0.999
-S4 R_E - R_D,0.2681,0.12,-3.091,0.001
-S5 O/E Indeterminate clustering,1.0334,1.077,0.207,0.5818

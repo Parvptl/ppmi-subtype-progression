@@ -1,3 +1,0 @@
-model,n,loglik_per_pair,accuracy,brier
-HMM (latent states),825,-0.6559,0.7612,0.3573
-Hierarchical Bayesian growth,825,-0.6814,0.737,0.3786

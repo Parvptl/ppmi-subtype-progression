@@ -1,9 +1,0 @@
-outcome,kind,best_component,selection_is_optimistic,n,n_positive,auc_a,auc_b,delta,delta_ci_low,delta_ci_high
-hy_ge_3,rate,rate_updrs2,True,761,127,0.6325,0.5794,0.0532,-0.0133,0.1186
-hy_ge_3,level,level_updrs2,True,761,127,0.6845,0.5794,0.1052,0.054,0.1557
-mci,rate,rate_moca,True,818,298,0.5942,0.5494,0.0448,-0.0054,0.0957
-mci,level,level_moca,True,818,298,0.7098,0.5494,0.1605,0.1093,0.2132
-motor_complications,rate,rate_updrs1,True,736,470,0.537,0.4963,0.0407,-0.0135,0.0956
-motor_complications,level,level_brady_rigid,True,736,470,0.5309,0.4963,0.0347,-0.0165,0.083
-cognitive_dx,rate,rate_updrs2,True,816,327,0.5937,0.5582,0.0355,-0.0133,0.0849
-cognitive_dx,level,level_moca,True,816,327,0.6776,0.5582,0.1194,0.069,0.1687

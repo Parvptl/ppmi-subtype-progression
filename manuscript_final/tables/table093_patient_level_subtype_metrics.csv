@@ -1,6 +1,0 @@
-condition,n_patients,n_patients_with_PIGD_targets,mean_patient_PIGD_sensitivity,median_patient_PIGD_sensitivity,n_PIGD_patients_zero_correct,pct_PIGD_patients_zero_correct,n_patients_ge2_PIGD_targets,mean_PIGD_sensitivity_ge2_targets,pct_zero_correct_ge2_PIGD_targets,mean_patient_TD_specificity
-last 2,740,335,0.5476,0.6667,117,34.9254,154,0.7171,5.8442,0.8855
-full history,898,388,0.5503,0.6,126,32.4742,225,0.7222,6.2222,0.8583
-persistence,898,387,0.4679,0.5,146,37.7261,225,0.6537,8.0,0.8834
-"A: full-trained, full history",898,388,0.5446,0.6,129,33.2474,225,0.7213,6.6667,0.8581
-"D: window-trained, last 2",740,335,0.5508,0.6667,115,34.3284,154,0.7307,3.8961,0.8739

@@ -1,7 +1,0 @@
-contrast,model_a,model_b,accuracy_a,accuracy_b,accuracy_delta,patient-bootstrap 95% CI,"a right, b wrong","b right, a wrong",Brier delta
-"latent state, holding the observed process interval-aware","CT-HMM (latent, interval-aware)","CTMC (observed, interval-aware)",0.8369,0.8277,0.0092,"[0.0003, 0.0179]",98,70,-0.0129
-"elapsed time, holding the observed-label chain fixed","CTMC (observed, interval-aware)","Markov (observed, discrete)",0.8277,0.8293,-0.0017,"[-0.0039, 0.0003]",3,8,0.0015
-"elapsed time, in the discriminative family",Direct logistic (history + interval),Direct logistic (history only),0.8359,0.8194,0.0165,"[0.0112, 0.0217]",61,11,-0.0019
-latent generative against the discriminative model,"CT-HMM (latent, interval-aware)",Direct logistic (history + interval),0.8369,0.8359,0.001,"[-0.0054, 0.0075]",53,50,-0.0011
-any fitted model over the persistence rule,"CT-HMM (latent, interval-aware)",Persistence (last non-Indeterminate),0.8369,0.8336,0.0033,"[-0.0037, 0.0100]",59,49,-0.0384
-any fitted model over the null,"CT-HMM (latent, interval-aware)",Marginal (two-class prior),0.8369,0.6983,0.1387,"[0.1107, 0.1665]",610,190,-0.0897

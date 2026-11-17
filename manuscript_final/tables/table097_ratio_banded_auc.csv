@@ -1,4 +1,0 @@
-model,arm,n,n_positive,auc_roc,AUC 95% CI,average_precision,AP 95% CI,n_called_PIGD,operating_tpr,operating_fpr,partial_auc_fpr_le_0.2_mcclish
-"CT-HMM (latent, interval-aware)",baseline (subtype only),3029,914,0.8587,"[0.8402, 0.8764]",0.7496,"[0.7106, 0.7873]",800,0.6674,0.0898,0.7883
-CT-HMM (subtype x ratio band),ratio-banded (subtype x band),3029,914,0.8758,"[0.8588, 0.8933]",0.7398,"[0.6971, 0.7803]",890,0.7079,0.1149,0.7823
-"CT-HMM (subtype labels, joint code path)",control (baseline via joint path),3029,914,0.8587,"[0.8402, 0.8764]",0.7497,"[0.7107, 0.7874]",800,0.6674,0.0898,0.7883

@@ -1,7 +1,0 @@
-Model,Accuracy,Brier (2-class),Log loss,AUC
-"CT-HMM (latent, interval-aware)",0.8371,0.1215,0.396,0.8583 (0.8411 to 0.8755)
-Persistence (last non-Indeterminate),0.8338,0.1598,4.196,—
-"Markov (observed, discrete)",0.8298,0.1327,0.431,—
-Profile: level + rate + medication,0.8404,0.1177,0.377,0.8902 (0.8748 to 0.9053)
-Last observation carried forward,0.8252,0.1235,0.394,—
-Population mean trajectory,0.6914,0.2083,0.607,—

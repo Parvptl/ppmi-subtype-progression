@@ -422,10 +422,8 @@ disease severity, which is close to orthogonal to the tremor-versus-PIGD ratio
 the label is defined from, so discretising onto a severity axis discards the
 very quantity being predicted.
 
-This is consistent with the project's earlier finding that subtype clustering
-is inconclusive (`docs/cluster_phase/`, "Close the Stage 6 clustering
-investigation as inconclusive") and with the previous experiment's finding that
-the next label is predictable mainly because the subtype is persistent. Taken
+This is consistent with the previous experiment's finding that the next label
+is predictable mainly because the subtype is persistent. Taken
 together: TD/PIGD subtype is a persistent *label* that is not well explained by
 the latent structure of overall clinical progression.
 

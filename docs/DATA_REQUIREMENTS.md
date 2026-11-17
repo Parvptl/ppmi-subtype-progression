@@ -1,20 +1,23 @@
 # Data requirements
 
-## What is already in the repository
+No PPMI data is stored in this repository. Access is granted per user by PPMI
+under its Data Use Agreement, so every file below has to be downloaded from the
+PPMI portal (<https://www.ppmi-info.org/access-data-specimens/download-data>)
+into a local `data/` folder, which is excluded from version control.
+
+## Files the pipeline reads
 
 | Path | Contents | Role |
 |---|---|---|
-| `data/clinical/PPMI_Curated_Data_Cut_Public_20260511.xlsx` | 19,450 visits × 212 cols, 4,788 patients, BL → Year 15 | Visit skeleton, covariates, baseline predictors |
-| `data/validation/PPMI_Original_Cohort_BL_to_Year_5_Dataset_Apr2020.csv` | 683 patients, BL → Y5 | The only in-repo source with a **3-class** subtype label |
-| `extra/unused_data/02_Genetic_Subgroup/`, `03_Biospecimen_SiteBatch/` | Genetics, biospecimen assays | Future extensions |
-| `extra/unused_data/05_Online_ModalityShift/` | Remote MDS-UPDRS Part I/II | Not usable here — no Part III |
-| `data/dictionaries/` | Annotated data dictionary, code list, user guides | Reference |
+| `data/clinical/PPMI_Curated_Data_Cut_Public_20260511.xlsx` | 19,450 visits × 212 columns, 4,788 participants, baseline to year 15 | Visit skeleton, covariates, baseline predictors |
+| `data/motor_updrs/MDS-UPDRS_Part_II__Patient_Questionnaire_<date>.csv` | MDS-UPDRS Part II items | 3 of the 16 items behind the subtype |
+| `data/motor_updrs/MDS-UPDRS_Part_III_<date>.csv` | MDS-UPDRS Part III items and medication state | 13 of the 16 items, and the OFF/ON state of each exam |
+| `data/validation/PPMI_Original_Cohort_BL_to_Year_5_Dataset_Apr2020.csv` | 683 participants, baseline to year 5 | The only PPMI source with a **three-class** subtype label; used to validate ours |
+| `data/dictionaries/` | Data dictionary, code list, user guides | Reference |
 
-## The two files that must be downloaded separately
+The analyses in this repository use data downloaded on 20 August 2026.
 
-These are **already in place** (`data/motor_updrs/`, downloaded 20 Aug 2026).
-This section records where they came from, so the pipeline can be rebuilt on
-another machine or refreshed against a newer PPMI cut.
+## The two item-level files
 
 Both come from the PPMI portal:
 
@@ -25,25 +28,24 @@ Both come from the PPMI portal:
 | MDS-UPDRS Part II: Patient Questionnaire | `NUPDRS2P` | `data/motor_updrs/MDS-UPDRS_Part_II__Patient_Questionnaire_<date>.csv` |
 | MDS-UPDRS Part III: Motor Examination | `NUPDRS3TRT` | `data/motor_updrs/MDS-UPDRS_Part_III_<date>.csv` |
 
-The date suffix does not matter — `config/config.yaml` matches these by glob
+The date suffix does not matter: `config/config.yaml` matches these by glob
 (`paths.updrs_part2_glob`, `paths.updrs_part3_glob`). If PPMI changes the file
 naming, edit those two patterns rather than any source file.
 
-### Why these two, specifically
+### Why the curated cut is not enough
 
-The proposal's model consumes the continuous TD/PIGD ratio and the three-class
-label. Neither can be derived from the curated cut alone:
+The models need the continuous tremor/PIGD ratio and the three-class label.
+Neither can be derived from the curated cut alone:
 
 1. **The curated cut has no tremor score.** It ships `pigd` (the 5-item PIGD
    mean) but no corresponding tremor subscore. Ratio = tremor ÷ PIGD, so only
    the denominator is available.
-2. **The curated cut's `td_pigd` is 2-class.** Its dictionary decodes it as
-   `1 = TD`, `2 = non-TD (PIGD or Indeterminate)`. The Indeterminate state —
-   the middle column of the proposal's output table — has been collapsed away
-   and cannot be recovered.
-3. The archived Apr-2020 file has 3-class `td_pigd_old`, but covers only 683
-   patients to Year 5, with no ratio. It is a validation reference, not an
-   analysis dataset.
+2. **The curated cut's `td_pigd` is two-class.** Its dictionary decodes it as
+   `1 = TD`, `2 = non-TD (PIGD or Indeterminate)`. The Indeterminate state has
+   been collapsed away and cannot be recovered.
+3. The archived April 2020 file has the three-class `td_pigd_old`, but covers
+   only 683 participants to year 5, with no ratio. It is a validation
+   reference, not an analysis dataset.
 
 ### Columns the pipeline reads
 
@@ -63,15 +65,15 @@ PDSTATE   PDTRTMNT  NHY
 
 Both files must also carry `PATNO` and `EVENT_ID`, which are the merge keys.
 
-`PDSTATE` and `PDTRTMNT` are not optional. The canonical classification uses
-the **OFF-medication or untreated** exam; levodopa suppresses tremor, so
-scoring an ON exam shifts patients toward PIGD and would manufacture
-transitions that are pharmacological rather than pathological.
+`PDSTATE` and `PDTRTMNT` are not optional. The classification uses the
+**OFF-medication or untreated** exam: levodopa suppresses tremor, so scoring an
+ON exam shifts patients toward PIGD and would manufacture transitions that are
+pharmacological rather than pathological.
 
-### Definition applied
+## Subtype definition
 
-Following Stebbins et al., *Movement Disorders* 2013 — and matching the
-derivation notes attached to `td_pigd` in the curated cut verbatim:
+Following Stebbins et al., *Movement Disorders* 2013, and matching the
+derivation notes attached to `td_pigd` in the curated cut:
 
 ```
 tremor_score = mean(11 tremor items)
@@ -86,7 +88,8 @@ ratio <= 0.90                          -> PIGD           (3)
 ```
 
 Codes are 1/2/3 to match the archived `td_pigd_old`, so recomputed labels can
-be compared against it without remapping.
+be compared against it without remapping. The value 101 ("Unable to Rate") in
+an item field is treated as missing, never as a score.
 
 ## Verifying the download
 
@@ -101,26 +104,14 @@ python scripts/01_build_panel.py
 ```
 
 This writes `outputs/visit_panel.csv` and reports agreement against both PPMI
-references. Expect near-perfect agreement with the curated `td_pigd` after
-collapsing to binary; any material disagreement means the medication-state
-filter or the item list needs revisiting before the panel is trusted.
+references. Expected: 4,431 of 4,431 visits against the curated two-class
+label, and 1,595 of 1,597 against the archived three-class label. Any material
+disagreement means the medication-state filter or the item list needs
+revisiting before the panel is trusted.
 
-## Known issue to decide before the modelling stage
+## Visits where the ratio is undefined
 
-**16.3% of labelled visits have a PIGD subscore of exactly zero** — 725 of
-4,441, measured on the built panel. Those visits are classifiable (the rule
-sends them to TD) but the *ratio* is undefined, so the observation model
-`observed ratio = latent phenotype + noise` has nothing to consume for roughly
-one visit in six — concentrated, predictably, in early and tremor-dominant
-patients, which is exactly the population the model most needs to characterise.
-
-This is a modelling decision, not a data problem. Three defensible routes:
-
-- model `tremor_score` and `pigd_score` jointly as a bivariate latent process
-  and derive the ratio's posterior, which keeps every visit;
-- model `log(tremor + c) − log(pigd + c)` for a small fixed `c`, which is
-  simple but makes the thresholds depend on `c`;
-- drop the ratio and model the ordinal label directly, which forfeits the
-  proposal's continuous-latent framing.
-
-The first is the most faithful to the proposal and should be costed early.
+**16.3% of labelled visits have a PIGD score of exactly zero** (725 of 4,441).
+Those visits are still classifiable, since the published rule sends them to
+TD, but the ratio itself does not exist. They are kept in every model that
+works on the label, and left out only of the models that work on the ratio.

@@ -1,6 +1,0 @@
-model,n_patients,n_scored,n_correct,accuracy,patient-bootstrap 95% CI,brier_two_class,log_loss
-Subtype-history CT-HMM (labels only),627,2091,1753,0.8384,"[0.8183, 0.8568]",0.1211,0.3953
-Persistence (last non-Indeterminate),627,2091,1746,0.835,"[0.8147, 0.8541]",0.159,4.1729
-Direct logistic on the 10 clinical measurements,627,2091,1737,0.8307,"[0.8086, 0.8515]",0.1156,0.3646
-Direct logistic on tremor and PIGD scores only,627,2091,1735,0.8297,"[0.8080, 0.8495]",0.1202,0.3819
-Clinical-state CT-HMM (10 measurements),627,2091,1517,0.7255,"[0.6960, 0.7534]",0.1831,0.5493

@@ -1,9 +1,0 @@
-model,n_patients,n_cases_total,n_eligible,n_scored,n_undefined_among_eligible,n_indeterminate_next,n_correct,accuracy,accuracy_ci_patient_bootstrap_low,accuracy_ci_patient_bootstrap_high,accuracy_ci_wilson_low,accuracy_ci_wilson_high,mean_per_patient_accuracy,brier_two_class,log_loss,log_loss_clipped,mean_P_PIGD,observed_rate_PIGD,n_ties,rule_based_probabilities,mean_p_Indeterminate_raw,mean_P_PIGD_on_indeterminate_next
-Population mean trajectory,898,3352,3020,3020,0,332,2088,0.6914,0.6677,0.7153,0.6747,0.7076,0.7093,0.2083,0.6067,False,0.3545,0.3013,2,False,0.0957,0.3604
-Last observation carried forward,898,3352,3020,3020,0,332,2492,0.8252,0.8083,0.8425,0.8112,0.8383,0.8176,0.1235,0.3941,False,0.3255,0.3013,0,False,0.0821,0.4069
-"Subtype-history: Markov (observed, discrete)",898,3352,3020,3020,0,332,2506,0.8298,0.813,0.8471,0.816,0.8428,0.8285,0.1327,0.4311,False,0.3019,0.3013,0,False,0.099,0.3616
-Subtype-history: Persistence (last non-Indeterminate),898,3352,3020,3020,0,332,2518,0.8338,0.8167,0.8509,0.8201,0.8466,0.8307,0.1598,4.1959,True,0.2496,0.3013,0,False,0.0,0.3197
-"Subtype-history: CT-HMM (latent, interval-aware)",898,3352,3020,3020,0,332,2528,0.8371,0.8202,0.854,0.8235,0.8498,0.8335,0.1215,0.3963,False,0.3046,0.3013,0,False,0.1032,0.3714
-Profile: level + rate + medication,898,3352,3020,3020,0,332,2538,0.8404,0.8248,0.8566,0.8269,0.853,0.8347,0.1177,0.3766,False,0.3246,0.3013,1,False,0.0806,0.4053
-"Profile: level + rate, no medication",898,3352,3020,3020,0,332,2538,0.8404,0.8249,0.8563,0.8269,0.853,0.8325,0.1175,0.3759,False,0.3216,0.3013,0,False,0.0805,0.4019
-Profile: level only (random walk),898,3352,3020,3020,0,332,2549,0.844,0.8285,0.8598,0.8307,0.8565,0.8368,0.1195,0.3814,False,0.3219,0.3013,0,False,0.0814,0.3995

@@ -1,4 +1,0 @@
-role,comparison,n_targets,accuracy,accuracy 95% CI,auc,auc 95% CI,log_loss,log loss 95% CI
-PRIMARY (pre-specified),last 2 - full history,1489,-0.0007,"[-0.0102, 0.0085]",-0.0025,"[-0.0069, 0.0016]",0.0099,"[0.0015, 0.0193]"
-exploratory,last 3 - full history,1489,0.002,"[-0.0062, 0.0096]",0.0,"[-0.0030, 0.0030]",0.002,"[-0.0040, 0.0079]"
-LEDD sensitivity,"full history, current-visit LEDD - full history",1489,-0.0013,"[-0.0056, 0.0026]",0.0003,"[-0.0008, 0.0014]",-0.0002,"[-0.0022, 0.0017]"
