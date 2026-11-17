@@ -218,6 +218,7 @@ The main modules in `src/ppmi_subtype/`:
 |---|---|
 | `subtype.py`, `panel.py`, `loaders.py`, `validate.py` | Tremor and PIGD scores, the ratio, the three-class rule; the patient-visit panel; agreement with PPMI's own labels |
 | `transitions.py` | Transition matrices, reversion, time to conversion |
+| `raw_scores.py`, `indeterminate_audit.py` | Item-level rebuild of the two scores; audit of the Indeterminate class |
 | `ctmc.py`, `hmm.py` | Discrete and continuous-time Markov chains; the CT-HMM (hidden state with a misclassification matrix) |
 | `next_visit.py`, `loo.py` | Next-visit TD or PIGD prediction and leave-one-patient-out validation |
 | `hmm_banded.py`, `ratio_bands.py`, `next_visit_banded.py` | The ratio-banded CT-HMM |
@@ -231,6 +232,7 @@ The main modules in `src/ppmi_subtype/`:
 |---|---|---|
 | Data audit, cohort and labels | `00`, `01`, `78` | [docs/DATA_REQUIREMENTS.md](docs/DATA_REQUIREMENTS.md) |
 | How the label moves: transitions, reversion, cut-off sensitivity | `02`, `08`, `77`, `85` | |
+| The label as a measurement: item-level scores, OFF against ON exams, the Indeterminate class | `39`, `40` | |
 | Markov chains against the CT-HMM | `03`, `09` | |
 | **CT-HMM next-visit prediction** | `60` | [docs/next_visit_prediction/](docs/next_visit_prediction/) |
 | **Ratio-banded CT-HMM** and its band width | `87` to `90` | [docs/ratio_banded_cthmm/](docs/ratio_banded_cthmm/), [docs/band_width_sensitivity/](docs/band_width_sensitivity/) |
